@@ -1,6 +1,6 @@
 # Implementation Plan - Build core chatbot commands and database integration
 
-## Phase 1: Project Scaffolding and SQLite Setup
+## Phase 1: Project Scaffolding and SQLite Setup [checkpoint: d641371]
 
 - [x] Task: Setup Project Scaffolding (b7224a5)
     - [x] Initialize Python virtual environment, create `.gitignore`, `.env.example`, and requirements.txt (packages: `python-telegram-bot`, `pytest`, `pytest-cov`, `pytest-asyncio`, `python-dotenv`).
@@ -9,7 +9,7 @@
     - [x] Write failing unit tests for database schema initialization and CRUD operations (`init_db`, `add_transaction`, `get_balance`, `get_history`, `get_summaries`).
     - [x] Implement `db.py` to pass the unit tests using SQLite.
     - [x] Run test suite, verify code coverage is >80%, and commit changes.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Project Scaffolding and SQLite Setup' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Project Scaffolding and SQLite Setup' (Protocol in workflow.md)
 
 ## Phase 2: Bot Setup and Core Commands
 
