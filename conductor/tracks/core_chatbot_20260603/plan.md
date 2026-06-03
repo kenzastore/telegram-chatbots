@@ -2,9 +2,9 @@
 
 ## Phase 1: Project Scaffolding and SQLite Setup
 
-- [ ] Task: Setup Project Scaffolding
-    - [ ] Initialize Python virtual environment, create `.gitignore`, `.env.example`, and requirements.txt (packages: `python-telegram-bot`, `pytest`, `pytest-cov`, `pytest-asyncio`, `python-dotenv`).
-    - [ ] Set up basic configuration module (`config.py`) to read `TELEGRAM_BOT_TOKEN` and `DATABASE_PATH`.
+- [x] Task: Setup Project Scaffolding (b7224a5)
+    - [x] Initialize Python virtual environment, create `.gitignore`, `.env.example`, and requirements.txt (packages: `python-telegram-bot`, `pytest`, `pytest-cov`, `pytest-asyncio`, `python-dotenv`).
+    - [x] Set up basic configuration module (`config.py`) to read `TELEGRAM_BOT_TOKEN` and `DATABASE_PATH`.
 - [ ] Task: Database Module Implementation
     - [ ] Write failing unit tests for database schema initialization and CRUD operations (`init_db`, `add_transaction`, `get_balance`, `get_history`, `get_summaries`).
     - [ ] Implement `db.py` to pass the unit tests using SQLite.
