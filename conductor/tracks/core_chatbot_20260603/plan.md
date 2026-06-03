@@ -25,10 +25,10 @@
     - [x] Write failing unit tests for `/balance` and `/view` commands.
     - [x] Implement handlers for `/balance` and `/view` commands in `bot.py`.
     - [x] Run test suite, verify code coverage is >80%, and commit changes.
-- [ ] Task: Summary Command (/summary)
-    - [ ] Write failing unit tests for `/summary` command.
-    - [ ] Implement handler for `/summary` command in `bot.py` to aggregate weekly/monthly debits and credits.
-    - [ ] Run test suite, verify code coverage is >80%, and commit changes.
+- [x] Task: Summary Command (/summary) (20be543)
+    - [x] Write failing unit tests for `/summary` command.
+    - [x] Implement handler for `/summary` command in `bot.py` to aggregate weekly/monthly debits and credits.
+    - [x] Run test suite, verify code coverage is >80%, and commit changes.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Bot Setup and Core Commands' (Protocol in workflow.md)
 
 ## Phase 3: Dockerization & Final Polish
