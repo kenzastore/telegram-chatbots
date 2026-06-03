@@ -168,6 +168,51 @@ async def view_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     await update.message.reply_html("\n".join(lines))
 
+async def show_summary(update: Update, period: str):
+    query = update.callback_query
+    db_path = config.DATABASE_PATH
+    sums = db.get_summaries(db_path, period)
+    
+    title = f"<b>{period.capitalize()} Summary</b>:\n"
+    if not sums:
+        msg = f"{title}\nNo transactions found for this period."
+    else:
+        lines = [title]
+        for s in sums:
+            emoji = "💰" if s["type"] == "credit" else "💸"
+            sign = "+" if s["type"] == "credit" else "-"
+            lines.append(f" - {s['description']} ({s['type']}): {sign} {emoji} ${s['total']:.2f}")
+        msg = "\n".join(lines)
+        
+    if query:
+        await query.edit_message_text(text=msg, parse_mode="HTML")
+    else:
+        await update.message.reply_html(msg)
+
+async def summary_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    args = context.args
+    if args and args[0].lower() in ["weekly", "monthly"]:
+        period = args[0].lower()
+        await show_summary(update, period)
+        return
+        
+    keyboard = [
+        [
+            InlineKeyboardButton("📊 Weekly Summary", callback_data="summary_weekly"),
+            InlineKeyboardButton("📆 Monthly Summary", callback_data="summary_monthly"),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_html(
+        "Please select the <b>Summary Period</b>:", reply_markup=reply_markup
+    )
+
+async def summary_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    period = "weekly" if "weekly" in query.data else "monthly"
+    await show_summary(update, period)
+
 def main():
     db.init_db(config.DATABASE_PATH)
     
@@ -191,6 +236,8 @@ def main():
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("balance", balance_command))
     app.add_handler(CommandHandler("view", view_command))
+    app.add_handler(CommandHandler("summary", summary_command))
+    app.add_handler(CallbackQueryHandler(summary_callback, pattern="^summary_"))
     app.add_handler(conv_handler)
     app.run_polling()
 

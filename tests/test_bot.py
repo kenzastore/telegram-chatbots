@@ -44,7 +44,7 @@ def test_main(monkeypatch):
     bot.main()
     
     mock_app.add_handler.assert_called()
-    assert mock_app.add_handler.call_count == 5
+    assert mock_app.add_handler.call_count == 7
     mock_app.run_polling.assert_called_once()
 
 @pytest.mark.asyncio
@@ -253,3 +253,74 @@ async def test_view_command_empty(monkeypatch):
     update.message.reply_html.assert_called_once()
     args, kwargs = update.message.reply_html.call_args
     assert "No transactions found" in args[0]
+
+@pytest.mark.asyncio
+async def test_summary_command_prompt():
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    context = MagicMock(spec=CallbackContext)
+    
+    await bot.summary_command(update, context)
+    
+    update.message.reply_html.assert_called_once()
+    args, kwargs = update.message.reply_html.call_args
+    assert "Summary Period" in args[0]
+
+@pytest.mark.asyncio
+async def test_summary_callback_weekly(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "summary_weekly"
+    context = MagicMock(spec=CallbackContext)
+    
+    mock_sums = [
+        {"description": "Food", "type": "debit", "total": 150.0},
+        {"description": "Salary", "type": "credit", "total": 500.0}
+    ]
+    import db
+    monkeypatch.setattr(db, "get_summaries", MagicMock(return_value=mock_sums))
+    
+    await bot.summary_callback(update, context)
+    
+    update.callback_query.edit_message_text.assert_called_once()
+    kwargs = update.callback_query.edit_message_text.call_args.kwargs
+    assert "Weekly Summary" in kwargs["text"]
+    assert "Food (debit): - 💸 $150.00" in kwargs["text"]
+    assert "Salary (credit): + 💰 $500.00" in kwargs["text"]
+
+@pytest.mark.asyncio
+async def test_summary_callback_monthly(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "summary_monthly"
+    context = MagicMock(spec=CallbackContext)
+    
+    mock_sums = []
+    import db
+    monkeypatch.setattr(db, "get_summaries", MagicMock(return_value=mock_sums))
+    
+    await bot.summary_callback(update, context)
+    
+    update.callback_query.edit_message_text.assert_called_once()
+    kwargs = update.callback_query.edit_message_text.call_args.kwargs
+    assert "Monthly Summary" in kwargs["text"]
+    assert "No transactions found" in kwargs["text"]
+
+@pytest.mark.asyncio
+async def test_summary_command_with_arg(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.callback_query = None
+    update.message = AsyncMock()
+    context = MagicMock(spec=CallbackContext)
+    context.args = ["weekly"]
+    
+    mock_sums = [{"description": "Food", "type": "debit", "total": 12.5}]
+    import db
+    monkeypatch.setattr(db, "get_summaries", MagicMock(return_value=mock_sums))
+    
+    await bot.summary_command(update, context)
+    
+    update.message.reply_html.assert_called_once()
+    args, kwargs = update.message.reply_html.call_args
+    assert "Weekly Summary" in args[0]
+    assert "Food (debit): - 💸 $12.50" in args[0]
