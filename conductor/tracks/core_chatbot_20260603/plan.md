@@ -5,10 +5,10 @@
 - [x] Task: Setup Project Scaffolding (b7224a5)
     - [x] Initialize Python virtual environment, create `.gitignore`, `.env.example`, and requirements.txt (packages: `python-telegram-bot`, `pytest`, `pytest-cov`, `pytest-asyncio`, `python-dotenv`).
     - [x] Set up basic configuration module (`config.py`) to read `TELEGRAM_BOT_TOKEN` and `DATABASE_PATH`.
-- [ ] Task: Database Module Implementation
-    - [ ] Write failing unit tests for database schema initialization and CRUD operations (`init_db`, `add_transaction`, `get_balance`, `get_history`, `get_summaries`).
-    - [ ] Implement `db.py` to pass the unit tests using SQLite.
-    - [ ] Run test suite, verify code coverage is >80%, and commit changes.
+- [x] Task: Database Module Implementation (bcdae2a)
+    - [x] Write failing unit tests for database schema initialization and CRUD operations (`init_db`, `add_transaction`, `get_balance`, `get_history`, `get_summaries`).
+    - [x] Implement `db.py` to pass the unit tests using SQLite.
+    - [x] Run test suite, verify code coverage is >80%, and commit changes.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Project Scaffolding and SQLite Setup' (Protocol in workflow.md)
 
 ## Phase 2: Bot Setup and Core Commands
