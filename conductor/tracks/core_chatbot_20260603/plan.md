@@ -21,10 +21,10 @@
     - [x] Write failing unit tests for `/add` command conversation handling (selecting debit/credit, inputting amount, description, confirmation).
     - [x] Implement ConversationHandler in `bot.py` for `/add` transaction flow.
     - [x] Run test suite, verify code coverage is >80%, and commit changes.
-- [ ] Task: Balance and History Commands (/balance, /view)
-    - [ ] Write failing unit tests for `/balance` and `/view` commands.
-    - [ ] Implement handlers for `/balance` and `/view` commands in `bot.py`.
-    - [ ] Run test suite, verify code coverage is >80%, and commit changes.
+- [x] Task: Balance and History Commands (/balance, /view) (1307d95)
+    - [x] Write failing unit tests for `/balance` and `/view` commands.
+    - [x] Implement handlers for `/balance` and `/view` commands in `bot.py`.
+    - [x] Run test suite, verify code coverage is >80%, and commit changes.
 - [ ] Task: Summary Command (/summary)
     - [ ] Write failing unit tests for `/summary` command.
     - [ ] Implement handler for `/summary` command in `bot.py` to aggregate weekly/monthly debits and credits.
