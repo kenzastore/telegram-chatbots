@@ -13,10 +13,10 @@
 
 ## Phase 2: Bot Setup and Core Commands
 
-- [ ] Task: Bot Setup & Basic Commands (/start, /help)
-    - [ ] Write failing unit tests mocking Telegram updates for bot configuration, `/start`, and `/help` command triggers.
-    - [ ] Implement `bot.py` with handlers for `/start` and `/help` using HTML or Markdown formatting.
-    - [ ] Run test suite, verify code coverage is >80%, and commit changes.
+- [x] Task: Bot Setup & Basic Commands (/start, /help) (49966c0)
+    - [x] Write failing unit tests mocking Telegram updates for bot configuration, `/start`, and `/help` command triggers.
+    - [x] Implement `bot.py` with handlers for `/start` and `/help` using HTML or Markdown formatting.
+    - [x] Run test suite, verify code coverage is >80%, and commit changes.
 - [ ] Task: Transaction Logging Flow (/add)
     - [ ] Write failing unit tests for `/add` command conversation handling (selecting debit/credit, inputting amount, description, confirmation).
     - [ ] Implement ConversationHandler in `bot.py` for `/add` transaction flow.
