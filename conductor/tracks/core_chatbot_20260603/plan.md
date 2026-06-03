@@ -17,10 +17,10 @@
     - [x] Write failing unit tests mocking Telegram updates for bot configuration, `/start`, and `/help` command triggers.
     - [x] Implement `bot.py` with handlers for `/start` and `/help` using HTML or Markdown formatting.
     - [x] Run test suite, verify code coverage is >80%, and commit changes.
-- [ ] Task: Transaction Logging Flow (/add)
-    - [ ] Write failing unit tests for `/add` command conversation handling (selecting debit/credit, inputting amount, description, confirmation).
-    - [ ] Implement ConversationHandler in `bot.py` for `/add` transaction flow.
-    - [ ] Run test suite, verify code coverage is >80%, and commit changes.
+- [x] Task: Transaction Logging Flow (/add) (3783b6d)
+    - [x] Write failing unit tests for `/add` command conversation handling (selecting debit/credit, inputting amount, description, confirmation).
+    - [x] Implement ConversationHandler in `bot.py` for `/add` transaction flow.
+    - [x] Run test suite, verify code coverage is >80%, and commit changes.
 - [ ] Task: Balance and History Commands (/balance, /view)
     - [ ] Write failing unit tests for `/balance` and `/view` commands.
     - [ ] Implement handlers for `/balance` and `/view` commands in `bot.py`.
