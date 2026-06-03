@@ -149,6 +149,25 @@ async def add_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html("❌ Transaction logging cancelled.")
     return ConversationHandler.END
 
+async def balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    balance = db.get_balance(config.DATABASE_PATH)
+    await update.message.reply_html(f"📈 Current Net Balance: <b>${balance:.2f}</b>")
+
+async def view_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    history = db.get_history(config.DATABASE_PATH, limit=10)
+    if not history:
+        await update.message.reply_html("No transactions found.")
+        return
+        
+    lines = ["<b>Recent Transaction History:</b>\n"]
+    for tx in history:
+        emoji = "💰" if tx["type"] == "credit" else "💸"
+        sign = "+" if tx["type"] == "credit" else "-"
+        lines.append(
+            f"📅 {tx['date']} | {sign} {emoji} ${tx['amount']:.2f} | <i>{tx['description']}</i> (Bal: ${tx['balance_after']:.2f})"
+        )
+    await update.message.reply_html("\n".join(lines))
+
 def main():
     db.init_db(config.DATABASE_PATH)
     
@@ -170,6 +189,8 @@ def main():
     
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("balance", balance_command))
+    app.add_handler(CommandHandler("view", view_command))
     app.add_handler(conv_handler)
     app.run_polling()
 

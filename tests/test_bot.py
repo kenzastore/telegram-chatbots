@@ -44,7 +44,7 @@ def test_main(monkeypatch):
     bot.main()
     
     mock_app.add_handler.assert_called()
-    assert mock_app.add_handler.call_count == 3
+    assert mock_app.add_handler.call_count == 5
     mock_app.run_polling.assert_called_once()
 
 @pytest.mark.asyncio
@@ -199,3 +199,57 @@ async def test_add_cancel():
     assert state == ConversationHandler.END
     update.message.reply_html.assert_called_once()
     assert "cancelled" in update.message.reply_html.call_args[0][0].lower()
+
+@pytest.mark.asyncio
+async def test_balance_command(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    context = MagicMock(spec=CallbackContext)
+    
+    mock_get_balance = MagicMock(return_value=125.50)
+    import db
+    monkeypatch.setattr(db, "get_balance", mock_get_balance)
+    
+    await bot.balance_command(update, context)
+    
+    update.message.reply_html.assert_called_once()
+    args, kwargs = update.message.reply_html.call_args
+    assert "Balance" in args[0]
+    assert "$125.50" in args[0]
+
+@pytest.mark.asyncio
+async def test_view_command(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    context = MagicMock(spec=CallbackContext)
+    
+    mock_history = [
+        {"date": "2026-06-03", "type": "credit", "amount": 100.0, "description": "Salary", "balance_after": 100.0},
+        {"date": "2026-06-03", "type": "debit", "amount": 20.0, "description": "Coffee", "balance_after": 80.0}
+    ]
+    import db
+    monkeypatch.setattr(db, "get_history", MagicMock(return_value=mock_history))
+    
+    await bot.view_command(update, context)
+    
+    update.message.reply_html.assert_called_once()
+    args, kwargs = update.message.reply_html.call_args
+    assert "Salary" in args[0]
+    assert "Coffee" in args[0]
+    assert "+ 💰 $100.00" in args[0]
+    assert "- 💸 $20.00" in args[0]
+
+@pytest.mark.asyncio
+async def test_view_command_empty(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    context = MagicMock(spec=CallbackContext)
+    
+    import db
+    monkeypatch.setattr(db, "get_history", MagicMock(return_value=[]))
+    
+    await bot.view_command(update, context)
+    
+    update.message.reply_html.assert_called_once()
+    args, kwargs = update.message.reply_html.call_args
+    assert "No transactions found" in args[0]
