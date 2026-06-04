@@ -8,7 +8,7 @@
     - [x] Run test suite and verify coverage.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Helper Implementation & Tests' (Protocol in workflow.md)
 
-## Phase 2: Refactor Bot Commands and Update Tests
+## Phase 2: Refactor Bot Commands and Update Tests [checkpoint: e6ad8b5]
 
 - [x] Task: Update Bot Output Formatting (9c3c584)
     - [x] Refactor transaction confirmation message in `bot.py` to use `format_rupiah`.
@@ -18,4 +18,4 @@
 - [x] Task: Update Bot Test Suite (9c3c584)
     - [x] Modify `tests/test_bot.py` assertions to expect the new `Rp X.XXX,XX` format instead of `$X.XX`.
     - [x] Run test suite to verify everything passes and coverage remains >80%.
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Refactor Bot Commands and Update Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Refactor Bot Commands and Update Tests' (Protocol in workflow.md)
