@@ -14,5 +14,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: make a cut off calculations transactions tobe every month. then the google-sheet will make a new sheet every month change**
+- [~] **Track: make a cut off calculations transactions tobe every month. then the google-sheet will make a new sheet every month change**
   *Link: [./tracks/monthly_cutoff_sheets_20260604/](./tracks/monthly_cutoff_sheets_20260604/)*

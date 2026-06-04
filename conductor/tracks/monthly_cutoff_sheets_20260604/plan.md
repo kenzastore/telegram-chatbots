@@ -6,11 +6,11 @@
     - [x] Write failing unit tests in `tests/test_db.py` for fetching transactions and summaries filtered by a specific calendar month.
     - [x] Implement `db.get_transactions_by_month(db_path, year, month)` and update `db.get_summaries(db_path, period, year, month)` in `db.py`.
     - [x] Run test suite, verify code coverage is >80%, and commit changes.
-- [~] Task: Update Bot Monthly Summary Handler
-    - [~] Write failing unit tests in `tests/test_bot.py` verifying `/summary monthly` displays transactions for the current calendar month.
-    - [ ] Update `show_summary` in `bot.py` to retrieve current calendar month summaries using the refactored DB helpers.
-    - [ ] Run test suite, verify code coverage is >80%, and commit changes.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Database and Core Summary Refactoring' (Protocol in workflow.md)
+- [x] Task: Update Bot Monthly Summary Handler
+    - [x] Write failing unit tests in `tests/test_bot.py` verifying `/summary monthly` displays transactions for the current calendar month.
+    - [x] Update `show_summary` in `bot.py` to retrieve current calendar month summaries using the refactored DB helpers.
+    - [x] Run test suite, verify code coverage is >80%, and commit changes.
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Database and Core Summary Refactoring' (Protocol in workflow.md)
 
 ## Phase 2: Google Sheets Monthly Tabs Export
 
