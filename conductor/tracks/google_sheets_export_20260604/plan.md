@@ -5,10 +5,10 @@
 - [x] Task: Dependency Setup & Config (Phase 1) (428b050)
     - [x] Install `google-api-python-client`, `google-auth-httplib2`, and `google-auth-oauthlib`. Update `requirements.txt`.
     - [x] Update `config.py` and `.env.example` to read and validate `GOOGLE_SERVICE_ACCOUNT_FILE` path.
-- [ ] Task: Google Sheets Integration Helper Module (Phase 1)
-    - [ ] Write unit tests mocking the Google Sheets API and Google Drive API for spreadsheet creation, tab creation, cell range updates, and public link sharing.
-    - [ ] Implement `sheets.py` containing service account auth and high-level export helper functions.
-    - [ ] Run test suite, verify code coverage is >80%, and commit changes.
+- [x] Task: Google Sheets Integration Helper Module (Phase 1) (c4e1509)
+    - [x] Write unit tests mocking the Google Sheets API and Google Drive API for spreadsheet creation, tab creation, cell range updates, and public link sharing.
+    - [x] Implement `sheets.py` containing service account auth and high-level export helper functions.
+    - [x] Run test suite, verify code coverage is >80%, and commit changes.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Setup and Google APIs Client Integration' (Protocol in workflow.md)
 
 ## Phase 2: Bot Handler and Inline Button Integration
