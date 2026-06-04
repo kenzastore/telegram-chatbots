@@ -29,5 +29,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: add a feature so it can add transactions just from typed sentences**
+- [x] **Track: add a feature so it can add transactions just from typed sentences**
   *Link: [./tracks/quick_add_sentences_20260604/](./tracks/quick_add_sentences_20260604/)*
