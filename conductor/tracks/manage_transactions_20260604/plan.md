@@ -22,7 +22,7 @@
     - [x] Write unit tests in `tests/test_bot.py` to verify the step-by-step editing flow and successful updates.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Bot Edit Command & Tests' (Protocol in workflow.md)
 
-## Phase 3: Bot Clear Command & Tests
+## Phase 3: Bot Clear Command & Tests [checkpoint: 52ecc2d]
 
 - [x] Task: Implement Clear Inline Keyboard (0c18647)
     - [x] Register `/clear` command in `bot.py` that displays inline keyboard choices: Recent, ID, Week, Month.
@@ -30,4 +30,4 @@
     - [x] Implement delete execution callback.
 - [x] Task: Test Clear Command (0c18647)
     - [x] Write unit tests in `tests/test_bot.py` to cover different `/clear` options and confirmations.
-- [~] Task: Conductor - User Manual Verification 'Phase 3: Bot Clear Command & Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Bot Clear Command & Tests' (Protocol in workflow.md)
