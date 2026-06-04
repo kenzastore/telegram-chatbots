@@ -11,7 +11,7 @@
     - [x] Run test suite, verify code coverage is >80%, and commit changes.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Project Scaffolding and SQLite Setup' (Protocol in workflow.md)
 
-## Phase 2: Bot Setup and Core Commands
+## Phase 2: Bot Setup and Core Commands [checkpoint: 0948b94]
 
 - [x] Task: Bot Setup & Basic Commands (/start, /help) (49966c0)
     - [x] Write failing unit tests mocking Telegram updates for bot configuration, `/start`, and `/help` command triggers.
@@ -29,7 +29,7 @@
     - [x] Write failing unit tests for `/summary` command.
     - [x] Implement handler for `/summary` command in `bot.py` to aggregate weekly/monthly debits and credits.
     - [x] Run test suite, verify code coverage is >80%, and commit changes.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Bot Setup and Core Commands' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Bot Setup and Core Commands' (Protocol in workflow.md)
 
 ## Phase 3: Dockerization & Final Polish
 
