@@ -1,6 +1,6 @@
 # Implementation Plan - Manage Transactions (Edit, Remove, Clear)
 
-## Phase 1: Database Helpers and Tests
+## Phase 1: Database Helpers and Tests [checkpoint: f07e91b]
 
 - [x] Task: Implement DB Operations & Balance Recalculation (82d3def)
     - [x] Implement `recalculate_balances(db_path)` in `db.py` to re-compute running balances sorted by `date ASC, id ASC`.
@@ -10,7 +10,7 @@
     - [x] Implement `clear_transactions(db_path, choice, param=None)` in `db.py` to handle clearing recent, weekly, or monthly entries, followed by balance recalculation.
 - [x] Task: Write Database Tests (82d3def)
     - [x] Add unit tests in `tests/test_db.py` to cover updating, deleting, and clearing transactions, validating that running balances are correctly recalculated.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Database Helpers and Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Database Helpers and Tests' (Protocol in workflow.md)
 
 ## Phase 2: Bot Edit Command & Tests
 
