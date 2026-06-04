@@ -25,7 +25,9 @@ HELP_TEXT = (
     "<b>/add</b> - Record a new transaction (credit or debit)\n"
     "<b>/balance</b> - Retrieve current net balance\n"
     "<b>/view</b> - View the last 10 transaction history records\n"
-    "<b>/summary</b> - View weekly/monthly financial summaries"
+    "<b>/summary</b> - View weekly/monthly financial summaries\n"
+    "<b>/edit</b> - Edit an existing transaction step-by-step\n"
+    "<b>/clear</b> - Remove or clear transaction history"
 )
 
 # Conversation states

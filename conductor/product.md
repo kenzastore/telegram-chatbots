@@ -25,7 +25,11 @@ Users can log transactions through interactive chat conversations or single-comm
    - Lists the last N transactions (defaulting to 10) in a cleanly formatted table.
 4. **Summaries (`/summary`)**:
    - Offers weekly summaries (last 7 days) and monthly financial summaries aggregated by calendar month (current month from day 1).
-5. **Google Sheets Export**:
+5. **Editing a Transaction (`/edit`)**:
+   - Initiates an interactive conversation flow to update Date, Type, Amount, and Description of a transaction by ID, recalculating balances chronologically.
+6. **Clearing Transactions (`/clear`)**:
+   - Initiates an interactive selection menu (Recent, ID, Week, Month) with double-confirmation confirmation prompts to delete transactions, recalculating balances.
+7. **Google Sheets Export**:
    - Allows exporting transaction logs and summaries into separate worksheets grouped dynamically by calendar month (e.g., `YYYY-MM Transactions` and `YYYY-MM Summaries`) within the Google Spreadsheet.
 
 ## Data Structure
@@ -40,6 +44,8 @@ The chatbot stores records in a relational database with the following fields:
 ## Command Set
 * `/start` - Initial setup, greeting, and help instructions.
 * `/add` - Initiate transaction logging workflow.
+* `/edit` - Edit a transaction's fields by ID.
+* `/clear` - Clear transactions by choice (Recent, ID, Week, Month).
 * `/view` - View recent transaction history.
 * `/summary` - View financial summaries (weekly/monthly).
 * `/balance` - Retrieve current running balance.

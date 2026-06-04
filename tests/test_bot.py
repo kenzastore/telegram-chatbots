@@ -29,6 +29,8 @@ async def test_help_command():
     args, kwargs = update.message.reply_html.call_args
     assert "/add" in args[0]
     assert "/balance" in args[0]
+    assert "/edit" in args[0]
+    assert "/clear" in args[0]
 
 def test_main(monkeypatch):
     mock_app = MagicMock()
