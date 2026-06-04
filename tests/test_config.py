@@ -7,12 +7,14 @@ def test_config_loading(monkeypatch):
     monkeypatch.setattr(dotenv, "load_dotenv", lambda *args, **kwargs: None)
     monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "mock_token_123")
     monkeypatch.setenv("DATABASE_PATH", "mock_finance.db")
+    monkeypatch.setenv("GOOGLE_SERVICE_ACCOUNT_FILE", "mock_credentials.json")
     
     import config
     importlib.reload(config)
     
     assert config.TELEGRAM_BOT_TOKEN == "mock_token_123"
     assert config.DATABASE_PATH == "mock_finance.db"
+    assert config.GOOGLE_SERVICE_ACCOUNT_FILE == "mock_credentials.json"
 
 def test_config_missing_token(monkeypatch):
     monkeypatch.setattr(dotenv, "load_dotenv", lambda *args, **kwargs: None)
