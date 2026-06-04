@@ -420,3 +420,140 @@ def test_format_rupiah():
     assert bot.format_rupiah(0.0) == "Rp 0,00"
     assert bot.format_rupiah(-500.25) == "Rp -500,25"
 
+@pytest.mark.asyncio
+async def test_edit_start():
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    context = MagicMock(spec=CallbackContext)
+    
+    state = await bot.edit_start(update, context)
+    assert state == bot.EDIT_ID
+    update.message.reply_html.assert_called_once()
+    assert "Transaction ID" in update.message.reply_html.call_args[0][0]
+
+@pytest.mark.asyncio
+async def test_edit_id_not_found(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.message.text = "999"
+    context = MagicMock(spec=CallbackContext)
+    
+    import db
+    monkeypatch.setattr(db, "get_transaction", MagicMock(return_value=None))
+    
+    state = await bot.edit_id(update, context)
+    assert state == bot.EDIT_ID
+    update.message.reply_text.assert_called_once()
+    assert "not found" in update.message.reply_text.call_args[0][0].lower()
+
+@pytest.mark.asyncio
+async def test_edit_id_found(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.message.text = "1"
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+    
+    tx = {"id": 1, "date": "2026-06-01", "amount": 100.0, "description": "Salary", "type": "credit"}
+    import db
+    monkeypatch.setattr(db, "get_transaction", MagicMock(return_value=tx))
+    
+    state = await bot.edit_id(update, context)
+    assert state == bot.EDIT_DATE
+    assert context.user_data["edit_id"] == 1
+    assert context.user_data["edit_tx"] == tx
+    update.message.reply_html.assert_called_once()
+    assert "Enter new date" in update.message.reply_html.call_args[0][0]
+
+@pytest.mark.asyncio
+async def test_edit_date_keep():
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "keep_current"
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {
+        "edit_tx": {"date": "2026-06-01", "type": "credit"}
+    }
+    
+    state = await bot.edit_date(update, context)
+    assert state == bot.EDIT_TYPE
+    assert context.user_data["edit_date"] == "2026-06-01"
+    update.callback_query.edit_message_text.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_edit_type_keep():
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "keep_current"
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {
+        "edit_tx": {"type": "credit", "amount": 100.0}
+    }
+    
+    state = await bot.edit_type(update, context)
+    assert state == bot.EDIT_AMOUNT
+    assert context.user_data["edit_type"] == "credit"
+    update.callback_query.edit_message_text.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_edit_amount_valid():
+    update = MagicMock(spec=Update)
+    update.callback_query = None
+    update.message = AsyncMock()
+    update.message.text = "150.0"
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {
+        "edit_tx": {"amount": 100.0, "description": "Salary"}
+    }
+    
+    state = await bot.edit_amount(update, context)
+    assert state == bot.EDIT_DESCRIPTION
+    assert context.user_data["edit_amount"] == 150.0
+    update.message.reply_html.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_edit_description_keep():
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "keep_current"
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {
+        "edit_id": 1,
+        "edit_tx": {"id": 1, "date": "2026-06-01", "amount": 100.0, "description": "Salary", "type": "credit"},
+        "edit_date": "2026-06-02",
+        "edit_type": "debit",
+        "edit_amount": 50.0
+    }
+    
+    state = await bot.edit_description(update, context)
+    assert state == bot.EDIT_CONFIRM
+    assert context.user_data["edit_description"] == "Salary"
+    update.callback_query.edit_message_text.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_edit_confirm(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "confirm"
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {
+        "edit_id": 1,
+        "edit_date": "2026-06-02",
+        "edit_type": "debit",
+        "edit_amount": 50.0,
+        "edit_description": "Salary"
+    }
+    
+    mock_update = MagicMock()
+    import db
+    monkeypatch.setattr(db, "update_transaction", mock_update)
+    
+    import config
+    from telegram.ext import ConversationHandler
+    state = await bot.edit_confirm(update, context)
+    assert state == ConversationHandler.END
+    mock_update.assert_called_once_with(config.DATABASE_PATH, 1, "2026-06-02", 50.0, "Salary", "debit")
+    update.callback_query.edit_message_text.assert_called_once()
+    assert "successfully updated" in update.callback_query.edit_message_text.call_args[0][0].lower()
+
+

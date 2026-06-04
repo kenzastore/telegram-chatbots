@@ -30,6 +30,7 @@ HELP_TEXT = (
 
 # Conversation states
 TYPE, AMOUNT, DESCRIPTION, DATE = range(4)
+EDIT_ID, EDIT_DATE, EDIT_TYPE, EDIT_AMOUNT, EDIT_DESCRIPTION, EDIT_CONFIRM = range(4, 10)
 
 def format_rupiah(amount: float) -> str:
     """Formats a float as Indonesian Rupiah with decimal places.
@@ -163,6 +164,245 @@ async def add_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def add_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html("❌ Transaction logging cancelled.")
+    return ConversationHandler.END
+
+async def edit_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_html(
+        "📝 <b>Edit Transaction</b>\n\n"
+        "Please enter the Transaction ID you wish to edit:"
+    )
+    return EDIT_ID
+
+async def edit_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        tx_id = int(update.message.text.strip())
+    except ValueError:
+        await update.message.reply_text("⚠️ Invalid ID format. Please enter a numeric ID:")
+        return EDIT_ID
+
+    tx = db.get_transaction(config.DATABASE_PATH, tx_id)
+    if not tx:
+        await update.message.reply_text(f"❌ Transaction with ID {tx_id} not found. Please enter a valid ID:")
+        return EDIT_ID
+
+    context.user_data["edit_id"] = tx_id
+    context.user_data["edit_tx"] = tx
+
+    # Show inline options for date: "Keep current: <value>", "Today"
+    keyboard = [
+        [InlineKeyboardButton(f"Keep Current ({tx['date']})", callback_data="keep_current")],
+        [InlineKeyboardButton("Today", callback_data="today")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_html(
+        f"📅 <b>Step 1: Date</b>\n\n"
+        f"Current: {tx['date']}\n\n"
+        f"Enter new date (YYYY-MM-DD) or select an option:",
+        reply_markup=reply_markup
+    )
+    return EDIT_DATE
+
+async def edit_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    tx = context.user_data["edit_tx"]
+    date_str = None
+
+    if query:
+        await query.answer()
+        if query.data == "keep_current":
+            date_str = tx["date"]
+        elif query.data == "today":
+            date_str = datetime.now().strftime("%Y-%m-%d")
+    else:
+        text = update.message.text.strip()
+        try:
+            datetime.strptime(text, "%Y-%m-%d")
+            date_str = text
+        except ValueError:
+            await update.message.reply_text(
+                "⚠️ Invalid date format. Please use YYYY-MM-DD or select an option:"
+            )
+            return EDIT_DATE
+
+    context.user_data["edit_date"] = date_str
+
+    # Type buttons
+    keyboard = [
+        [InlineKeyboardButton(f"Keep Current ({tx['type'].capitalize()})", callback_data="keep_current")],
+        [InlineKeyboardButton("Credit 💰", callback_data="credit"),
+         InlineKeyboardButton("Debit 💸", callback_data="debit")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    msg = (
+        f"🏷️ <b>Step 2: Transaction Type</b>\n\n"
+        f"Current: {tx['type'].capitalize()}\n\n"
+        f"Select the new type:"
+    )
+
+    if query:
+        await query.edit_message_text(text=msg, parse_mode="HTML", reply_markup=reply_markup)
+    else:
+        await update.message.reply_html(msg, reply_markup=reply_markup)
+
+    return EDIT_TYPE
+
+async def edit_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    tx = context.user_data["edit_tx"]
+    tx_type = None
+
+    if query:
+        await query.answer()
+        if query.data == "keep_current":
+            tx_type = tx["type"]
+        else:
+            tx_type = query.data
+    else:
+        await update.message.reply_text("Please use the buttons to select a transaction type.")
+        return EDIT_TYPE
+
+    context.user_data["edit_type"] = tx_type
+
+    # Amount keyboard: "Keep current"
+    keyboard = [
+        [InlineKeyboardButton(f"Keep Current ({format_rupiah(tx['amount'])})", callback_data="keep_current")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    msg = (
+        f"💵 <b>Step 3: Amount</b>\n\n"
+        f"Current: {format_rupiah(tx['amount'])}\n\n"
+        f"Type the new numeric amount or select an option:"
+    )
+
+    if query:
+        await query.edit_message_text(text=msg, parse_mode="HTML", reply_markup=reply_markup)
+    else:
+        await update.message.reply_html(msg, reply_markup=reply_markup)
+
+    return EDIT_AMOUNT
+
+async def edit_amount(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    tx = context.user_data["edit_tx"]
+    amount = None
+
+    if query:
+        await query.answer()
+        if query.data == "keep_current":
+            amount = tx["amount"]
+    else:
+        try:
+            amount = float(update.message.text.strip())
+            if amount <= 0:
+                raise ValueError()
+        except ValueError:
+            await update.message.reply_text("⚠️ Please enter a valid positive number for amount:")
+            return EDIT_AMOUNT
+
+    context.user_data["edit_amount"] = amount
+
+    # Description keyboard
+    keyboard = [
+        [InlineKeyboardButton(f"Keep Current ({tx['description']})", callback_data="keep_current")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    msg = (
+        f"✍️ <b>Step 4: Description</b>\n\n"
+        f"Current: {tx['description']}\n\n"
+        f"Type the new description or select an option:"
+    )
+
+    if query:
+        await query.edit_message_text(text=msg, parse_mode="HTML", reply_markup=reply_markup)
+    else:
+        await update.message.reply_html(msg, reply_markup=reply_markup)
+
+    return EDIT_DESCRIPTION
+
+async def edit_description(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    tx = context.user_data["edit_tx"]
+    description = None
+
+    if query:
+        await query.answer()
+        if query.data == "keep_current":
+            description = tx["description"]
+    else:
+        description = update.message.text.strip()
+
+    context.user_data["edit_description"] = description
+
+    # Build confirmation summary
+    new_date = context.user_data["edit_date"]
+    new_type = context.user_data["edit_type"]
+    new_amount = context.user_data["edit_amount"]
+    new_desc = context.user_data["edit_description"]
+
+    old_emoji = "💰" if tx["type"] == "credit" else "💸"
+    old_sign = "+" if tx["type"] == "credit" else "-"
+    new_emoji = "💰" if new_type == "credit" else "💸"
+    new_sign = "+" if new_type == "credit" else "-"
+
+    keyboard = [
+        [InlineKeyboardButton("Confirm Update ⚠️", callback_data="confirm"),
+         InlineKeyboardButton("Cancel ❌", callback_data="cancel")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    msg = (
+        f"⚠️ <b>Confirm Changes</b>\n\n"
+        f"<b>Original Transaction:</b>\n"
+        f"📅 Date: {tx['date']}\n"
+        f"🏷️ Type: {tx['type'].capitalize()} {old_emoji}\n"
+        f"💵 Amount: {old_sign} {format_rupiah(tx['amount'])}\n"
+        f"📝 Desc: {tx['description']}\n\n"
+        f"<b>New Values:</b>\n"
+        f"📅 Date: {new_date}\n"
+        f"🏷️ Type: {new_type.capitalize()} {new_emoji}\n"
+        f"💵 Amount: {new_sign} {format_rupiah(new_amount)}\n"
+        f"📝 Desc: {new_desc}\n\n"
+        f"Confirm the update?"
+    )
+
+    if query:
+        await query.edit_message_text(text=msg, parse_mode="HTML", reply_markup=reply_markup)
+    else:
+        await update.message.reply_html(msg, reply_markup=reply_markup)
+
+    return EDIT_CONFIRM
+
+async def edit_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not query:
+        return EDIT_CONFIRM
+
+    await query.answer()
+    if query.data == "confirm":
+        tx_id = context.user_data["edit_id"]
+        date = context.user_data["edit_date"]
+        tx_type = context.user_data["edit_type"]
+        amount = context.user_data["edit_amount"]
+        description = context.user_data["edit_description"]
+
+        db.update_transaction(config.DATABASE_PATH, tx_id, date, amount, description, tx_type)
+        new_balance = db.get_balance(config.DATABASE_PATH)
+
+        await query.edit_message_text(
+            f"✅ <b>Transaction successfully updated!</b>\n\n"
+            f"📈 Current Net Balance: <b>{format_rupiah(new_balance)}</b>",
+            parse_mode="HTML"
+        )
+    else:
+        await query.edit_message_text("❌ Update cancelled.")
+
+    return ConversationHandler.END
+
+async def edit_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_html("❌ Transaction editing cancelled.")
     return ConversationHandler.END
 
 async def balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -309,6 +549,29 @@ def main():
         per_message=False,
     )
     
+    edit_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("edit", edit_start)],
+        states={
+            EDIT_ID: [MessageHandler(filters.TEXT & ~filters.COMMAND, edit_id)],
+            EDIT_DATE: [
+                CallbackQueryHandler(edit_date),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, edit_date),
+            ],
+            EDIT_TYPE: [CallbackQueryHandler(edit_type)],
+            EDIT_AMOUNT: [
+                CallbackQueryHandler(edit_amount),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, edit_amount),
+            ],
+            EDIT_DESCRIPTION: [
+                CallbackQueryHandler(edit_description),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, edit_description),
+            ],
+            EDIT_CONFIRM: [CallbackQueryHandler(edit_confirm)],
+        },
+        fallbacks=[CommandHandler("cancel", edit_cancel)],
+        per_message=False,
+    )
+
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("balance", balance_command))
@@ -319,6 +582,7 @@ def main():
         export_sheets_callback, pattern="^export_sheets$"
     ))
     app.add_handler(conv_handler)
+    app.add_handler(edit_conv_handler)
     app.run_polling()
 
 if __name__ == "__main__":
