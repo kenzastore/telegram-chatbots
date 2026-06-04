@@ -97,3 +97,36 @@ def test_get_all_transactions(temp_db):
     assert txs[0]["description"] == "Gift"
     assert txs[1]["description"] == "Snack"
     assert txs[2]["description"] == "Bus"
+
+
+def test_get_monthly_summary_calendar_month(temp_db):
+    # Add transactions in May 2026
+    db.add_transaction(temp_db, "2026-05-15", 100.0, "Salary", "credit")
+    db.add_transaction(temp_db, "2026-05-20", 50.0, "Groceries", "debit")
+
+    # Add transactions in June 2026
+    db.add_transaction(temp_db, "2026-06-01", 200.0, "Salary", "credit")
+    db.add_transaction(temp_db, "2026-06-02", 30.0, "Snack", "debit")
+
+    # Call get_summaries for June 2026 (monthly period)
+    sums = db.get_summaries(temp_db, period="monthly", year=2026, month=6)
+
+    # Check that only June transactions are returned
+    salary_sum = [s for s in sums if s["description"] == "Salary"]
+    groceries_sum = [s for s in sums if s["description"] == "Groceries"]
+    snack_sum = [s for s in sums if s["description"] == "Snack"]
+
+    assert len(salary_sum) == 1
+    assert salary_sum[0]["total"] == 200.0
+    assert len(groceries_sum) == 0
+    assert len(snack_sum) == 1
+    assert snack_sum[0]["total"] == 30.0
+
+
+def test_get_transactions_by_month(temp_db):
+    db.add_transaction(temp_db, "2026-05-15", 100.0, "May Tx", "credit")
+    db.add_transaction(temp_db, "2026-06-01", 200.0, "June Tx", "credit")
+
+    txs = db.get_transactions_by_month(temp_db, year=2026, month=6)
+    assert len(txs) == 1
+    assert txs[0]["description"] == "June Tx"

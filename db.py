@@ -59,27 +59,57 @@ def get_history(db_path, limit=10):
     conn.close()
     return [dict(row) for row in rows]
 
-def get_summaries(db_path, period="weekly"):
+def get_summaries(
+    db_path: str, period: str = "weekly", year: int = None, month: int = None
+) -> list:
+    """Retrieves financial summaries grouped by description and type.
+
+    If period is 'weekly', retrieves aggregates for the last 7 days.
+    If period is 'monthly', retrieves aggregates for the specified calendar month
+    (defaults to the current calendar month if year/month are not provided).
+
+    Args:
+        db_path: Path to the SQLite database file.
+        period: Summary period ('weekly' or 'monthly').
+        year: Optional calendar year.
+        month: Optional calendar month (1-12).
+
+    Returns:
+        A list of dictionaries containing description, type, and total.
+
+    Raises:
+        ValueError: If period is not 'weekly' or 'monthly'.
+    """
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
-    
-    today = datetime.now()
+
     if period == "weekly":
+        today = datetime.now()
         start_date = today - timedelta(days=7)
+        start_str = start_date.strftime("%Y-%m-%d")
+        cursor.execute("""
+            SELECT description, type, SUM(amount) as total
+            FROM transactions
+            WHERE date >= ?
+            GROUP BY description, type
+        """, (start_str,))
     elif period == "monthly":
-        start_date = today - timedelta(days=30)
+        if year is None or month is None:
+            today = datetime.now()
+            year = today.year
+            month = today.month
+        month_pattern = f"{year}-{month:02d}-%"
+        cursor.execute("""
+            SELECT description, type, SUM(amount) as total
+            FROM transactions
+            WHERE date LIKE ?
+            GROUP BY description, type
+        """, (month_pattern,))
     else:
+        conn.close()
         raise ValueError("Period must be 'weekly' or 'monthly'")
-        
-    start_str = start_date.strftime("%Y-%m-%d")
-    
-    cursor.execute("""
-        SELECT description, type, SUM(amount) as total
-        FROM transactions
-        WHERE date >= ?
-        GROUP BY description, type
-    """, (start_str,))
+
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
@@ -101,6 +131,32 @@ def get_all_transactions(db_path: str) -> list:
         FROM transactions
         ORDER BY date ASC, id ASC
     """)
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
+
+
+def get_transactions_by_month(db_path: str, year: int, month: int) -> list:
+    """Retrieves all transactions for a specific calendar month.
+
+    Args:
+        db_path: Path to the SQLite database file.
+        year: Calendar year.
+        month: Calendar month (1-12).
+
+    Returns:
+        A list of dictionaries containing transaction details.
+    """
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    month_pattern = f"{year}-{month:02d}-%"
+    cursor.execute("""
+        SELECT id, date, amount, description, type, balance_after
+        FROM transactions
+        WHERE date LIKE ?
+        ORDER BY date ASC, id ASC
+    """, (month_pattern,))
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
