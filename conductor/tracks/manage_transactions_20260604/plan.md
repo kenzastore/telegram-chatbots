@@ -14,13 +14,13 @@
 
 ## Phase 2: Bot Edit Command & Tests
 
-- [ ] Task: Implement Edit Conversation Handler
-    - [ ] Register `/edit` command and build its ConversationHandler in `bot.py` with states: `EDIT_ID`, `EDIT_DATE`, `EDIT_TYPE`, `EDIT_AMOUNT`, `EDIT_DESCRIPTION`, `EDIT_CONFIRM`.
-    - [ ] Support inline buttons to "Keep current: <value>" for each field.
-    - [ ] Implement confirmation and update logic.
-- [ ] Task: Test Edit Command
-    - [ ] Write unit tests in `tests/test_bot.py` to verify the step-by-step editing flow and successful updates.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Bot Edit Command & Tests' (Protocol in workflow.md)
+- [x] Task: Implement Edit Conversation Handler (26bed61)
+    - [x] Register `/edit` command and build its ConversationHandler in `bot.py` with states: `EDIT_ID`, `EDIT_DATE`, `EDIT_TYPE`, `EDIT_AMOUNT`, `EDIT_DESCRIPTION`, `EDIT_CONFIRM`.
+    - [x] Support inline buttons to "Keep current: <value>" for each field.
+    - [x] Implement confirmation and update logic.
+- [x] Task: Test Edit Command (26bed61)
+    - [x] Write unit tests in `tests/test_bot.py` to verify the step-by-step editing flow and successful updates.
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Bot Edit Command & Tests' (Protocol in workflow.md)
 
 ## Phase 3: Bot Clear Command & Tests
 
