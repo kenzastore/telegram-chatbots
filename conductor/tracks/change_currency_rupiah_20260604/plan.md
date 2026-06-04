@@ -2,11 +2,11 @@
 
 ## Phase 1: Helper Implementation & Tests
 
-- [ ] Task: Implement Rupiah Formatting Helper
-    - [ ] Create a `format_rupiah` helper function (e.g. in `bot.py` or a helpers module) that takes a float and returns it formatted as `Rp X.XXX,XX`.
-    - [ ] Add unit tests for `format_rupiah` in a new or existing test file.
-    - [ ] Run test suite and verify coverage.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Helper Implementation & Tests' (Protocol in workflow.md)
+- [x] Task: Implement Rupiah Formatting Helper (fa58485)
+    - [x] Create a `format_rupiah` helper function (e.g. in `bot.py` or a helpers module) that takes a float and returns it formatted as `Rp X.XXX,XX`.
+    - [x] Add unit tests for `format_rupiah` in a new or existing test file.
+    - [x] Run test suite and verify coverage.
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Helper Implementation & Tests' (Protocol in workflow.md)
 
 ## Phase 2: Refactor Bot Commands and Update Tests
 
