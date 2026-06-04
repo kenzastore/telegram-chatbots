@@ -55,8 +55,8 @@ def format_rupiah(amount: float) -> str:
 def get_commands_keyboard() -> ReplyKeyboardMarkup:
     """Returns a ReplyKeyboardMarkup featuring shortcuts for all main bot commands."""
     keyboard = [
-        ["/add", "/balance"],
         ["/quick"],
+        ["/add", "/balance"],
         ["/view", "/summary"],
         ["/edit", "/clear"],
         ["/help"]

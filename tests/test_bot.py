@@ -18,8 +18,9 @@ async def test_start_command():
     args, kwargs = update.message.reply_html.call_args
     assert "Welcome" in args[0] or "welcome" in args[0].lower()
     assert isinstance(kwargs.get("reply_markup"), ReplyKeyboardMarkup)
-    assert kwargs.get("reply_markup").keyboard[0][0].text == "/add"
-    assert kwargs.get("reply_markup").keyboard[0][1].text == "/balance"
+    assert kwargs.get("reply_markup").keyboard[0][0].text == "/quick"
+    assert kwargs.get("reply_markup").keyboard[1][0].text == "/add"
+    assert kwargs.get("reply_markup").keyboard[1][1].text == "/balance"
 
 @pytest.mark.asyncio
 async def test_help_command():
@@ -36,8 +37,9 @@ async def test_help_command():
     assert "/edit" in args[0]
     assert "/clear" in args[0]
     assert isinstance(kwargs.get("reply_markup"), ReplyKeyboardMarkup)
-    assert kwargs.get("reply_markup").keyboard[0][0].text == "/add"
-    assert kwargs.get("reply_markup").keyboard[0][1].text == "/balance"
+    assert kwargs.get("reply_markup").keyboard[0][0].text == "/quick"
+    assert kwargs.get("reply_markup").keyboard[1][0].text == "/add"
+    assert kwargs.get("reply_markup").keyboard[1][1].text == "/balance"
 
 def test_main(monkeypatch):
     mock_app = MagicMock()
