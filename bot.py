@@ -56,6 +56,7 @@ def get_commands_keyboard() -> ReplyKeyboardMarkup:
     """Returns a ReplyKeyboardMarkup featuring shortcuts for all main bot commands."""
     keyboard = [
         ["/add", "/balance"],
+        ["/quick"],
         ["/view", "/summary"],
         ["/edit", "/clear"],
         ["/help"]
