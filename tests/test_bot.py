@@ -143,7 +143,7 @@ async def test_add_date_today(monkeypatch):
     
     update.callback_query.edit_message_text.assert_called_once()
     kwargs = update.callback_query.edit_message_text.call_args.kwargs
-    assert "+ 💰 $200.00" in kwargs["text"]
+    assert "+ 💰 Rp 200,00" in kwargs["text"]
 
 @pytest.mark.asyncio
 async def test_add_date_manual(monkeypatch):
@@ -173,7 +173,7 @@ async def test_add_date_manual(monkeypatch):
     
     update.message.reply_html.assert_called_once()
     args, kwargs = update.message.reply_html.call_args
-    assert "- 💸 $50.00" in args[0]
+    assert "- 💸 Rp 50,00" in args[0]
 
 @pytest.mark.asyncio
 async def test_add_date_manual_invalid():
@@ -215,7 +215,7 @@ async def test_balance_command(monkeypatch):
     update.message.reply_html.assert_called_once()
     args, kwargs = update.message.reply_html.call_args
     assert "Balance" in args[0]
-    assert "$125.50" in args[0]
+    assert "Rp 125,50" in args[0]
 
 @pytest.mark.asyncio
 async def test_view_command(monkeypatch):
@@ -236,8 +236,8 @@ async def test_view_command(monkeypatch):
     args, kwargs = update.message.reply_html.call_args
     assert "Salary" in args[0]
     assert "Coffee" in args[0]
-    assert "+ 💰 $100.00" in args[0]
-    assert "- 💸 $20.00" in args[0]
+    assert "+ 💰 Rp 100,00" in args[0]
+    assert "- 💸 Rp 20,00" in args[0]
 
 @pytest.mark.asyncio
 async def test_view_command_empty(monkeypatch):
@@ -285,8 +285,8 @@ async def test_summary_callback_weekly(monkeypatch):
     update.callback_query.edit_message_text.assert_called_once()
     kwargs = update.callback_query.edit_message_text.call_args.kwargs
     assert "Weekly Summary" in kwargs["text"]
-    assert "Food (debit): - 💸 $150.00" in kwargs["text"]
-    assert "Salary (credit): + 💰 $500.00" in kwargs["text"]
+    assert "Food (debit): - 💸 Rp 150,00" in kwargs["text"]
+    assert "Salary (credit): + 💰 Rp 500,00" in kwargs["text"]
     assert "reply_markup" in kwargs
     assert kwargs["reply_markup"].inline_keyboard[0][0].text == "Export to Google Sheets 📊"
     assert kwargs["reply_markup"].inline_keyboard[0][0].callback_data == "export_sheets"
@@ -329,7 +329,7 @@ async def test_summary_command_with_arg(monkeypatch):
     update.message.reply_html.assert_called_once()
     args, kwargs = update.message.reply_html.call_args
     assert "Weekly Summary" in args[0]
-    assert "Food (debit): - 💸 $12.50" in args[0]
+    assert "Food (debit): - 💸 Rp 12,50" in args[0]
     assert kwargs["reply_markup"].inline_keyboard[0][0].text == "Export to Google Sheets 📊"
     assert kwargs["reply_markup"].inline_keyboard[0][0].callback_data == "export_sheets"
 

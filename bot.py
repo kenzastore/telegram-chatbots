@@ -150,8 +150,8 @@ async def add_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"✅ <b>Transaction Saved!</b>\n\n"
         f"📅 Date: {date_str}\n"
         f"🏷️ Description: {description}\n"
-        f"💵 Amount: {sign} {emoji} ${amount:.2f}\n\n"
-        f"📈 Current Balance: <b>${new_balance:.2f}</b>"
+        f"💵 Amount: {sign} {emoji} {format_rupiah(amount)}\n\n"
+        f"📈 Current Balance: <b>{format_rupiah(new_balance)}</b>"
     )
     
     if query:
@@ -167,7 +167,7 @@ async def add_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     balance = db.get_balance(config.DATABASE_PATH)
-    await update.message.reply_html(f"📈 Current Net Balance: <b>${balance:.2f}</b>")
+    await update.message.reply_html(f"📈 Current Net Balance: <b>{format_rupiah(balance)}</b>")
 
 async def view_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     history = db.get_history(config.DATABASE_PATH, limit=10)
@@ -180,7 +180,7 @@ async def view_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         emoji = "💰" if tx["type"] == "credit" else "💸"
         sign = "+" if tx["type"] == "credit" else "-"
         lines.append(
-            f"📅 {tx['date']} | {sign} {emoji} ${tx['amount']:.2f} | <i>{tx['description']}</i> (Bal: ${tx['balance_after']:.2f})"
+            f"📅 {tx['date']} | {sign} {emoji} {format_rupiah(tx['amount'])} | <i>{tx['description']}</i> (Bal: {format_rupiah(tx['balance_after'])})"
         )
     await update.message.reply_html("\n".join(lines))
 
@@ -197,7 +197,7 @@ async def show_summary(update: Update, period: str):
         for s in sums:
             emoji = "💰" if s["type"] == "credit" else "💸"
             sign = "+" if s["type"] == "credit" else "-"
-            lines.append(f" - {s['description']} ({s['type']}): {sign} {emoji} ${s['total']:.2f}")
+            lines.append(f" - {s['description']} ({s['type']}): {sign} {emoji} {format_rupiah(s['total'])}")
         msg = "\n".join(lines)
         
     keyboard = [
