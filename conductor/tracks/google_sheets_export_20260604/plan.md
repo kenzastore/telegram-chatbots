@@ -21,3 +21,6 @@
     - [x] Implement callback query handler in `bot.py` to handle the export trigger.
     - [x] Run test suite, verify code coverage is >80%, and commit changes.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Bot Handler and Inline Button Integration' (Protocol in workflow.md) (acb3669)
+
+## Phase: Review Fixes
+- [x] Task: Apply review suggestions (0b31974)
