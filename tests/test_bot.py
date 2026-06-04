@@ -44,7 +44,7 @@ def test_main(monkeypatch):
     bot.main()
     
     mock_app.add_handler.assert_called()
-    assert mock_app.add_handler.call_count == 9
+    assert mock_app.add_handler.call_count == 10
     mock_app.run_polling.assert_called_once()
 
 @pytest.mark.asyncio
@@ -555,5 +555,86 @@ async def test_edit_confirm(monkeypatch):
     mock_update.assert_called_once_with(config.DATABASE_PATH, 1, "2026-06-02", 50.0, "Salary", "debit")
     update.callback_query.edit_message_text.assert_called_once()
     assert "successfully updated" in update.callback_query.edit_message_text.call_args[0][0].lower()
+
+@pytest.mark.asyncio
+async def test_clear_start():
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    context = MagicMock(spec=CallbackContext)
+    
+    state = await bot.clear_start(update, context)
+    assert state == bot.CLEAR_CHOICE
+    update.message.reply_html.assert_called_once()
+    assert "clear transactions" in update.message.reply_html.call_args[0][0].lower()
+
+@pytest.mark.asyncio
+async def test_clear_choice_recent():
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "clear_recent"
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+    
+    state = await bot.clear_choice(update, context)
+    assert state == bot.CLEAR_CONFIRM
+    assert context.user_data["clear_choice"] == "recent"
+    update.callback_query.edit_message_text.assert_called_once()
+    assert "confirm deletion" in update.callback_query.edit_message_text.call_args[0][0].lower()
+
+@pytest.mark.asyncio
+async def test_clear_choice_id():
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "clear_id"
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+    
+    state = await bot.clear_choice(update, context)
+    assert state == bot.CLEAR_ID_INPUT
+    update.callback_query.edit_message_text.assert_called_once()
+    assert "enter transaction id" in update.callback_query.edit_message_text.call_args[0][0].lower()
+
+@pytest.mark.asyncio
+async def test_clear_id_input_found(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.message.text = "1"
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+    
+    tx = {"id": 1, "date": "2026-06-01", "amount": 100.0, "description": "Salary", "type": "credit"}
+    import db
+    monkeypatch.setattr(db, "get_transaction", MagicMock(return_value=tx))
+    
+    state = await bot.clear_id_input(update, context)
+    assert state == bot.CLEAR_CONFIRM
+    assert context.user_data["clear_choice"] == "id"
+    assert context.user_data["clear_param"] == 1
+    update.message.reply_html.assert_called_once()
+    assert "confirm deletion" in update.message.reply_html.call_args[0][0].lower()
+
+@pytest.mark.asyncio
+async def test_clear_confirm_yes(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "clear_confirm"
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {
+        "clear_choice": "week",
+        "clear_param": None
+    }
+    
+    mock_clear = MagicMock(return_value=3)
+    import db
+    monkeypatch.setattr(db, "clear_transactions", mock_clear)
+    
+    import config
+    from telegram.ext import ConversationHandler
+    state = await bot.clear_confirm_callback(update, context)
+    assert state == ConversationHandler.END
+    mock_clear.assert_called_once_with(config.DATABASE_PATH, "week", None)
+    update.callback_query.edit_message_text.assert_called_once()
+    assert "deleted 3 transaction" in update.callback_query.edit_message_text.call_args[0][0].lower()
+
 
 

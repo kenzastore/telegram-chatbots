@@ -31,6 +31,7 @@ HELP_TEXT = (
 # Conversation states
 TYPE, AMOUNT, DESCRIPTION, DATE = range(4)
 EDIT_ID, EDIT_DATE, EDIT_TYPE, EDIT_AMOUNT, EDIT_DESCRIPTION, EDIT_CONFIRM = range(4, 10)
+CLEAR_CHOICE, CLEAR_ID_INPUT, CLEAR_MONTH_INPUT, CLEAR_CONFIRM = range(10, 14)
 
 def format_rupiah(amount: float) -> str:
     """Formats a float as Indonesian Rupiah with decimal places.
@@ -405,6 +406,187 @@ async def edit_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html("❌ Transaction editing cancelled.")
     return ConversationHandler.END
 
+async def clear_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [InlineKeyboardButton("Recent Transaction 🕒", callback_data="clear_recent")],
+        [InlineKeyboardButton("By ID 🔑", callback_data="clear_id")],
+        [InlineKeyboardButton("This Week 📅", callback_data="clear_week")],
+        [InlineKeyboardButton("By Month 🗓️", callback_data="clear_month")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_html(
+        "⚠️ <b>Clear Transactions</b>\n\n"
+        "Please choose which transactions you would like to clear:",
+        reply_markup=reply_markup
+    )
+    return CLEAR_CHOICE
+
+async def clear_choice(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not query:
+        return CLEAR_CHOICE
+
+    await query.answer()
+    choice = query.data.replace("clear_", "")
+    context.user_data["clear_choice"] = choice
+    context.user_data["clear_param"] = None
+
+    if choice == "recent":
+        # Ask for confirmation
+        keyboard = [
+            [InlineKeyboardButton("Confirm Delete ⚠️", callback_data="clear_confirm"),
+             InlineKeyboardButton("Cancel ❌", callback_data="clear_cancel")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            "⚠️ <b>Confirm Deletion</b>\n\n"
+            "Are you sure you want to clear the <b>most recent</b> transaction?",
+            parse_mode="HTML",
+            reply_markup=reply_markup
+        )
+        return CLEAR_CONFIRM
+
+    elif choice == "id":
+        await query.edit_message_text(
+            "🔑 <b>Enter Transaction ID</b>\n\n"
+            "Please type the numeric ID of the transaction to delete:"
+        )
+        return CLEAR_ID_INPUT
+
+    elif choice == "week":
+        keyboard = [
+            [InlineKeyboardButton("Confirm Delete ⚠️", callback_data="clear_confirm"),
+             InlineKeyboardButton("Cancel ❌", callback_data="clear_cancel")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            "⚠️ <b>Confirm Deletion</b>\n\n"
+            "Are you sure you want to clear <b>all transactions from the last 7 days</b>?",
+            parse_mode="HTML",
+            reply_markup=reply_markup
+        )
+        return CLEAR_CONFIRM
+
+    elif choice == "month":
+        # Suggest current calendar month or last month, or custom YYYY-MM
+        current_month = datetime.now().strftime("%Y-%m")
+        last_month = (datetime.now() - timedelta(days=30)).strftime("%Y-%m")
+        keyboard = [
+            [InlineKeyboardButton(f"Current Month ({current_month})", callback_data=f"clear_m_{current_month}")],
+            [InlineKeyboardButton(f"Last Month ({last_month})", callback_data=f"clear_m_{last_month}")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.edit_message_text(
+            "🗓️ <b>Choose Calendar Month</b>\n\n"
+            "Select a month button below, or type custom month in <b>YYYY-MM</b> format:",
+            parse_mode="HTML",
+            reply_markup=reply_markup
+        )
+        return CLEAR_MONTH_INPUT
+
+    return CLEAR_CHOICE
+
+async def clear_id_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    try:
+        tx_id = int(update.message.text.strip())
+    except ValueError:
+        await update.message.reply_text("⚠️ Invalid ID format. Please enter a numeric ID:")
+        return CLEAR_ID_INPUT
+
+    tx = db.get_transaction(config.DATABASE_PATH, tx_id)
+    if not tx:
+        await update.message.reply_text(f"❌ Transaction with ID {tx_id} not found. Please enter a valid ID:")
+        return CLEAR_ID_INPUT
+
+    context.user_data["clear_choice"] = "id"
+    context.user_data["clear_param"] = tx_id
+
+    emoji = "💰" if tx["type"] == "credit" else "💸"
+    sign = "+" if tx["type"] == "credit" else "-"
+
+    keyboard = [
+        [InlineKeyboardButton("Confirm Delete ⚠️", callback_data="clear_confirm"),
+         InlineKeyboardButton("Cancel ❌", callback_data="clear_cancel")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await update.message.reply_html(
+        f"⚠️ <b>Confirm Deletion</b>\n\n"
+        f"Are you sure you want to clear this transaction?\n\n"
+        f"📅 Date: {tx['date']}\n"
+        f"🏷️ Type: {tx['type'].capitalize()} {emoji}\n"
+        f"💵 Amount: {sign} {format_rupiah(tx['amount'])}\n"
+        f"📝 Desc: {tx['description']}\n",
+        reply_markup=reply_markup
+    )
+    return CLEAR_CONFIRM
+
+async def clear_month_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    month_str = None
+
+    if query:
+        await query.answer()
+        month_str = query.data.replace("clear_m_", "")
+    else:
+        text = update.message.text.strip()
+        try:
+            datetime.strptime(text, "%Y-%m")
+            month_str = text
+        except ValueError:
+            await update.message.reply_text(
+                "⚠️ Invalid month format. Please type custom month in YYYY-MM format:"
+            )
+            return CLEAR_MONTH_INPUT
+
+    context.user_data["clear_choice"] = "month"
+    context.user_data["clear_param"] = month_str
+
+    keyboard = [
+        [InlineKeyboardButton("Confirm Delete ⚠️", callback_data="clear_confirm"),
+         InlineKeyboardButton("Cancel ❌", callback_data="clear_cancel")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    msg = (
+        f"⚠️ <b>Confirm Deletion</b>\n\n"
+        f"Are you sure you want to clear <b>all transactions for month {month_str}</b>?"
+    )
+
+    if query:
+        await query.edit_message_text(text=msg, parse_mode="HTML", reply_markup=reply_markup)
+    else:
+        await update.message.reply_html(msg, reply_markup=reply_markup)
+
+    return CLEAR_CONFIRM
+
+async def clear_confirm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    if not query:
+        return CLEAR_CONFIRM
+
+    await query.answer()
+    if query.data == "clear_confirm":
+        choice = context.user_data["clear_choice"]
+        param = context.user_data["clear_param"]
+
+        deleted_count = db.clear_transactions(config.DATABASE_PATH, choice, param)
+        new_balance = db.get_balance(config.DATABASE_PATH)
+
+        await query.edit_message_text(
+            f"✅ <b>Successfully deleted {deleted_count} transaction(s)!</b>\n\n"
+            f"📈 Current Net Balance: <b>{format_rupiah(new_balance)}</b>",
+            parse_mode="HTML"
+        )
+    else:
+        await query.edit_message_text("❌ Clear operation cancelled.")
+
+    return ConversationHandler.END
+
+async def clear_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_html("❌ Clear operation cancelled.")
+    return ConversationHandler.END
+
 async def balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     balance = db.get_balance(config.DATABASE_PATH)
     await update.message.reply_html(f"📈 Current Net Balance: <b>{format_rupiah(balance)}</b>")
@@ -572,6 +754,24 @@ def main():
         per_message=False,
     )
 
+    clear_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("clear", clear_start)],
+        states={
+            CLEAR_CHOICE: [CallbackQueryHandler(clear_choice)],
+            CLEAR_ID_INPUT: [MessageHandler(filters.TEXT & ~filters.COMMAND, clear_id_input)],
+            CLEAR_MONTH_INPUT: [
+                CallbackQueryHandler(clear_month_input),
+                MessageHandler(filters.TEXT & ~filters.COMMAND, clear_month_input),
+            ],
+            CLEAR_CONFIRM: [
+                CallbackQueryHandler(clear_confirm_callback, pattern="^clear_confirm$"),
+                CallbackQueryHandler(clear_cancel, pattern="^clear_cancel$"),
+            ],
+        },
+        fallbacks=[CommandHandler("cancel", clear_cancel)],
+        per_message=False,
+    )
+
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("balance", balance_command))
@@ -583,6 +783,7 @@ def main():
     ))
     app.add_handler(conv_handler)
     app.add_handler(edit_conv_handler)
+    app.add_handler(clear_conv_handler)
     app.run_polling()
 
 if __name__ == "__main__":
