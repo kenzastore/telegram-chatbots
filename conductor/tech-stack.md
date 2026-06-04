@@ -11,3 +11,4 @@
 ## Tools & Devops
 *   **Docker**: A containerization platform to package the application, ensuring it runs identically on local environments and hosting environments.
 *   **python-dotenv**: To read key-value pairs from a `.env` file and set them as environment variables (e.g., `TELEGRAM_BOT_TOKEN`).
+*   **Google API Client Libraries (google-api-python-client, google-auth)**: To authenticate and interact with Google Sheets and Drive APIs.
