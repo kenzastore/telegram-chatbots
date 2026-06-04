@@ -3,21 +3,46 @@ from datetime import datetime
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 
-def export_data_to_sheets(credentials_file, transactions, weekly_summary, monthly_summary):
-    """
-    Exports transaction history and weekly/monthly summaries to a new Google Spreadsheet.
-    Authenticates using the Google Service Account credentials file.
-    Shares the created sheet with 'anyone with link' (role=reader).
-    Returns the URL of the created spreadsheet.
+def export_data_to_sheets(
+    credentials_file: str,
+    transactions: list,
+    weekly_summary: list,
+    monthly_summary: list
+) -> str:
+    """Exports transaction history and summaries to a new Google Spreadsheet.
+
+    Authenticates using the Google Service Account credentials file and
+    shares the created sheet with 'anyone with link' (role=reader).
+
+    Args:
+        credentials_file: Path to Google Service Account credentials JSON file.
+        transactions: List of transaction dicts to write.
+        weekly_summary: List of weekly summary dicts to write.
+        monthly_summary: List of monthly summary dicts to write.
+
+    Returns:
+        The URL of the created Google Spreadsheet.
+
+    Raises:
+        ValueError: If credentials_file is not configured.
+        FileNotFoundError: If credentials_file does not exist.
     """
     if not credentials_file:
-        raise ValueError("Google Service Account credentials file path is not configured.")
+        raise ValueError(
+            "Google Service Account credentials file path is not configured."
+        )
     if not os.path.exists(credentials_file):
-        raise FileNotFoundError(f"Google Service Account credentials file not found at: {credentials_file}")
-        
+        raise FileNotFoundError(
+            f"Google Service Account credentials file not found at: "
+            f"{credentials_file}"
+        )
+
     creds = service_account.Credentials.from_service_account_file(
         credentials_file,
-        scopes=['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file']
+        scopes=[
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive.file'
+        ]
     )
     
     # Initialize the APIs
@@ -70,13 +95,17 @@ def export_data_to_sheets(credentials_file, transactions, weekly_summary, monthl
     summary_rows.append(["Weekly Summary (Last 7 Days)"])
     summary_rows.append(["Description", "Type", "Total"])
     for s in weekly_summary:
-        summary_rows.append([s.get("description"), s.get("type"), s.get("total")])
+        summary_rows.append([
+            s.get("description"), s.get("type"), s.get("total")
+        ])
         
     summary_rows.append([]) # Empty separator row
     summary_rows.append(["Monthly Summary (Last 30 Days)"])
     summary_rows.append(["Description", "Type", "Total"])
     for s in monthly_summary:
-        summary_rows.append([s.get("description"), s.get("type"), s.get("total")])
+        summary_rows.append([
+            s.get("description"), s.get("type"), s.get("total")
+        ])
         
     # Write to Transactions tab
     sheets_service.spreadsheets().values().update(

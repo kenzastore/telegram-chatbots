@@ -220,22 +220,31 @@ async def summary_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     period = "weekly" if "weekly" in query.data else "monthly"
     await show_summary(update, period)
 
-async def export_sheets_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Callback handler for exporting transaction logs and summaries to a Google Spreadsheet.
-    Fetches the transactions and weekly/monthly summaries, invokes the sheets helper,
-    and returns a public Google Spreadsheet link to the user.
+async def export_sheets_callback(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    """Callback for exporting transaction data to a Google Spreadsheet.
+
+    Fetches transactions and weekly/monthly summaries, invokes the sheets
+    helper, and returns a public Google Spreadsheet link to the user.
+
+    Args:
+        update: The incoming Telegram update.
+        context: The callback context.
     """
     query = update.callback_query
     await query.answer()
-    
+
     if not config.GOOGLE_SERVICE_ACCOUNT_FILE:
         await query.edit_message_text(
-            "❌ Google Sheets export is not configured (missing credentials file path)."
+            "❌ Google Sheets export is not configured "
+            "(missing credentials file path)."
         )
         return
-        
-    await query.edit_message_text("⏳ Generating Google Sheet export, please wait...")
+
+    await query.edit_message_text(
+        "⏳ Generating Google Sheet export, please wait..."
+    )
     
     try:
         import sheets
@@ -289,7 +298,9 @@ def main():
     app.add_handler(CommandHandler("view", view_command))
     app.add_handler(CommandHandler("summary", summary_command))
     app.add_handler(CallbackQueryHandler(summary_callback, pattern="^summary_"))
-    app.add_handler(CallbackQueryHandler(export_sheets_callback, pattern="^export_sheets$"))
+    app.add_handler(CallbackQueryHandler(
+        export_sheets_callback, pattern="^export_sheets$"
+    ))
     app.add_handler(conv_handler)
     app.run_polling()
 

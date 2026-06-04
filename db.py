@@ -84,10 +84,14 @@ def get_summaries(db_path, period="weekly"):
     conn.close()
     return [dict(row) for row in rows]
 
-def get_all_transactions(db_path):
-    """
-    Retrieves all transactions from the database in chronological order (ascending date/id).
-    Returns a list of dictionaries containing transaction details.
+def get_all_transactions(db_path: str) -> list:
+    """Retrieves all transactions from the database in chronological order.
+
+    Args:
+        db_path: Path to the SQLite database file.
+
+    Returns:
+        A list of dictionaries containing transaction details.
     """
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
