@@ -1,6 +1,6 @@
 # Implementation Plan - Monthly Cut-off Summaries & Monthly Sheets Export
 
-## Phase 1: Database and Core Summary Refactoring
+## Phase 1: Database and Core Summary Refactoring [checkpoint: 973899a]
 
 - [x] Task: Refactor DB Summary Queries (e0c91f7)
     - [x] Write failing unit tests in `tests/test_db.py` for fetching transactions and summaries filtered by a specific calendar month.
@@ -10,12 +10,12 @@
     - [x] Write failing unit tests in `tests/test_bot.py` verifying `/summary monthly` displays transactions for the current calendar month.
     - [x] Update `show_summary` in `bot.py` to retrieve current calendar month summaries using the refactored DB helpers.
     - [x] Run test suite, verify code coverage is >80%, and commit changes.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Database and Core Summary Refactoring' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Database and Core Summary Refactoring' (Protocol in workflow.md)
 
 ## Phase 2: Google Sheets Monthly Tabs Export
 
-- [ ] Task: Group and Export Data to Monthly Tabs
-    - [ ] Write failing unit tests in `tests/test_sheets.py` for grouping transactions by month and writing them to dynamic monthly tabs (e.g. `YYYY-MM Transactions`).
+- [~] Task: Group and Export Data to Monthly Tabs
+    - [~] Write failing unit tests in `tests/test_sheets.py` for grouping transactions by month and writing them to dynamic monthly tabs (e.g. `YYYY-MM Transactions`).
     - [ ] Refactor `sheets.py` to group transactions by calendar month, check sheet/tab existence, create missing monthly tabs, and update data inside them.
     - [ ] Run test suite, verify code coverage is >80%, and commit changes.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Google Sheets Monthly Tabs Export' (Protocol in workflow.md)
