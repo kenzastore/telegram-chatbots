@@ -1,6 +1,6 @@
 # Implementation Plan - Quick Add Transaction via Typed Sentences
 
-## Phase 1: Parsing Engine & Unit Tests [checkpoint: ]
+## Phase 1: Parsing Engine & Unit Tests [checkpoint: 56874b6]
 
 - [x] Task: Write failing unit tests for parsing engine (b6c9120)
     - [x] Create test case `test_parse_transaction_sentence` in `tests/test_bot.py` with multiple test inputs covering:
@@ -14,7 +14,7 @@
     - [x] Implement `parse_transaction_sentence(sentence: str, reference_date: datetime = None)` in `bot.py`.
     - [x] Implement regex-based extraction of type, amount, date, and description.
     - [x] Run tests and verify they pass (Green Phase).
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Parsing Engine & Unit Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Parsing Engine & Unit Tests' (Protocol in workflow.md) (56874b6)
 
 ## Phase 2: Bot Command /quick Integration & Tests [checkpoint: ]
 
