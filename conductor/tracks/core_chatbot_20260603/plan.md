@@ -31,9 +31,9 @@
     - [x] Run test suite, verify code coverage is >80%, and commit changes.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Bot Setup and Core Commands' (Protocol in workflow.md)
 
-## Phase 3: Dockerization & Final Polish
+## Phase 3: Dockerization & Final Polish [checkpoint: b3001fe]
 
 - [x] Task: Docker Integration (17cb757)
     - [x] Write Dockerfile and docker-compose.yml to containerize the bot.
     - [x] Validate that the container can build and run successfully locally.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Dockerization & Final Polish' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Dockerization & Final Polish' (Protocol in workflow.md) (b3001fe)
