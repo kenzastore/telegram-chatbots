@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand, MenuButtonCommands
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand, MenuButtonCommands, ReplyKeyboardRemove
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -52,10 +52,10 @@ def format_rupiah(amount: float) -> str:
     return f"Rp {formatted}"
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_html(START_TEXT)
+    await update.message.reply_html(START_TEXT, reply_markup=ReplyKeyboardRemove())
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_html(HELP_TEXT)
+    await update.message.reply_html(HELP_TEXT, reply_markup=ReplyKeyboardRemove())
 
 # Add Transaction Conversation Flow
 async def add_start(update: Update, context: ContextTypes.DEFAULT_TYPE):

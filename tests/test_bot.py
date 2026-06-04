@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from telegram import Update, MenuButtonCommands
+from telegram import Update, MenuButtonCommands, ReplyKeyboardRemove
 from telegram.ext import CallbackContext, Application
 
 import bot
@@ -16,6 +16,7 @@ async def test_start_command():
     update.message.reply_html.assert_called_once()
     args, kwargs = update.message.reply_html.call_args
     assert "Welcome" in args[0] or "welcome" in args[0].lower()
+    assert isinstance(kwargs.get("reply_markup"), ReplyKeyboardRemove)
 
 @pytest.mark.asyncio
 async def test_help_command():
@@ -31,6 +32,7 @@ async def test_help_command():
     assert "/balance" in args[0]
     assert "/edit" in args[0]
     assert "/clear" in args[0]
+    assert isinstance(kwargs.get("reply_markup"), ReplyKeyboardRemove)
 
 def test_main(monkeypatch):
     mock_app = MagicMock()
