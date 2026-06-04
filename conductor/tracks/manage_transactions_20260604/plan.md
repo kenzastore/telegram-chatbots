@@ -12,7 +12,7 @@
     - [x] Add unit tests in `tests/test_db.py` to cover updating, deleting, and clearing transactions, validating that running balances are correctly recalculated.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Database Helpers and Tests' (Protocol in workflow.md)
 
-## Phase 2: Bot Edit Command & Tests
+## Phase 2: Bot Edit Command & Tests [checkpoint: 8e41c72]
 
 - [x] Task: Implement Edit Conversation Handler (26bed61)
     - [x] Register `/edit` command and build its ConversationHandler in `bot.py` with states: `EDIT_ID`, `EDIT_DATE`, `EDIT_TYPE`, `EDIT_AMOUNT`, `EDIT_DESCRIPTION`, `EDIT_CONFIRM`.
@@ -20,7 +20,7 @@
     - [x] Implement confirmation and update logic.
 - [x] Task: Test Edit Command (26bed61)
     - [x] Write unit tests in `tests/test_bot.py` to verify the step-by-step editing flow and successful updates.
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Bot Edit Command & Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Bot Edit Command & Tests' (Protocol in workflow.md)
 
 ## Phase 3: Bot Clear Command & Tests
 
