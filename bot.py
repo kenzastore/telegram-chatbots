@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import re
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand, MenuButtonCommands, ReplyKeyboardRemove, ReplyKeyboardMarkup
 from telegram.ext import (
     Application,
@@ -63,6 +64,130 @@ def get_commands_keyboard() -> ReplyKeyboardMarkup:
 def get_cancel_keyboard() -> ReplyKeyboardMarkup:
     """Returns a ReplyKeyboardMarkup containing a single /cancel shortcut button."""
     return ReplyKeyboardMarkup([["/cancel"]], resize_keyboard=True)
+
+def parse_transaction_sentence(sentence: str, reference_date: datetime = None) -> dict:
+    """Parses a natural language sentence into a structured transaction dictionary.
+
+    Args:
+        sentence: The text sentence to parse.
+        reference_date: Optional reference datetime for relative dates (defaults to now).
+
+    Returns:
+        A dict with keys 'amount', 'type', 'date', 'description' or None if parsing fails.
+    """
+    if not sentence:
+        return None
+
+    if reference_date is None:
+        reference_date = datetime.now()
+
+    # Clean sentence
+    s_clean = sentence.strip()
+    if s_clean.startswith("/quick"):
+        s_clean = s_clean[len("/quick"):].strip()
+
+    # 1. Extract Amount
+    # Supports formats like: 50000, 50.000, 1.5jt, 50k, 1m, Rp 50.000
+    amount_pattern = re.compile(
+        r'\b(?:rp\.?\s*)?([0-9]+(?:[.,][0-9]+)?)\s*(k|rb|jt|juta|m|miliar)?\b',
+        re.IGNORECASE
+    )
+    match_amount = amount_pattern.search(s_clean)
+    if not match_amount:
+        return None
+
+    amount_raw = match_amount.group(1)
+    suffix = match_amount.group(2)
+    
+    try:
+        # Helper to parse amount
+        s = amount_raw.replace(" ", "")
+        if suffix:
+            s = s.replace(",", ".")
+            val = float(s)
+            suf = suffix.lower()
+            if suf in ["k", "rb"]:
+                amount_val = val * 1000
+            elif suf in ["jt", "juta"]:
+                amount_val = val * 1000000
+            elif suf in ["m", "miliar"]:
+                amount_val = val * 1000000000
+            else:
+                amount_val = val
+        else:
+            if len(s) >= 4 and s[-4] in [".", ","] and s[-3:].isdigit():
+                s = s[:-4] + s[-3:]
+                amount_val = float(s)
+            else:
+                s = s.replace(",", ".")
+                amount_val = float(s)
+    except ValueError:
+        return None
+
+    # 2. Extract Type
+    debit_pattern = re.compile(r'\b(spent|pay|bayar|beli|debit|keluar|makan|shopping)\b', re.IGNORECASE)
+    credit_pattern = re.compile(r'\b(receive|income|terima|dapat|gaji|credit|masuk)\b', re.IGNORECASE)
+
+    has_debit = bool(debit_pattern.search(s_clean))
+    has_credit = bool(credit_pattern.search(s_clean))
+
+    if has_debit and has_credit:
+        return None  # Ambiguous
+    elif has_debit:
+        tx_type = "debit"
+    elif has_credit:
+        tx_type = "credit"
+    else:
+        return None  # Missing type
+
+    # 3. Extract Date
+    yesterday_pattern = re.compile(r'\b(yesterday|kemarin)\b', re.IGNORECASE)
+    today_pattern = re.compile(r'\b(today|hari\s+ini)\b', re.IGNORECASE)
+
+    if yesterday_pattern.search(s_clean):
+        tx_date = (reference_date - timedelta(days=1)).strftime("%Y-%m-%d")
+    elif today_pattern.search(s_clean):
+        tx_date = reference_date.strftime("%Y-%m-%d")
+    else:
+        tx_date = reference_date.strftime("%Y-%m-%d")
+
+    # 4. Extract Description
+    desc_clean = s_clean
+    
+    # Remove amount match
+    desc_clean = desc_clean.replace(match_amount.group(0), "")
+    
+    # Remove type keyword match
+    type_match = debit_pattern.search(desc_clean) or credit_pattern.search(desc_clean)
+    if type_match:
+        desc_clean = desc_clean.replace(type_match.group(0), "")
+        
+    # Remove date keyword match
+    date_match = yesterday_pattern.search(desc_clean) or today_pattern.search(desc_clean)
+    if date_match:
+        desc_clean = desc_clean.replace(date_match.group(0), "")
+
+    # Strip prepositions and clean extra whitespaces
+    desc_clean = re.sub(r'\s+', ' ', desc_clean).strip()
+    
+    # Strip leading/trailing prepositions repeatedly
+    while True:
+        prev = desc_clean
+        desc_clean = re.sub(r'^(?:for|on|untuk|di|dari|at|bagi|pada|ke|about|buat|the|a|an|in|dari)\s+', '', desc_clean, flags=re.IGNORECASE)
+        desc_clean = re.sub(r'\s+(?:for|on|untuk|di|dari|at|bagi|pada|ke|about|buat|the|a|an|in|dari)$', '', desc_clean, flags=re.IGNORECASE)
+        desc_clean = desc_clean.strip()
+        if desc_clean == prev:
+            break
+
+    if not desc_clean:
+        return None
+
+    return {
+        "amount": amount_val,
+        "type": tx_type,
+        "date": tx_date,
+        "description": desc_clean
+    }
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html(START_TEXT, reply_markup=get_commands_keyboard())

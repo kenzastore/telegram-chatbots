@@ -676,5 +676,60 @@ async def test_clear_confirm_yes(monkeypatch):
     assert "deleted 3 transaction" in update.callback_query.edit_message_text.call_args[0][0].lower()
     context.bot.send_message.assert_called_once()
 
+def test_parse_transaction_sentence():
+    from datetime import datetime
+    ref_date = datetime(2026, 6, 4, 12, 0, 0)
+    
+    test_cases = [
+        # Basic debit, English, today
+        ("spent 50k on lunch today", {
+            "amount": 50000.0,
+            "type": "debit",
+            "date": "2026-06-04",
+            "description": "lunch"
+        }),
+        # Basic credit, Indonesian, yesterday
+        ("terima 1.5jt untuk gaji kemarin", {
+            "amount": 1500000.0,
+            "type": "credit",
+            "date": "2026-06-03",
+            "description": "gaji"
+        }),
+        # No date, defaults to today
+        ("bayar 25000 untuk parkir", {
+            "amount": 25000.0,
+            "type": "debit",
+            "date": "2026-06-04",
+            "description": "parkir"
+        }),
+        # Suffix and dot separators
+        ("masuk 2.5jt dari bonus", {
+            "amount": 2500000.0,
+            "type": "credit",
+            "date": "2026-06-04",
+            "description": "bonus"
+        }),
+        # Suffix k and billion (m)
+        ("beli saham 1m hari ini", {
+            "amount": 1000000000.0,
+            "type": "debit",
+            "date": "2026-06-04",
+            "description": "saham"
+        }),
+        # Clean preposition removal
+        ("spent 100000 for dinner at restaurant", {
+            "amount": 100000.0,
+            "type": "debit",
+            "date": "2026-06-04",
+            "description": "dinner at restaurant"
+        }),
+        # Parsing fails if amount or type is missing
+        ("buying coffee", None),
+        ("spent money on coffee", None),
+    ]
+    
+    for sentence, expected in test_cases:
+        result = bot.parse_transaction_sentence(sentence, ref_date)
+        assert result == expected, f"Failed on sentence: {sentence}. Got: {result}, Expected: {expected}"
 
 
