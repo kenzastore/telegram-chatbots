@@ -19,5 +19,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: change the currency to Rupiah**
+- [x] **Track: change the currency to Rupiah**
   *Link: [./tracks/change_currency_rupiah_20260604/](./tracks/change_currency_rupiah_20260604/)*
