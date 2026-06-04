@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand, MenuButtonCommands
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -727,6 +727,7 @@ async def post_init(application: Application) -> None:
         BotCommand("cancel", "Cancel current interaction/conversation"),
     ]
     await application.bot.set_my_commands(commands)
+    await application.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
 
 def main():
     db.init_db(config.DATABASE_PATH)

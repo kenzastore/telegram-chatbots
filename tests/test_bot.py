@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from telegram import Update
+from telegram import Update, MenuButtonCommands
 from telegram.ext import CallbackContext, Application
 
 import bot
@@ -70,6 +70,10 @@ async def test_post_init():
     assert commands[6].command == "edit"
     assert commands[7].command == "clear"
     assert commands[8].command == "cancel"
+    
+    mock_app.bot.set_chat_menu_button.assert_called_once()
+    menu_kwargs = mock_app.bot.set_chat_menu_button.call_args[1]
+    assert isinstance(menu_kwargs.get("menu_button"), MenuButtonCommands)
 
 @pytest.mark.asyncio
 async def test_add_start():
