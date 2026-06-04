@@ -44,7 +44,7 @@ def test_main(monkeypatch):
     bot.main()
     
     mock_app.add_handler.assert_called()
-    assert mock_app.add_handler.call_count == 7
+    assert mock_app.add_handler.call_count == 8
     mock_app.run_polling.assert_called_once()
 
 @pytest.mark.asyncio
@@ -330,6 +330,84 @@ async def test_summary_command_with_arg(monkeypatch):
     args, kwargs = update.message.reply_html.call_args
     assert "Weekly Summary" in args[0]
     assert "Food (debit): - 💸 $12.50" in args[0]
-    assert "reply_markup" in kwargs
     assert kwargs["reply_markup"].inline_keyboard[0][0].text == "Export to Google Sheets 📊"
     assert kwargs["reply_markup"].inline_keyboard[0][0].callback_data == "export_sheets"
+
+@pytest.mark.asyncio
+async def test_export_sheets_callback_not_configured(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "export_sheets"
+    context = MagicMock(spec=CallbackContext)
+    
+    import config
+    monkeypatch.setattr(config, "GOOGLE_SERVICE_ACCOUNT_FILE", None)
+    
+    await bot.export_sheets_callback(update, context)
+    
+    update.callback_query.answer.assert_called_once()
+    update.callback_query.edit_message_text.assert_called_once()
+    args, kwargs = update.callback_query.edit_message_text.call_args
+    assert "Google Sheets export is not configured" in args[0]
+
+@pytest.mark.asyncio
+async def test_export_sheets_callback_success(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "export_sheets"
+    context = MagicMock(spec=CallbackContext)
+    
+    import config
+    monkeypatch.setattr(config, "GOOGLE_SERVICE_ACCOUNT_FILE", "credentials.json")
+    
+    import db
+    monkeypatch.setattr(db, "get_all_transactions", MagicMock(return_value=[
+        {"id": 1, "date": "2026-06-04", "amount": 10.0, "description": "Test", "type": "credit", "balance_after": 10.0}
+    ]))
+    monkeypatch.setattr(db, "get_summaries", MagicMock(side_effect=lambda db_path, period: [
+        {"description": "Test", "type": "credit", "total": 10.0}
+    ]))
+    
+    import sheets
+    mock_export = MagicMock(return_value="https://docs.google.com/spreadsheets/d/test_id")
+    monkeypatch.setattr(sheets, "export_data_to_sheets", mock_export)
+    
+    await bot.export_sheets_callback(update, context)
+    
+    update.callback_query.answer.assert_called_once()
+    mock_export.assert_called_once_with(
+        "credentials.json",
+        [{"id": 1, "date": "2026-06-04", "amount": 10.0, "description": "Test", "type": "credit", "balance_after": 10.0}],
+        [{"description": "Test", "type": "credit", "total": 10.0}],
+        [{"description": "Test", "type": "credit", "total": 10.0}]
+    )
+    
+    assert update.callback_query.edit_message_text.call_count == 2
+    args, kwargs = update.callback_query.edit_message_text.call_args
+    assert "Google Sheet generated successfully" in args[0]
+    assert "https://docs.google.com/spreadsheets/d/test_id" in args[0]
+
+@pytest.mark.asyncio
+async def test_export_sheets_callback_error(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "export_sheets"
+    context = MagicMock(spec=CallbackContext)
+    
+    import config
+    monkeypatch.setattr(config, "GOOGLE_SERVICE_ACCOUNT_FILE", "credentials.json")
+    
+    import db
+    monkeypatch.setattr(db, "get_all_transactions", MagicMock(return_value=[]))
+    monkeypatch.setattr(db, "get_summaries", MagicMock(return_value=[]))
+    
+    import sheets
+    monkeypatch.setattr(sheets, "export_data_to_sheets", MagicMock(side_effect=Exception("API Error")))
+    
+    await bot.export_sheets_callback(update, context)
+    
+    update.callback_query.answer.assert_called_once()
+    assert update.callback_query.edit_message_text.call_count == 2
+    args, kwargs = update.callback_query.edit_message_text.call_args
+    assert "Failed to export data" in args[0]
+    assert "API Error" in args[0]

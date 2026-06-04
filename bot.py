@@ -220,6 +220,43 @@ async def summary_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     period = "weekly" if "weekly" in query.data else "monthly"
     await show_summary(update, period)
 
+async def export_sheets_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    if not config.GOOGLE_SERVICE_ACCOUNT_FILE:
+        await query.edit_message_text(
+            "❌ Google Sheets export is not configured (missing credentials file path)."
+        )
+        return
+        
+    await query.edit_message_text("⏳ Generating Google Sheet export, please wait...")
+    
+    try:
+        import sheets
+        transactions = db.get_all_transactions(config.DATABASE_PATH)
+        weekly = db.get_summaries(config.DATABASE_PATH, "weekly")
+        monthly = db.get_summaries(config.DATABASE_PATH, "monthly")
+        
+        sheet_url = sheets.export_data_to_sheets(
+            config.GOOGLE_SERVICE_ACCOUNT_FILE,
+            transactions,
+            weekly,
+            monthly
+        )
+        
+        await query.edit_message_text(
+            f"✅ Google Sheet generated successfully!\n\n"
+            f"📊 <a href=\"{sheet_url}\">Open Exported Google Sheet</a>",
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        await query.edit_message_text(
+            f"❌ Failed to export data to Google Sheets.\n\n"
+            f"Error details: <code>{str(e)}</code>",
+            parse_mode="HTML"
+        )
+
 def main():
     db.init_db(config.DATABASE_PATH)
     
@@ -246,6 +283,7 @@ def main():
     app.add_handler(CommandHandler("view", view_command))
     app.add_handler(CommandHandler("summary", summary_command))
     app.add_handler(CallbackQueryHandler(summary_callback, pattern="^summary_"))
+    app.add_handler(CallbackQueryHandler(export_sheets_callback, pattern="^export_sheets$"))
     app.add_handler(conv_handler)
     app.run_polling()
 

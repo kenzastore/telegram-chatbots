@@ -83,3 +83,16 @@ def get_summaries(db_path, period="weekly"):
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+def get_all_transactions(db_path):
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, date, amount, description, type, balance_after
+        FROM transactions
+        ORDER BY date ASC, id ASC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(row) for row in rows]

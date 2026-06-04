@@ -85,3 +85,15 @@ def test_add_transaction_invalid_type(temp_db):
 def test_get_summaries_invalid_period(temp_db):
     with pytest.raises(ValueError, match="Period must be 'weekly' or 'monthly'"):
         db.get_summaries(temp_db, "yearly")
+
+def test_get_all_transactions(temp_db):
+    db.add_transaction(temp_db, "2026-06-01", 50.0, "Gift", "credit")
+    db.add_transaction(temp_db, "2026-06-02", 20.0, "Snack", "debit")
+    db.add_transaction(temp_db, "2026-06-03", 10.0, "Bus", "debit")
+    
+    txs = db.get_all_transactions(temp_db)
+    assert len(txs) == 3
+    # Check chronological order (ascending date/id)
+    assert txs[0]["description"] == "Gift"
+    assert txs[1]["description"] == "Snack"
+    assert txs[2]["description"] == "Bus"
