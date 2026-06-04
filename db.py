@@ -160,3 +160,161 @@ def get_transactions_by_month(db_path: str, year: int, month: int) -> list:
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+
+def recalculate_balances(db_path: str) -> None:
+    """Recalculates the running balances of all transactions in chronological order.
+
+    Sorted by date ASC, id ASC to maintain ledger consistency.
+
+    Args:
+        db_path: Path to the SQLite database file.
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, amount, type
+        FROM transactions
+        ORDER BY date ASC, id ASC
+    """)
+    rows = cursor.fetchall()
+
+    current_balance = 0.0
+    updates = []
+    for tx_id, amount, tx_type in rows:
+        if tx_type == "credit":
+            current_balance += amount
+        elif tx_type == "debit":
+            current_balance -= amount
+        updates.append((current_balance, tx_id))
+
+    cursor.executemany("""
+        UPDATE transactions
+        SET balance_after = ?
+        WHERE id = ?
+    """, updates)
+    conn.commit()
+    conn.close()
+
+
+def get_transaction(db_path: str, tx_id: int) -> dict:
+    """Retrieves a single transaction by its ID.
+
+    Args:
+        db_path: Path to the SQLite database file.
+        tx_id: The transaction ID.
+
+    Returns:
+        A dictionary containing transaction details, or None if not found.
+    """
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, date, amount, description, type, balance_after
+        FROM transactions
+        WHERE id = ?
+    """, (tx_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def update_transaction(
+    db_path: str,
+    tx_id: int,
+    date: str,
+    amount: float,
+    description: str,
+    tx_type: str
+) -> None:
+    """Updates a transaction's fields and recalculates subsequent balances.
+
+    Args:
+        db_path: Path to the SQLite database file.
+        tx_id: The ID of the transaction to update.
+        date: The updated date (YYYY-MM-DD).
+        amount: The updated numeric amount.
+        description: The updated description.
+        tx_type: The updated transaction type ('credit' or 'debit').
+
+    Raises:
+        ValueError: If transaction type is invalid.
+    """
+    if tx_type not in ("credit", "debit"):
+        raise ValueError("Transaction type must be 'credit' or 'debit'")
+
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("""
+        UPDATE transactions
+        SET date = ?, amount = ?, description = ?, type = ?
+        WHERE id = ?
+    """, (date, amount, description, tx_type, tx_id))
+    conn.commit()
+    conn.close()
+    recalculate_balances(db_path)
+
+
+def delete_transaction(db_path: str, tx_id: int) -> None:
+    """Deletes a transaction and recalculates subsequent balances.
+
+    Args:
+        db_path: Path to the SQLite database file.
+        tx_id: The ID of the transaction to delete.
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
+    conn.commit()
+    conn.close()
+    recalculate_balances(db_path)
+
+
+def clear_transactions(db_path: str, choice: str, param: str = None) -> int:
+    """Clears transactions based on the choice: recent, id, week, or month.
+
+    Args:
+        db_path: Path to the SQLite database file.
+        choice: The clearing choice ('recent', 'id', 'week', 'month').
+        param: Optional parameter (e.g. YYYY-MM for 'month', transaction ID for 'id').
+
+    Returns:
+        The number of transactions deleted.
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    deleted_count = 0
+
+    if choice == "recent":
+        # Find the most recently added transaction (highest ID)
+        cursor.execute("SELECT id FROM transactions ORDER BY id DESC LIMIT 1")
+        row = cursor.fetchone()
+        if row:
+            cursor.execute("DELETE FROM transactions WHERE id = ?", (row[0],))
+            deleted_count = 1
+    elif choice == "id":
+        if param:
+            cursor.execute("DELETE FROM transactions WHERE id = ?", (int(param),))
+            deleted_count = cursor.rowcount
+    elif choice == "week":
+        # Deletes transactions from the last 7 days
+        start_date = datetime.now() - timedelta(days=7)
+        start_str = start_date.strftime("%Y-%m-%d")
+        cursor.execute("DELETE FROM transactions WHERE date >= ?", (start_str,))
+        deleted_count = cursor.rowcount
+    elif choice == "month":
+        if param:
+            # param is YYYY-MM
+            month_pattern = f"{param}-%"
+            cursor.execute("DELETE FROM transactions WHERE date LIKE ?", (month_pattern,))
+            deleted_count = cursor.rowcount
+
+    conn.commit()
+    conn.close()
+
+    if deleted_count > 0:
+        recalculate_balances(db_path)
+
+    return deleted_count
+

@@ -130,3 +130,96 @@ def test_get_transactions_by_month(temp_db):
     txs = db.get_transactions_by_month(temp_db, year=2026, month=6)
     assert len(txs) == 1
     assert txs[0]["description"] == "June Tx"
+
+def test_get_transaction(temp_db):
+    tx_id = db.add_transaction(temp_db, "2026-06-01", 100.0, "Test Tx", "credit")
+    tx = db.get_transaction(temp_db, tx_id)
+    assert tx is not None
+    assert tx["description"] == "Test Tx"
+    assert tx["amount"] == 100.0
+    
+    assert db.get_transaction(temp_db, 999) is None
+
+def test_update_transaction_recalculates_balance(temp_db):
+    # Insert sequential transactions
+    id1 = db.add_transaction(temp_db, "2026-06-01", 100.0, "Salary", "credit") # Bal: 100
+    id2 = db.add_transaction(temp_db, "2026-06-02", 30.0, "Snack", "debit")    # Bal: 70
+    id3 = db.add_transaction(temp_db, "2026-06-03", 20.0, "Bus", "debit")      # Bal: 50
+    
+    # Update id2: change amount to 50.0 and description to "Groceries"
+    db.update_transaction(temp_db, id2, "2026-06-02", 50.0, "Groceries", "debit")
+    
+    # Check id2 values
+    tx2 = db.get_transaction(temp_db, id2)
+    assert tx2["amount"] == 50.0
+    assert tx2["description"] == "Groceries"
+    
+    # Check balances are updated chronologically:
+    # id1: Bal 100
+    # id2: Bal 50 (100 - 50)
+    # id3: Bal 30 (50 - 20)
+    tx1 = db.get_transaction(temp_db, id1)
+    tx2 = db.get_transaction(temp_db, id2)
+    tx3 = db.get_transaction(temp_db, id3)
+    assert tx1["balance_after"] == 100.0
+    assert tx2["balance_after"] == 50.0
+    assert tx3["balance_after"] == 30.0
+    assert db.get_balance(temp_db) == 30.0
+
+def test_delete_transaction_recalculates_balance(temp_db):
+    id1 = db.add_transaction(temp_db, "2026-06-01", 100.0, "Salary", "credit") # Bal: 100
+    id2 = db.add_transaction(temp_db, "2026-06-02", 30.0, "Snack", "debit")    # Bal: 70
+    id3 = db.add_transaction(temp_db, "2026-06-03", 20.0, "Bus", "debit")      # Bal: 50
+    
+    # Delete id2
+    db.delete_transaction(temp_db, id2)
+    
+    # Assert id2 is gone
+    assert db.get_transaction(temp_db, id2) is None
+    
+    # Balances should be:
+    # id1: Bal 100
+    # id3: Bal 80 (100 - 20)
+    tx1 = db.get_transaction(temp_db, id1)
+    tx3 = db.get_transaction(temp_db, id3)
+    assert tx1["balance_after"] == 100.0
+    assert tx3["balance_after"] == 80.0
+    assert db.get_balance(temp_db) == 80.0
+
+def test_clear_transactions_recent(temp_db):
+    id1 = db.add_transaction(temp_db, "2026-06-01", 100.0, "Salary", "credit")
+    id2 = db.add_transaction(temp_db, "2026-06-02", 30.0, "Snack", "debit")
+    
+    # Clear recent
+    db.clear_transactions(temp_db, "recent")
+    
+    # id2 should be gone, id1 remains
+    assert db.get_transaction(temp_db, id2) is None
+    assert db.get_transaction(temp_db, id1) is not None
+    assert db.get_balance(temp_db) == 100.0
+
+def test_clear_transactions_week(temp_db):
+    today = datetime.now()
+    old_date = today - timedelta(days=10)
+    
+    id1 = db.add_transaction(temp_db, old_date.strftime("%Y-%m-%d"), 100.0, "Old Tx", "credit")
+    id2 = db.add_transaction(temp_db, today.strftime("%Y-%m-%d"), 30.0, "New Tx", "debit")
+    
+    # Clear week
+    db.clear_transactions(temp_db, "week")
+    
+    assert db.get_transaction(temp_db, id2) is None
+    assert db.get_transaction(temp_db, id1) is not None
+    assert db.get_balance(temp_db) == 100.0
+
+def test_clear_transactions_month(temp_db):
+    id1 = db.add_transaction(temp_db, "2026-05-15", 100.0, "May Tx", "credit")
+    id2 = db.add_transaction(temp_db, "2026-06-01", 30.0, "June Tx", "debit")
+    
+    # Clear month June
+    db.clear_transactions(temp_db, "month", "2026-06")
+    
+    assert db.get_transaction(temp_db, id2) is None
+    assert db.get_transaction(temp_db, id1) is not None
+    assert db.get_balance(temp_db) == 100.0
+
