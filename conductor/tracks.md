@@ -9,5 +9,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Add ability to export summary to google-sheet**
+- [~] **Track: Add ability to export summary to google-sheet**
   *Link: [./tracks/google_sheets_export_20260604/](./tracks/google_sheets_export_20260604/)*
