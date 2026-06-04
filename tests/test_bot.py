@@ -413,3 +413,10 @@ async def test_export_sheets_callback_error(monkeypatch):
     args, kwargs = update.callback_query.edit_message_text.call_args
     assert "Failed to export data" in args[0]
     assert "&lt;API Error&gt;" in args[0]
+
+def test_format_rupiah():
+    assert bot.format_rupiah(150000.0) == "Rp 150.000,00"
+    assert bot.format_rupiah(1250.5) == "Rp 1.250,50"
+    assert bot.format_rupiah(0.0) == "Rp 0,00"
+    assert bot.format_rupiah(-500.25) == "Rp -500,25"
+

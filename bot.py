@@ -31,6 +31,22 @@ HELP_TEXT = (
 # Conversation states
 TYPE, AMOUNT, DESCRIPTION, DATE = range(4)
 
+def format_rupiah(amount: float) -> str:
+    """Formats a float as Indonesian Rupiah with decimal places.
+
+    Args:
+        amount: Float value to format.
+
+    Returns:
+        Formatted string (e.g. Rp 150.000,00).
+    """
+    formatted = f"{amount:,.2f}"
+    placeholder = "___TEMP___"
+    formatted = formatted.replace(",", placeholder)
+    formatted = formatted.replace(".", ",")
+    formatted = formatted.replace(placeholder, ".")
+    return f"Rp {formatted}"
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html(START_TEXT)
 
