@@ -155,6 +155,7 @@ async def test_add_date_today(monkeypatch):
     update.callback_query = AsyncMock()
     update.callback_query.data = "today"
     context = MagicMock(spec=CallbackContext)
+    context.bot = AsyncMock()
     context.user_data = {
         "type": "credit",
         "amount": 200.0,
@@ -178,6 +179,7 @@ async def test_add_date_today(monkeypatch):
     update.callback_query.edit_message_text.assert_called_once()
     kwargs = update.callback_query.edit_message_text.call_args.kwargs
     assert "+ 💰 Rp 200,00" in kwargs["text"]
+    context.bot.send_message.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_add_date_manual(monkeypatch):
@@ -570,6 +572,7 @@ async def test_edit_confirm(monkeypatch):
     update.callback_query = AsyncMock()
     update.callback_query.data = "confirm"
     context = MagicMock(spec=CallbackContext)
+    context.bot = AsyncMock()
     context.user_data = {
         "edit_id": 1,
         "edit_date": "2026-06-02",
@@ -589,6 +592,7 @@ async def test_edit_confirm(monkeypatch):
     mock_update.assert_called_once_with(config.DATABASE_PATH, 1, "2026-06-02", 50.0, "Salary", "debit")
     update.callback_query.edit_message_text.assert_called_once()
     assert "successfully updated" in update.callback_query.edit_message_text.call_args[0][0].lower()
+    context.bot.send_message.assert_called_once()
 
 @pytest.mark.asyncio
 async def test_clear_start():
@@ -653,6 +657,7 @@ async def test_clear_confirm_yes(monkeypatch):
     update.callback_query = AsyncMock()
     update.callback_query.data = "clear_confirm"
     context = MagicMock(spec=CallbackContext)
+    context.bot = AsyncMock()
     context.user_data = {
         "clear_choice": "week",
         "clear_param": None
@@ -669,6 +674,7 @@ async def test_clear_confirm_yes(monkeypatch):
     mock_clear.assert_called_once_with(config.DATABASE_PATH, "week", None)
     update.callback_query.edit_message_text.assert_called_once()
     assert "deleted 3 transaction" in update.callback_query.edit_message_text.call_args[0][0].lower()
+    context.bot.send_message.assert_called_once()
 
 
 

@@ -60,6 +60,10 @@ def get_commands_keyboard() -> ReplyKeyboardMarkup:
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
+def get_cancel_keyboard() -> ReplyKeyboardMarkup:
+    """Returns a ReplyKeyboardMarkup containing a single /cancel shortcut button."""
+    return ReplyKeyboardMarkup([["/cancel"]], resize_keyboard=True)
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html(START_TEXT, reply_markup=get_commands_keyboard())
 
@@ -68,6 +72,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Add Transaction Conversation Flow
 async def add_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Starting transaction logger...", reply_markup=get_cancel_keyboard())
+    
     keyboard = [
         [
             InlineKeyboardButton("➕ Credit (Income)", callback_data="credit"),
@@ -169,19 +175,25 @@ async def add_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     if query:
         await query.edit_message_text(text=msg, parse_mode="HTML")
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="Menu restored:",
+            reply_markup=get_commands_keyboard()
+        )
     else:
-        await update.message.reply_html(msg)
+        await update.message.reply_html(msg, reply_markup=get_commands_keyboard())
         
     return ConversationHandler.END
 
 async def add_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_html("❌ Transaction logging cancelled.")
+    await update.message.reply_html("❌ Transaction logging cancelled.", reply_markup=get_commands_keyboard())
     return ConversationHandler.END
 
 async def edit_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html(
         "📝 <b>Edit Transaction</b>\n\n"
-        "Please enter the Transaction ID you wish to edit:"
+        "Please enter the Transaction ID you wish to edit:",
+        reply_markup=get_cancel_keyboard()
     )
     return EDIT_ID
 
@@ -411,13 +423,21 @@ async def edit_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await query.edit_message_text("❌ Update cancelled.")
 
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Menu restored:",
+        reply_markup=get_commands_keyboard()
+    )
+
     return ConversationHandler.END
 
 async def edit_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_html("❌ Transaction editing cancelled.")
+    await update.message.reply_html("❌ Transaction editing cancelled.", reply_markup=get_commands_keyboard())
     return ConversationHandler.END
 
 async def clear_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Starting clear transaction utility...", reply_markup=get_cancel_keyboard())
+
     keyboard = [
         [InlineKeyboardButton("Recent Transaction 🕒", callback_data="clear_recent")],
         [InlineKeyboardButton("By ID 🔑", callback_data="clear_id")],
@@ -592,10 +612,26 @@ async def clear_confirm_callback(update: Update, context: ContextTypes.DEFAULT_T
     else:
         await query.edit_message_text("❌ Clear operation cancelled.")
 
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Menu restored:",
+        reply_markup=get_commands_keyboard()
+    )
+
     return ConversationHandler.END
 
 async def clear_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_html("❌ Clear operation cancelled.")
+    query = update.callback_query
+    if query:
+        await query.answer()
+        await query.edit_message_text("❌ Clear operation cancelled.")
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="Menu restored:",
+            reply_markup=get_commands_keyboard()
+        )
+    else:
+        await update.message.reply_html("❌ Clear operation cancelled.", reply_markup=get_commands_keyboard())
     return ConversationHandler.END
 
 async def balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
