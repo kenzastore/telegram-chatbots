@@ -251,9 +251,10 @@ async def export_sheets_callback(update: Update, context: ContextTypes.DEFAULT_T
             parse_mode="HTML"
         )
     except Exception as e:
+        import html
         await query.edit_message_text(
             f"❌ Failed to export data to Google Sheets.\n\n"
-            f"Error details: <code>{str(e)}</code>",
+            f"Error details: <code>{html.escape(str(e))}</code>",
             parse_mode="HTML"
         )
 

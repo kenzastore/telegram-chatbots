@@ -402,7 +402,7 @@ async def test_export_sheets_callback_error(monkeypatch):
     monkeypatch.setattr(db, "get_summaries", MagicMock(return_value=[]))
     
     import sheets
-    monkeypatch.setattr(sheets, "export_data_to_sheets", MagicMock(side_effect=Exception("API Error")))
+    monkeypatch.setattr(sheets, "export_data_to_sheets", MagicMock(side_effect=Exception("<API Error>")))
     
     await bot.export_sheets_callback(update, context)
     
@@ -410,4 +410,4 @@ async def test_export_sheets_callback_error(monkeypatch):
     assert update.callback_query.edit_message_text.call_count == 2
     args, kwargs = update.callback_query.edit_message_text.call_args
     assert "Failed to export data" in args[0]
-    assert "API Error" in args[0]
+    assert "&lt;API Error&gt;" in args[0]
