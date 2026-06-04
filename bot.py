@@ -256,7 +256,8 @@ async def export_sheets_callback(
             config.GOOGLE_SERVICE_ACCOUNT_FILE,
             transactions,
             weekly,
-            monthly
+            monthly,
+            config.SPREADSHEET_ID
         )
         
         await query.edit_message_text(

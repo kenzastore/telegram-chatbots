@@ -7,21 +7,24 @@ def export_data_to_sheets(
     credentials_file: str,
     transactions: list,
     weekly_summary: list,
-    monthly_summary: list
+    monthly_summary: list,
+    spreadsheet_id: str = None
 ) -> str:
-    """Exports transaction history and summaries to a new Google Spreadsheet.
+    """Exports transaction history and summaries to a Google Spreadsheet.
 
-    Authenticates using the Google Service Account credentials file and
-    shares the created sheet with 'anyone with link' (role=reader).
+    Authenticates using the Google Service Account credentials file. If
+    spreadsheet_id is provided, updates that existing sheet. Otherwise,
+    creates a new sheet and shares it with 'anyone with link' (role=reader).
 
     Args:
         credentials_file: Path to Google Service Account credentials JSON file.
         transactions: List of transaction dicts to write.
         weekly_summary: List of weekly summary dicts to write.
         monthly_summary: List of monthly summary dicts to write.
+        spreadsheet_id: Optional ID of an existing spreadsheet.
 
     Returns:
-        The URL of the created Google Spreadsheet.
+        The URL of the Google Spreadsheet.
 
     Raises:
         ValueError: If credentials_file is not configured.
@@ -50,34 +53,39 @@ def export_data_to_sheets(
     drive_service = build('drive', 'v3', credentials=creds)
     
     today_str = datetime.now().strftime("%Y-%m-%d")
+    is_new = False
     
-    # 1. Create a new Spreadsheet with two tabs
-    spreadsheet_body = {
-        'properties': {
-            'title': f'Finance Bot Export - {today_str}'
-        },
-        'sheets': [
-            {
-                'properties': {
-                    'title': 'Transactions'
-                }
+    # 1. Create a new Spreadsheet with two tabs if not provided
+    if not spreadsheet_id:
+        is_new = True
+        spreadsheet_body = {
+            'properties': {
+                'title': f'Finance Bot Export - {today_str}'
             },
-            {
-                'properties': {
-                    'title': 'Summaries'
+            'sheets': [
+                {
+                    'properties': {
+                        'title': 'Transactions'
+                    }
+                },
+                {
+                    'properties': {
+                        'title': 'Summaries'
+                    }
                 }
-            }
-        ]
-    }
-    
-    spreadsheet = sheets_service.spreadsheets().create(
-        body=spreadsheet_body,
-        fields='spreadsheetId,spreadsheetUrl'
-    ).execute()
-    
-    spreadsheet_id = spreadsheet.get('spreadsheetId')
-    spreadsheet_url = spreadsheet.get('spreadsheetUrl')
-    
+            ]
+        }
+        
+        spreadsheet = sheets_service.spreadsheets().create(
+            body=spreadsheet_body,
+            fields='spreadsheetId,spreadsheetUrl'
+        ).execute()
+        
+        spreadsheet_id = spreadsheet.get('spreadsheetId')
+        spreadsheet_url = spreadsheet.get('spreadsheetUrl')
+    else:
+        spreadsheet_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
+        
     # 2. Format and write Transactions sheet data
     tx_rows = [["ID", "Date", "Amount", "Description", "Type", "Balance After"]]
     for tx in transactions:
@@ -123,13 +131,14 @@ def export_data_to_sheets(
         body={"values": summary_rows}
     ).execute()
     
-    # 4. Set sharing permission to "anyone with the link can view"
-    drive_service.permissions().create(
-        fileId=spreadsheet_id,
-        body={
-            'role': 'reader',
-            'type': 'anyone'
-        }
-    ).execute()
+    # 4. Set sharing permission to "anyone with the link can view" (only for new spreadsheets)
+    if is_new:
+        drive_service.permissions().create(
+            fileId=spreadsheet_id,
+            body={
+                'role': 'reader',
+                'type': 'anyone'
+            }
+        ).execute()
     
     return spreadsheet_url

@@ -70,3 +70,61 @@ def test_export_data_to_sheets_success(mock_exists, mock_build, mock_from_file):
         fileId="test_sheet_id_123",
         body={"role": "reader", "type": "anyone"}
     )
+
+
+@patch("sheets.service_account.Credentials.from_service_account_file")
+@patch("sheets.build")
+@patch("os.path.exists")
+def test_export_data_to_sheets_existing(mock_exists, mock_build, mock_from_file):
+    mock_exists.return_value = True
+
+    # Mock Sheets service
+    mock_sheets = MagicMock()
+    mock_spreadsheets = MagicMock()
+    mock_values = MagicMock()
+
+    mock_sheets.spreadsheets.return_value = mock_spreadsheets
+    mock_spreadsheets.values.return_value = mock_values
+
+    # Mock Drive service
+    mock_drive = MagicMock()
+    mock_permissions = MagicMock()
+    mock_drive.permissions.return_value = mock_permissions
+
+    def side_effect(serviceName, version, **kwargs):
+        if serviceName == "sheets":
+            return mock_sheets
+        elif serviceName == "drive":
+            return mock_drive
+        return MagicMock()
+
+    mock_build.side_effect = side_effect
+
+    transactions = [
+        {"id": 1, "date": "2026-06-04", "amount": 100.0, "description": "Salary", "type": "credit", "balance_after": 100.0}
+    ]
+    weekly = []
+    monthly = []
+
+    url = sheets.export_data_to_sheets(
+        "credentials.json", transactions, weekly, monthly, "existing_sheet_id_456"
+    )
+
+    assert url == "https://docs.google.com/spreadsheets/d/existing_sheet_id_456"
+
+    # Verify spreadsheet creation was NOT called
+    mock_spreadsheets.create.assert_not_called()
+
+    # Verify values update was called twice
+    assert mock_values.update.call_count == 2
+
+    # Verify values update was called with the existing sheet id
+    mock_values.update.assert_any_call(
+        spreadsheetId="existing_sheet_id_456",
+        range="Transactions!A1",
+        valueInputOption="USER_ENTERED",
+        body={"values": [["ID", "Date", "Amount", "Description", "Type", "Balance After"], [1, "2026-06-04", 100.0, "Salary", "credit", 100.0]]}
+    )
+
+    # Verify permissions create (sharing) was NOT called
+    mock_permissions.create.assert_not_called()

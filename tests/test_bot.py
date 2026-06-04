@@ -359,6 +359,7 @@ async def test_export_sheets_callback_success(monkeypatch):
     
     import config
     monkeypatch.setattr(config, "GOOGLE_SERVICE_ACCOUNT_FILE", "credentials.json")
+    monkeypatch.setattr(config, "SPREADSHEET_ID", "test_spreadsheet_id")
     
     import db
     monkeypatch.setattr(db, "get_all_transactions", MagicMock(return_value=[
@@ -379,7 +380,8 @@ async def test_export_sheets_callback_success(monkeypatch):
         "credentials.json",
         [{"id": 1, "date": "2026-06-04", "amount": 10.0, "description": "Test", "type": "credit", "balance_after": 10.0}],
         [{"description": "Test", "type": "credit", "total": 10.0}],
-        [{"description": "Test", "type": "credit", "total": 10.0}]
+        [{"description": "Test", "type": "credit", "total": 10.0}],
+        "test_spreadsheet_id"
     )
     
     assert update.callback_query.edit_message_text.call_count == 2
