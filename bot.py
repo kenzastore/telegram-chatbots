@@ -221,6 +221,11 @@ async def summary_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await show_summary(update, period)
 
 async def export_sheets_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Callback handler for exporting transaction logs and summaries to a Google Spreadsheet.
+    Fetches the transactions and weekly/monthly summaries, invokes the sheets helper,
+    and returns a public Google Spreadsheet link to the user.
+    """
     query = update.callback_query
     await query.answer()
     

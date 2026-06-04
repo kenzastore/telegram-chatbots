@@ -17,7 +17,7 @@ def export_data_to_sheets(credentials_file, transactions, weekly_summary, monthl
         
     creds = service_account.Credentials.from_service_account_file(
         credentials_file,
-        scopes=['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+        scopes=['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive.file']
     )
     
     # Initialize the APIs

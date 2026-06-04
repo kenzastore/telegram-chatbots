@@ -85,6 +85,10 @@ def get_summaries(db_path, period="weekly"):
     return [dict(row) for row in rows]
 
 def get_all_transactions(db_path):
+    """
+    Retrieves all transactions from the database in chronological order (ascending date/id).
+    Returns a list of dictionaries containing transaction details.
+    """
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
