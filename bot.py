@@ -230,6 +230,7 @@ def main():
             ],
         },
         fallbacks=[CommandHandler("cancel", add_cancel)],
+        per_message=False,
     )
     
     app.add_handler(CommandHandler("start", start_command))
