@@ -55,82 +55,103 @@ def export_data_to_sheets(
     today_str = datetime.now().strftime("%Y-%m-%d")
     is_new = False
     
-    # 1. Create a new Spreadsheet with two tabs if not provided
     if not spreadsheet_id:
         is_new = True
         spreadsheet_body = {
             'properties': {
                 'title': f'Finance Bot Export - {today_str}'
-            },
-            'sheets': [
-                {
-                    'properties': {
-                        'title': 'Transactions'
-                    }
-                },
-                {
-                    'properties': {
-                        'title': 'Summaries'
-                    }
-                }
-            ]
+            }
         }
-        
         spreadsheet = sheets_service.spreadsheets().create(
             body=spreadsheet_body,
             fields='spreadsheetId,spreadsheetUrl'
         ).execute()
-        
         spreadsheet_id = spreadsheet.get('spreadsheetId')
         spreadsheet_url = spreadsheet.get('spreadsheetUrl')
+        existing_titles = []
     else:
         spreadsheet_url = f"https://docs.google.com/spreadsheets/d/{spreadsheet_id}"
+        spreadsheet = sheets_service.spreadsheets().get(
+            spreadsheetId=spreadsheet_id,
+            fields='sheets.properties.title'
+        ).execute()
+        existing_titles = [
+            s['properties']['title'] for s in spreadsheet.get('sheets', [])
+        ]
         
-    # 2. Format and write Transactions sheet data
-    tx_rows = [["ID", "Date", "Amount", "Description", "Type", "Balance After"]]
+    # Group transactions by calendar month (YYYY-MM)
+    from collections import defaultdict
+    monthly_groups = defaultdict(list)
     for tx in transactions:
-        tx_rows.append([
-            tx.get("id"),
-            tx.get("date"),
-            tx.get("amount"),
-            tx.get("description"),
-            tx.get("type"),
-            tx.get("balance_after")
-        ])
+        tx_date = tx.get("date", today_str)
+        month_key = tx_date[:7]  # YYYY-MM
+        monthly_groups[month_key].append(tx)
         
-    # 3. Format and write Summaries sheet data
-    summary_rows = []
-    summary_rows.append(["Weekly Summary (Last 7 Days)"])
-    summary_rows.append(["Description", "Type", "Total"])
-    for s in weekly_summary:
-        summary_rows.append([
-            s.get("description"), s.get("type"), s.get("total")
-        ])
+    # If there are no transactions, we default to the current calendar month
+    if not monthly_groups:
+        monthly_groups[today_str[:7]] = []
         
-    summary_rows.append([]) # Empty separator row
-    summary_rows.append(["Monthly Summary (Last 30 Days)"])
-    summary_rows.append(["Description", "Type", "Total"])
-    for s in monthly_summary:
-        summary_rows.append([
-            s.get("description"), s.get("type"), s.get("total")
-        ])
+    # Create missing worksheets dynamically
+    requests = []
+    for month_key in sorted(monthly_groups.keys()):
+        tx_tab = f"{month_key} Transactions"
+        sum_tab = f"{month_key} Summaries"
+        if tx_tab not in existing_titles:
+            requests.append({'addSheet': {'properties': {'title': tx_tab}}})
+        if sum_tab not in existing_titles:
+            requests.append({'addSheet': {'properties': {'title': sum_tab}}})
+            
+    if requests:
+        sheets_service.spreadsheets().batchUpdate(
+            spreadsheetId=spreadsheet_id,
+            body={'requests': requests}
+        ).execute()
         
-    # Write to Transactions tab
-    sheets_service.spreadsheets().values().update(
-        spreadsheetId=spreadsheet_id,
-        range="Transactions!A1",
-        valueInputOption="USER_ENTERED",
-        body={"values": tx_rows}
-    ).execute()
-    
-    # Write to Summaries tab
-    sheets_service.spreadsheets().values().update(
-        spreadsheetId=spreadsheet_id,
-        range="Summaries!A1",
-        valueInputOption="USER_ENTERED",
-        body={"values": summary_rows}
-    ).execute()
-    
+    # Write transactions and monthly summaries for each month
+    for month_key, tx_list in monthly_groups.items():
+        tx_tab = f"{month_key} Transactions"
+        sum_tab = f"{month_key} Summaries"
+        
+        # 1. Format transaction data for this month
+        tx_rows = [["ID", "Date", "Amount", "Description", "Type", "Balance After"]]
+        for tx in tx_list:
+            tx_rows.append([
+                tx.get("id"),
+                tx.get("date"),
+                tx.get("amount"),
+                tx.get("description"),
+                tx.get("type"),
+                tx.get("balance_after")
+            ])
+            
+        # 2. Format and calculate monthly summary data for this month
+        summary_rows = [
+            [f"Monthly Summary ({month_key})"],
+            ["Description", "Type", "Total"]
+        ]
+        sums = {}
+        for tx in tx_list:
+            key = (tx.get("description"), tx.get("type"))
+            sums[key] = sums.get(key, 0.0) + tx.get("amount", 0.0)
+        for (desc, t_type), total in sorted(sums.items()):
+            summary_rows.append([desc, t_type, total])
+            
+        # Write to month-specific Transactions tab
+        sheets_service.spreadsheets().values().update(
+            spreadsheetId=spreadsheet_id,
+            range=f"{tx_tab}!A1",
+            valueInputOption="USER_ENTERED",
+            body={"values": tx_rows}
+        ).execute()
+        
+        # Write to month-specific Summaries tab
+        sheets_service.spreadsheets().values().update(
+            spreadsheetId=spreadsheet_id,
+            range=f"{sum_tab}!A1",
+            valueInputOption="USER_ENTERED",
+            body={"values": summary_rows}
+        ).execute()
+        
     # 4. Set sharing permission to "anyone with the link can view" (only for new spreadsheets)
     if is_new:
         drive_service.permissions().create(
@@ -140,5 +161,5 @@ def export_data_to_sheets(
                 'type': 'anyone'
             }
         ).execute()
-    
+        
     return spreadsheet_url

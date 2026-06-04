@@ -86,6 +86,13 @@ def test_export_data_to_sheets_existing(mock_exists, mock_build, mock_from_file)
     mock_sheets.spreadsheets.return_value = mock_spreadsheets
     mock_spreadsheets.values.return_value = mock_values
 
+    # Mock sheets.get list
+    mock_spreadsheets.get.return_value.execute.return_value = {
+        "sheets": [
+            {"properties": {"title": "Sheet1"}}
+        ]
+    }
+
     # Mock Drive service
     mock_drive = MagicMock()
     mock_permissions = MagicMock()
@@ -121,10 +128,102 @@ def test_export_data_to_sheets_existing(mock_exists, mock_build, mock_from_file)
     # Verify values update was called with the existing sheet id
     mock_values.update.assert_any_call(
         spreadsheetId="existing_sheet_id_456",
-        range="Transactions!A1",
+        range="2026-06 Transactions!A1",
         valueInputOption="USER_ENTERED",
         body={"values": [["ID", "Date", "Amount", "Description", "Type", "Balance After"], [1, "2026-06-04", 100.0, "Salary", "credit", 100.0]]}
     )
 
     # Verify permissions create (sharing) was NOT called
     mock_permissions.create.assert_not_called()
+
+
+@patch("sheets.service_account.Credentials.from_service_account_file")
+@patch("sheets.build")
+@patch("os.path.exists")
+def test_export_data_to_sheets_monthly_tabs(mock_exists, mock_build, mock_from_file):
+    mock_exists.return_value = True
+
+    # Mock Sheets service
+    mock_sheets = MagicMock()
+    mock_spreadsheets = MagicMock()
+    mock_values = MagicMock()
+    mock_batch = MagicMock()
+
+    mock_sheets.spreadsheets.return_value = mock_spreadsheets
+    mock_spreadsheets.values.return_value = mock_values
+    mock_spreadsheets.batchUpdate.return_value = mock_batch
+
+    # Mock sheets.get list
+    mock_spreadsheets.get.return_value.execute.return_value = {
+        "sheets": [
+            {"properties": {"title": "Sheet1"}}
+        ]
+    }
+
+    # Mock Drive service
+    mock_drive = MagicMock()
+    mock_permissions = MagicMock()
+    mock_drive.permissions.return_value = mock_permissions
+
+    def side_effect(serviceName, version, **kwargs):
+        if serviceName == "sheets":
+            return mock_sheets
+        elif serviceName == "drive":
+            return mock_drive
+        return MagicMock()
+
+    mock_build.side_effect = side_effect
+
+    # Transactions from May and June
+    transactions = [
+        {"id": 1, "date": "2026-05-15", "amount": 100.0, "description": "Salary", "type": "credit", "balance_after": 100.0},
+        {"id": 2, "date": "2026-06-02", "amount": 50.0, "description": "Groceries", "type": "debit", "balance_after": 50.0}
+    ]
+    weekly = []
+    monthly = []
+
+    url = sheets.export_data_to_sheets(
+        "credentials.json", transactions, weekly, monthly, "existing_sheet_id_456"
+    )
+
+    assert url == "https://docs.google.com/spreadsheets/d/existing_sheet_id_456"
+
+    # Verify that spreadsheets.get was called to fetch sheets list
+    mock_spreadsheets.get.assert_called_once_with(
+        spreadsheetId="existing_sheet_id_456",
+        fields="sheets.properties.title"
+    )
+
+    # Verify batchUpdate was called to add sheets for 2026-05 and 2026-06
+    mock_spreadsheets.batchUpdate.assert_called_once()
+    kwargs = mock_spreadsheets.batchUpdate.call_args[1]
+    body = kwargs["body"]
+    assert len(body["requests"]) == 4  # 2026-05 Tx/Sum + 2026-06 Tx/Sum
+    titles = [req["addSheet"]["properties"]["title"] for req in body["requests"]]
+    assert "2026-05 Transactions" in titles
+    assert "2026-05 Summaries" in titles
+    assert "2026-06 Transactions" in titles
+    assert "2026-06 Summaries" in titles
+
+    # Verify values update was called 4 times (2 Tx tabs, 2 Summaries tabs)
+    assert mock_values.update.call_count == 4
+
+    # Verify the specific ranges for May and June updates
+    mock_values.update.assert_any_call(
+        spreadsheetId="existing_sheet_id_456",
+        range="2026-05 Transactions!A1",
+        valueInputOption="USER_ENTERED",
+        body={"values": [["ID", "Date", "Amount", "Description", "Type", "Balance After"], [1, "2026-05-15", 100.0, "Salary", "credit", 100.0]]}
+    )
+    mock_values.update.assert_any_call(
+        spreadsheetId="existing_sheet_id_456",
+        range="2026-06 Transactions!A1",
+        valueInputOption="USER_ENTERED",
+        body={"values": [["ID", "Date", "Amount", "Description", "Type", "Balance After"], [2, "2026-06-02", 50.0, "Groceries", "debit", 50.0]]}
+    )
+    mock_values.update.assert_any_call(
+        spreadsheetId="existing_sheet_id_456",
+        range="2026-05 Summaries!A1",
+        valueInputOption="USER_ENTERED",
+        body={"values": [["Monthly Summary (2026-05)"], ["Description", "Type", "Total"], ["Salary", "credit", 100.0]]}
+    )
