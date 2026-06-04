@@ -184,10 +184,17 @@ async def show_summary(update: Update, period: str):
             lines.append(f" - {s['description']} ({s['type']}): {sign} {emoji} ${s['total']:.2f}")
         msg = "\n".join(lines)
         
+    keyboard = [
+        [
+            InlineKeyboardButton("Export to Google Sheets 📊", callback_data="export_sheets")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     if query:
-        await query.edit_message_text(text=msg, parse_mode="HTML")
+        await query.edit_message_text(text=msg, parse_mode="HTML", reply_markup=reply_markup)
     else:
-        await update.message.reply_html(msg)
+        await update.message.reply_html(msg, reply_markup=reply_markup)
 
 async def summary_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args

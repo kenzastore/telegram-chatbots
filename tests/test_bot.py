@@ -287,6 +287,9 @@ async def test_summary_callback_weekly(monkeypatch):
     assert "Weekly Summary" in kwargs["text"]
     assert "Food (debit): - 💸 $150.00" in kwargs["text"]
     assert "Salary (credit): + 💰 $500.00" in kwargs["text"]
+    assert "reply_markup" in kwargs
+    assert kwargs["reply_markup"].inline_keyboard[0][0].text == "Export to Google Sheets 📊"
+    assert kwargs["reply_markup"].inline_keyboard[0][0].callback_data == "export_sheets"
 
 @pytest.mark.asyncio
 async def test_summary_callback_monthly(monkeypatch):
@@ -305,6 +308,9 @@ async def test_summary_callback_monthly(monkeypatch):
     kwargs = update.callback_query.edit_message_text.call_args.kwargs
     assert "Monthly Summary" in kwargs["text"]
     assert "No transactions found" in kwargs["text"]
+    assert "reply_markup" in kwargs
+    assert kwargs["reply_markup"].inline_keyboard[0][0].text == "Export to Google Sheets 📊"
+    assert kwargs["reply_markup"].inline_keyboard[0][0].callback_data == "export_sheets"
 
 @pytest.mark.asyncio
 async def test_summary_command_with_arg(monkeypatch):
@@ -324,3 +330,6 @@ async def test_summary_command_with_arg(monkeypatch):
     args, kwargs = update.message.reply_html.call_args
     assert "Weekly Summary" in args[0]
     assert "Food (debit): - 💸 $12.50" in args[0]
+    assert "reply_markup" in kwargs
+    assert kwargs["reply_markup"].inline_keyboard[0][0].text == "Export to Google Sheets 📊"
+    assert kwargs["reply_markup"].inline_keyboard[0][0].callback_data == "export_sheets"
