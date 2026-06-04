@@ -44,7 +44,7 @@ def test_main(monkeypatch):
     bot.main()
     
     mock_app.add_handler.assert_called()
-    assert mock_app.add_handler.call_count == 8
+    assert mock_app.add_handler.call_count == 9
     mock_app.run_polling.assert_called_once()
 
 @pytest.mark.asyncio
