@@ -2,18 +2,18 @@
 
 ## Phase 1: Parsing Engine & Unit Tests [checkpoint: ]
 
-- [ ] Task: Write failing unit tests for parsing engine
-    - [ ] Create test case `test_parse_transaction_sentence` in `tests/test_bot.py` with multiple test inputs covering:
+- [x] Task: Write failing unit tests for parsing engine (b6c9120)
+    - [x] Create test case `test_parse_transaction_sentence` in `tests/test_bot.py` with multiple test inputs covering:
         - Expense keywords (`spent`, `bayar`, `beli`, etc.)
         - Income keywords (`receive`, `terima`, `gaji`, etc.)
         - Numeric amounts with suffixes (`50k`, `1.5jt`, `200.000`, `1m`)
         - Relative dates (`today`, `yesterday`, `kemarin`, `hari ini`)
         - Clean description extraction (removing stop prepositions like `for`, `on`, `untuk`, `di`)
-    - [ ] Run the tests and confirm they fail (Red Phase).
-- [ ] Task: Implement parsing engine in `bot.py`
-    - [ ] Implement `parse_transaction_sentence(sentence: str, reference_date: datetime = None)` in `bot.py`.
-    - [ ] Implement regex-based extraction of type, amount, date, and description.
-    - [ ] Run tests and verify they pass (Green Phase).
+    - [x] Run the tests and confirm they fail (Red Phase).
+- [x] Task: Implement parsing engine in `bot.py` (b6c9120)
+    - [x] Implement `parse_transaction_sentence(sentence: str, reference_date: datetime = None)` in `bot.py`.
+    - [x] Implement regex-based extraction of type, amount, date, and description.
+    - [x] Run tests and verify they pass (Green Phase).
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Parsing Engine & Unit Tests' (Protocol in workflow.md)
 
 ## Phase 2: Bot Command /quick Integration & Tests [checkpoint: ]
