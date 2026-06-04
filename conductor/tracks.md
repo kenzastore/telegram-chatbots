@@ -26,3 +26,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: add ability to edit/remove/clear transactions by choice:recent, id, week or months**
   *Link: [./tracks/manage_transactions_20260604/](./tracks/manage_transactions_20260604/)*
+
+---
+
+- [ ] **Track: add a feature so it can add transactions just from typed sentences**
+  *Link: [./tracks/quick_add_sentences_20260604/](./tracks/quick_add_sentences_20260604/)*

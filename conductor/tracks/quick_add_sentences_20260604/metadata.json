@@ -1,0 +1,8 @@
+{
+  "track_id": "quick_add_sentences_20260604",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-06-04T10:08:00Z",
+  "updated_at": "2026-06-04T10:08:00Z",
+  "description": "add a feature so it can add transactions just from typed sentences"
+}
