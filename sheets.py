@@ -136,6 +136,19 @@ def export_data_to_sheets(
         for (desc, t_type), total in sorted(sums.items()):
             summary_rows.append([desc, t_type, total])
             
+        # Clear existing content in both tabs to ensure no leftover rows when dataset shrinks or is cleared
+        sheets_service.spreadsheets().values().clear(
+            spreadsheetId=spreadsheet_id,
+            range=tx_tab,
+            body={}
+        ).execute()
+        
+        sheets_service.spreadsheets().values().clear(
+            spreadsheetId=spreadsheet_id,
+            range=sum_tab,
+            body={}
+        ).execute()
+
         # Write to month-specific Transactions tab
         sheets_service.spreadsheets().values().update(
             spreadsheetId=spreadsheet_id,

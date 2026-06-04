@@ -62,7 +62,8 @@ def test_export_data_to_sheets_success(mock_exists, mock_build, mock_from_file):
     # Verify spreadsheet creation was called
     mock_spreadsheets.create.assert_called_once()
     
-    # Verify values update was called twice (once for Transactions, once for Summaries)
+    # Verify values clear and update was called twice (once for Transactions, once for Summaries)
+    assert mock_values.clear.call_count == 2
     assert mock_values.update.call_count == 2
     
     # Verify permissions create was called to share the sheet
@@ -122,7 +123,8 @@ def test_export_data_to_sheets_existing(mock_exists, mock_build, mock_from_file)
     # Verify spreadsheet creation was NOT called
     mock_spreadsheets.create.assert_not_called()
 
-    # Verify values update was called twice
+    # Verify values clear and update was called twice
+    assert mock_values.clear.call_count == 2
     assert mock_values.update.call_count == 2
 
     # Verify values update was called with the existing sheet id
@@ -205,7 +207,8 @@ def test_export_data_to_sheets_monthly_tabs(mock_exists, mock_build, mock_from_f
     assert "2026-06 Transactions" in titles
     assert "2026-06 Summaries" in titles
 
-    # Verify values update was called 4 times (2 Tx tabs, 2 Summaries tabs)
+    # Verify values clear and update was called 4 times (2 Tx tabs, 2 Summaries tabs)
+    assert mock_values.clear.call_count == 4
     assert mock_values.update.call_count == 4
 
     # Verify the specific ranges for May and June updates
