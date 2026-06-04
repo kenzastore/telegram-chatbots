@@ -10,12 +10,12 @@
 
 ## Phase 2: Refactor Bot Commands and Update Tests
 
-- [ ] Task: Update Bot Output Formatting
-    - [ ] Refactor transaction confirmation message in `bot.py` to use `format_rupiah`.
-    - [ ] Refactor `/balance` command response in `bot.py` to use `format_rupiah`.
-    - [ ] Refactor `/view` command response in `bot.py` to use `format_rupiah`.
-    - [ ] Refactor `/summary` command response in `bot.py` to use `format_rupiah`.
-- [ ] Task: Update Bot Test Suite
-    - [ ] Modify `tests/test_bot.py` assertions to expect the new `Rp X.XXX,XX` format instead of `$X.XX`.
-    - [ ] Run test suite to verify everything passes and coverage remains >80%.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Refactor Bot Commands and Update Tests' (Protocol in workflow.md)
+- [x] Task: Update Bot Output Formatting (9c3c584)
+    - [x] Refactor transaction confirmation message in `bot.py` to use `format_rupiah`.
+    - [x] Refactor `/balance` command response in `bot.py` to use `format_rupiah`.
+    - [x] Refactor `/view` command response in `bot.py` to use `format_rupiah`.
+    - [x] Refactor `/summary` command response in `bot.py` to use `format_rupiah`.
+- [x] Task: Update Bot Test Suite (9c3c584)
+    - [x] Modify `tests/test_bot.py` assertions to expect the new `Rp X.XXX,XX` format instead of `$X.XX`.
+    - [x] Run test suite to verify everything passes and coverage remains >80%.
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Refactor Bot Commands and Update Tests' (Protocol in workflow.md)
