@@ -1,0 +1,72 @@
+import pytest
+import os
+from unittest.mock import MagicMock, patch
+import sheets
+
+def test_export_data_to_sheets_missing_creds():
+    with pytest.raises(ValueError, match="Google Service Account credentials file path is not configured."):
+        sheets.export_data_to_sheets(None, [], [], [])
+
+def test_export_data_to_sheets_file_not_found():
+    with pytest.raises(FileNotFoundError, match="Google Service Account credentials file not found"):
+        sheets.export_data_to_sheets("nonexistent_file.json", [], [], [])
+
+@patch("sheets.service_account.Credentials.from_service_account_file")
+@patch("sheets.build")
+@patch("os.path.exists")
+def test_export_data_to_sheets_success(mock_exists, mock_build, mock_from_file):
+    mock_exists.return_value = True
+    
+    # Mock Sheets service
+    mock_sheets = MagicMock()
+    mock_spreadsheets = MagicMock()
+    mock_values = MagicMock()
+    
+    mock_sheets.spreadsheets.return_value = mock_spreadsheets
+    mock_spreadsheets.values.return_value = mock_values
+    
+    # Mock spreadsheet creation response
+    mock_spreadsheets.create.return_value.execute.return_value = {
+        "spreadsheetId": "test_sheet_id_123",
+        "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/test_sheet_id_123"
+    }
+    
+    # Mock Drive service
+    mock_drive = MagicMock()
+    mock_permissions = MagicMock()
+    mock_drive.permissions.return_value = mock_permissions
+    
+    def side_effect(serviceName, version, **kwargs):
+        if serviceName == "sheets":
+            return mock_sheets
+        elif serviceName == "drive":
+            return mock_drive
+        return MagicMock()
+        
+    mock_build.side_effect = side_effect
+    
+    transactions = [
+        {"id": 1, "date": "2026-06-04", "amount": 100.0, "description": "Salary", "type": "credit", "balance_after": 100.0}
+    ]
+    weekly = [
+        {"description": "Groceries", "type": "debit", "total": 50.0}
+    ]
+    monthly = [
+        {"description": "Salary", "type": "credit", "total": 100.0}
+    ]
+    
+    url = sheets.export_data_to_sheets("credentials.json", transactions, weekly, monthly)
+    
+    assert url == "https://docs.google.com/spreadsheets/d/test_sheet_id_123"
+    
+    # Verify spreadsheet creation was called
+    mock_spreadsheets.create.assert_called_once()
+    
+    # Verify values update was called twice (once for Transactions, once for Summaries)
+    assert mock_values.update.call_count == 2
+    
+    # Verify permissions create was called to share the sheet
+    mock_permissions.create.assert_called_once_with(
+        fileId="test_sheet_id_123",
+        body={"role": "reader", "type": "anyone"}
+    )
