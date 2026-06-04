@@ -18,17 +18,17 @@
 
 ## Phase 2: Bot Command /quick Integration & Tests [checkpoint: ]
 
-- [ ] Task: Implement /quick command handler
-    - [ ] Register `/quick` command handler (`quick_start`) in `bot.py`.
-    - [ ] Validate input (must have arguments).
-    - [ ] Parse sentence using `parse_transaction_sentence`.
-    - [ ] Store parsed transaction dict in `context.user_data["quick_tx"]`.
-    - [ ] Show parsed fields to the user and prompt with "Confirm Save ✅" and "Cancel ❌" inline buttons.
-- [ ] Task: Implement Callback Handlers
-    - [ ] Register `quick_confirm_callback` for callback data `quick_confirm`. Save the transaction using `db.add_transaction`, trigger running balance recalculation, and restore the main menu.
-    - [ ] Register `quick_cancel_callback` for callback data `quick_cancel` and `/cancel` command. Abort the transaction and restore the main menu.
-- [ ] Task: Write Command Integration Tests
-    - [ ] Add tests in `tests/test_bot.py` to cover:
+- [x] Task: Implement /quick command handler (27f401f)
+    - [x] Register `/quick` command handler (`quick_start`) in `bot.py`.
+    - [x] Validate input (must have arguments).
+    - [x] Parse sentence using `parse_transaction_sentence`.
+    - [x] Store parsed transaction dict in `context.user_data["quick_tx"]`.
+    - [x] Show parsed fields to the user and prompt with "Confirm Save ✅" and "Cancel ❌" inline buttons.
+- [x] Task: Implement Callback Handlers (27f401f)
+    - [x] Register `quick_confirm_callback` for callback data `quick_confirm`. Save the transaction using `db.add_transaction`, trigger running balance recalculation, and restore the main menu.
+    - [x] Register `quick_cancel_callback` for callback data `quick_cancel` and `/cancel` command. Abort the transaction and restore the main menu.
+- [x] Task: Write Command Integration Tests (27f401f)
+    - [x] Add tests in `tests/test_bot.py` to cover:
         - Running `/quick` without args (assert instructions text).
         - Running `/quick` with valid sentence (assert confirmation message and inline buttons).
         - Clicking "Confirm Save" (assert database insert, balance recalculation, and success message).
