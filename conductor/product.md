@@ -31,6 +31,10 @@ Users can log transactions through interactive chat conversations or single-comm
    - Initiates an interactive selection menu (Recent, ID, Week, Month) with double-confirmation confirmation prompts to delete transactions, recalculating balances.
 7. **Google Sheets Export**:
    - Allows exporting transaction logs and summaries into separate worksheets grouped dynamically by calendar month (e.g., `YYYY-MM Transactions` and `YYYY-MM Summaries`) within the Google Spreadsheet.
+8. **Quick Add (`/quick`)**:
+   - **Trigger**: User types `/quick <sentence>`.
+   - **Inputs**: A single natural language sentence (supports both English and Indonesian) containing transaction type, amount (with multipliers), date (today, yesterday, etc.), and description.
+   - **Confirmation**: The bot parses the sentence, prompts the user to confirm via inline buttons, saves the transaction on confirmation, and displays the updated running balance.
 
 ## Data Structure
 The chatbot stores records in a relational database with the following fields:
@@ -46,6 +50,7 @@ The chatbot stores records in a relational database with the following fields:
 * `/add` - Initiate transaction logging workflow.
 * `/edit` - Edit a transaction's fields by ID.
 * `/clear` - Clear transactions by choice (Recent, ID, Week, Month).
+* `/quick` - Quickly add a transaction via a single natural language sentence.
 * `/view` - View recent transaction history.
 * `/summary` - View financial summaries (weekly/monthly).
 * `/balance` - Retrieve current running balance.
