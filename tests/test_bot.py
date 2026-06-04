@@ -827,3 +827,34 @@ async def test_quick_cancel_callback():
     context.bot.send_message.assert_called_once()
 
 
+@pytest.mark.asyncio
+async def test_quick_sentence_input_valid():
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.message.text = "spent 50k on lunch today"
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+
+    res = await bot.quick_sentence_input(update, context)
+
+    assert res == bot.ConversationHandler.END
+    update.message.reply_html.assert_called_once()
+    assert "confirm quick add" in update.message.reply_html.call_args[0][0].lower()
+    assert context.user_data["quick_tx"]["amount"] == 50000.0
+
+
+@pytest.mark.asyncio
+async def test_quick_sentence_input_invalid():
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.message.text = "invalid sentence pattern"
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+
+    res = await bot.quick_sentence_input(update, context)
+
+    assert res == bot.QUICK_SENTENCE
+    update.message.reply_html.assert_called_once()
+    assert "could not parse" in update.message.reply_html.call_args[0][0].lower()
+
+

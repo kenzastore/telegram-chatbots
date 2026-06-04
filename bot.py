@@ -36,6 +36,7 @@ HELP_TEXT = (
 TYPE, AMOUNT, DESCRIPTION, DATE = range(4)
 EDIT_ID, EDIT_DATE, EDIT_TYPE, EDIT_AMOUNT, EDIT_DESCRIPTION, EDIT_CONFIRM = range(4, 10)
 CLEAR_CHOICE, CLEAR_ID_INPUT, CLEAR_MONTH_INPUT, CLEAR_CONFIRM = range(10, 14)
+QUICK_SENTENCE = 14
 
 def format_rupiah(amount: float) -> str:
     """Formats a float as Indonesian Rupiah with decimal places.
@@ -886,7 +887,7 @@ async def export_sheets_callback(
         )
 
 
-async def quick_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def quick_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Parses a natural language sentence and prompts for confirmation."""
     message_text = update.message.text
     sentence = ""
@@ -897,12 +898,10 @@ async def quick_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     if not sentence.strip():
         await update.message.reply_html(
-            "⚠️ Please provide a sentence to parse.\n"
-            "Usage: <code>/quick &lt;sentence&gt;</code>\n"
-            "Example: <code>/quick spent 50k on lunch today</code>",
-            reply_markup=get_commands_keyboard()
+            "⚠️ Please provide a sentence to parse describing your transaction (e.g. <code>spent 50k on lunch today</code>):",
+            reply_markup=get_cancel_keyboard()
         )
-        return
+        return QUICK_SENTENCE
 
     parsed = parse_transaction_sentence(sentence)
     if not parsed:
@@ -911,7 +910,7 @@ async def quick_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             "Example: <code>/quick spent 50k on lunch today</code>",
             reply_markup=get_commands_keyboard()
         )
-        return
+        return ConversationHandler.END
 
     context.user_data["quick_tx"] = parsed
 
@@ -934,6 +933,43 @@ async def quick_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_html(msg, reply_markup=reply_markup)
+    return ConversationHandler.END
+
+
+async def quick_sentence_input(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """Parses the text sentence entered by the user after prompting."""
+    sentence = update.message.text.strip()
+    parsed = parse_transaction_sentence(sentence)
+    if not parsed:
+        await update.message.reply_html(
+            "⚠️ Could not parse the transaction sentence. Please try again with a clearer format (or /cancel to abort):\n"
+            "Example: <code>spent 50k on lunch today</code>",
+            reply_markup=get_cancel_keyboard()
+        )
+        return QUICK_SENTENCE
+
+    context.user_data["quick_tx"] = parsed
+
+    amount_str = format_rupiah(parsed["amount"])
+    tx_type_str = "Debit (Expense)" if parsed["type"] == "debit" else "Credit (Income)"
+    msg = (
+        "<b>Confirm Quick Add</b>\n\n"
+        f"📅 <b>Date:</b> {parsed['date']}\n"
+        f"💰 <b>Amount:</b> {amount_str}\n"
+        f"🏷️ <b>Type:</b> {tx_type_str}\n"
+        f"📝 <b>Description:</b> {parsed['description']}\n\n"
+        "Do you want to save this transaction?"
+    )
+
+    keyboard = [
+        [
+            InlineKeyboardButton("Confirm Save ✅", callback_data="quick_confirm"),
+            InlineKeyboardButton("Cancel ❌", callback_data="quick_cancel"),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_html(msg, reply_markup=reply_markup)
+    return ConversationHandler.END
 
 
 async def quick_confirm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -978,7 +1014,7 @@ async def quick_confirm_callback(update: Update, context: ContextTypes.DEFAULT_T
     )
 
 
-async def quick_cancel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def quick_cancel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Cancels the quick add operation and clears the temporary state."""
     query = update.callback_query
     context.user_data.pop("quick_tx", None)
@@ -996,6 +1032,7 @@ async def quick_cancel_callback(update: Update, context: ContextTypes.DEFAULT_TY
             "❌ Quick add transaction cancelled.",
             reply_markup=get_commands_keyboard()
         )
+    return ConversationHandler.END
 
 
 async def post_init(application: Application) -> None:
@@ -1077,6 +1114,15 @@ def main():
         per_message=False,
     )
 
+    quick_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("quick", quick_start)],
+        states={
+            QUICK_SENTENCE: [MessageHandler(filters.TEXT & ~filters.COMMAND, quick_sentence_input)],
+        },
+        fallbacks=[CommandHandler("cancel", quick_cancel_callback)],
+        per_message=False,
+    )
+
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("balance", balance_command))
@@ -1086,7 +1132,7 @@ def main():
     app.add_handler(CallbackQueryHandler(
         export_sheets_callback, pattern="^export_sheets$"
     ))
-    app.add_handler(CommandHandler("quick", quick_start))
+    app.add_handler(quick_conv_handler)
     app.add_handler(CallbackQueryHandler(quick_confirm_callback, pattern="^quick_confirm$"))
     app.add_handler(CallbackQueryHandler(quick_cancel_callback, pattern="^quick_cancel$"))
     app.add_handler(conv_handler)
