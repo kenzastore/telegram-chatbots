@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -713,10 +713,25 @@ async def export_sheets_callback(
             parse_mode="HTML"
         )
 
+async def post_init(application: Application) -> None:
+    """Sets up the bot command list for Telegram client input autocomplete."""
+    commands = [
+        BotCommand("start", "Initialize the bot, display greeting"),
+        BotCommand("help", "Show this guide"),
+        BotCommand("add", "Record a new transaction (credit or debit)"),
+        BotCommand("balance", "Retrieve current net balance"),
+        BotCommand("view", "View the last 10 transaction history records"),
+        BotCommand("summary", "View weekly/monthly financial summaries"),
+        BotCommand("edit", "Edit an existing transaction step-by-step"),
+        BotCommand("clear", "Remove or clear transaction history"),
+        BotCommand("cancel", "Cancel current interaction/conversation"),
+    ]
+    await application.bot.set_my_commands(commands)
+
 def main():
     db.init_db(config.DATABASE_PATH)
     
-    app = Application.builder().token(config.TELEGRAM_BOT_TOKEN).build()
+    app = Application.builder().token(config.TELEGRAM_BOT_TOKEN).post_init(post_init).build()
     
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("add", add_start)],

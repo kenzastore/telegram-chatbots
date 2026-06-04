@@ -36,6 +36,7 @@ def test_main(monkeypatch):
     mock_app = MagicMock()
     mock_builder = MagicMock()
     mock_builder.token.return_value = mock_builder
+    mock_builder.post_init.return_value = mock_builder
     mock_builder.build.return_value = mock_app
     
     monkeypatch.setattr(Application, "builder", lambda: mock_builder)
@@ -48,6 +49,27 @@ def test_main(monkeypatch):
     mock_app.add_handler.assert_called()
     assert mock_app.add_handler.call_count == 10
     mock_app.run_polling.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_post_init():
+    mock_app = MagicMock(spec=Application)
+    mock_app.bot = AsyncMock()
+    
+    await bot.post_init(mock_app)
+    
+    mock_app.bot.set_my_commands.assert_called_once()
+    args, kwargs = mock_app.bot.set_my_commands.call_args
+    commands = args[0]
+    assert len(commands) == 9
+    assert commands[0].command == "start"
+    assert commands[1].command == "help"
+    assert commands[2].command == "add"
+    assert commands[3].command == "balance"
+    assert commands[4].command == "view"
+    assert commands[5].command == "summary"
+    assert commands[6].command == "edit"
+    assert commands[7].command == "clear"
+    assert commands[8].command == "cancel"
 
 @pytest.mark.asyncio
 async def test_add_start():
