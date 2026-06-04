@@ -4,6 +4,7 @@ from telegram import Update, MenuButtonCommands, ReplyKeyboardRemove, ReplyKeybo
 from telegram.ext import CallbackContext, Application
 
 import bot
+import config
 
 @pytest.mark.asyncio
 async def test_start_command():
@@ -53,7 +54,7 @@ def test_main(monkeypatch):
     bot.main()
     
     mock_app.add_handler.assert_called()
-    assert mock_app.add_handler.call_count == 10
+    assert mock_app.add_handler.call_count == 14
     mock_app.run_polling.assert_called_once()
 
 @pytest.mark.asyncio
@@ -66,7 +67,7 @@ async def test_post_init():
     mock_app.bot.set_my_commands.assert_called_once()
     args, kwargs = mock_app.bot.set_my_commands.call_args
     commands = args[0]
-    assert len(commands) == 9
+    assert len(commands) == 10
     assert commands[0].command == "start"
     assert commands[1].command == "help"
     assert commands[2].command == "add"
@@ -76,6 +77,7 @@ async def test_post_init():
     assert commands[6].command == "edit"
     assert commands[7].command == "clear"
     assert commands[8].command == "cancel"
+    assert commands[9].command == "quick"
     
     mock_app.bot.set_chat_menu_button.assert_called_once()
     menu_kwargs = mock_app.bot.set_chat_menu_button.call_args[1]
@@ -731,5 +733,95 @@ def test_parse_transaction_sentence():
     for sentence, expected in test_cases:
         result = bot.parse_transaction_sentence(sentence, ref_date)
         assert result == expected, f"Failed on sentence: {sentence}. Got: {result}, Expected: {expected}"
+
+@pytest.mark.asyncio
+async def test_quick_command_no_args():
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.message.text = "/quick"
+    context = MagicMock(spec=CallbackContext)
+    context.args = []
+    
+    await bot.quick_start(update, context)
+    
+    update.message.reply_html.assert_called_once()
+    assert "please provide a sentence" in update.message.reply_html.call_args[0][0].lower()
+
+@pytest.mark.asyncio
+async def test_quick_command_invalid_sentence():
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.message.text = "/quick buying coffee"
+    context = MagicMock(spec=CallbackContext)
+    context.args = ["buying", "coffee"]
+    
+    await bot.quick_start(update, context)
+    
+    update.message.reply_html.assert_called_once()
+    assert "could not parse" in update.message.reply_html.call_args[0][0].lower()
+
+@pytest.mark.asyncio
+async def test_quick_command_valid_sentence():
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.message.text = "/quick spent 50k on lunch today"
+    context = MagicMock(spec=CallbackContext)
+    context.args = ["spent", "50k", "on", "lunch", "today"]
+    context.user_data = {}
+    
+    await bot.quick_start(update, context)
+    
+    update.message.reply_html.assert_called_once()
+    assert "confirm quick add" in update.message.reply_html.call_args[0][0].lower()
+    assert context.user_data["quick_tx"]["amount"] == 50000.0
+    assert context.user_data["quick_tx"]["type"] == "debit"
+    assert context.user_data["quick_tx"]["description"] == "lunch"
+
+@pytest.mark.asyncio
+async def test_quick_confirm_callback(monkeypatch):
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "quick_confirm"
+    context = MagicMock(spec=CallbackContext)
+    context.bot = AsyncMock()
+    context.user_data = {
+        "quick_tx": {
+            "amount": 50000.0,
+            "type": "debit",
+            "date": "2026-06-04",
+            "description": "lunch"
+        }
+    }
+    
+    mock_add = MagicMock(return_value=1)
+    mock_balance = MagicMock(return_value=150000.0)
+    import db
+    monkeypatch.setattr(db, "add_transaction", mock_add)
+    monkeypatch.setattr(db, "get_balance", mock_balance)
+    
+    await bot.quick_confirm_callback(update, context)
+    
+    mock_add.assert_called_once_with(config.DATABASE_PATH, "2026-06-04", 50000.0, "lunch", "debit")
+    update.callback_query.edit_message_text.assert_called_once()
+    assert "saved successfully" in update.callback_query.edit_message_text.call_args[0][0].lower()
+    context.bot.send_message.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_quick_cancel_callback():
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "quick_cancel"
+    context = MagicMock(spec=CallbackContext)
+    context.bot = AsyncMock()
+    context.user_data = {
+        "quick_tx": {"amount": 50000.0}
+    }
+    
+    await bot.quick_cancel_callback(update, context)
+    
+    assert "quick_tx" not in context.user_data
+    update.callback_query.edit_message_text.assert_called_once()
+    assert "cancelled" in update.callback_query.edit_message_text.call_args[0][0].lower()
+    context.bot.send_message.assert_called_once()
 
 

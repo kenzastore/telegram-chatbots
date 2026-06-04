@@ -24,6 +24,7 @@ HELP_TEXT = (
     "<b>/start</b> - Initialize the bot, display greeting\n"
     "<b>/help</b> - Show this guide\n"
     "<b>/add</b> - Record a new transaction (credit or debit)\n"
+    "<b>/quick &lt;sentence&gt;</b> - Quickly add a transaction via a single sentence\n"
     "<b>/balance</b> - Retrieve current net balance\n"
     "<b>/view</b> - View the last 10 transaction history records\n"
     "<b>/summary</b> - View weekly/monthly financial summaries\n"
@@ -883,6 +884,119 @@ async def export_sheets_callback(
             parse_mode="HTML"
         )
 
+
+async def quick_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Parses a natural language sentence and prompts for confirmation."""
+    message_text = update.message.text
+    sentence = ""
+    if message_text.lower().startswith("/quick"):
+        parts = message_text.split(None, 1)
+        if len(parts) > 1:
+            sentence = parts[1]
+
+    if not sentence.strip():
+        await update.message.reply_html(
+            "⚠️ Please provide a sentence to parse.\n"
+            "Usage: <code>/quick &lt;sentence&gt;</code>\n"
+            "Example: <code>/quick spent 50k on lunch today</code>",
+            reply_markup=get_commands_keyboard()
+        )
+        return
+
+    parsed = parse_transaction_sentence(sentence)
+    if not parsed:
+        await update.message.reply_html(
+            "⚠️ Could not parse the transaction sentence. Please try again with a clearer format.\n"
+            "Example: <code>/quick spent 50k on lunch today</code>",
+            reply_markup=get_commands_keyboard()
+        )
+        return
+
+    context.user_data["quick_tx"] = parsed
+
+    amount_str = format_rupiah(parsed["amount"])
+    tx_type_str = "Debit (Expense)" if parsed["type"] == "debit" else "Credit (Income)"
+    msg = (
+        "<b>Confirm Quick Add</b>\n\n"
+        f"📅 <b>Date:</b> {parsed['date']}\n"
+        f"💰 <b>Amount:</b> {amount_str}\n"
+        f"🏷️ <b>Type:</b> {tx_type_str}\n"
+        f"📝 <b>Description:</b> {parsed['description']}\n\n"
+        "Do you want to save this transaction?"
+    )
+
+    keyboard = [
+        [
+            InlineKeyboardButton("Confirm Save ✅", callback_data="quick_confirm"),
+            InlineKeyboardButton("Cancel ❌", callback_data="quick_cancel"),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_html(msg, reply_markup=reply_markup)
+
+
+async def quick_confirm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Saves the parsed transaction to the database after user confirmation."""
+    query = update.callback_query
+    await query.answer()
+
+    parsed = context.user_data.get("quick_tx")
+    if not parsed:
+        await query.edit_message_text("⚠️ No active quick transaction found to confirm.")
+        return
+
+    db.add_transaction(
+        config.DATABASE_PATH,
+        parsed["date"],
+        parsed["amount"],
+        parsed["description"],
+        parsed["type"]
+    )
+
+    balance = db.get_balance(config.DATABASE_PATH)
+    formatted_balance = format_rupiah(balance)
+
+    context.user_data.pop("quick_tx", None)
+
+    amount_str = format_rupiah(parsed["amount"])
+    tx_type_str = "Debit (Expense)" if parsed["type"] == "debit" else "Credit (Income)"
+    success_text = (
+        f"✅ <b>Transaction Saved Successfully!</b>\n\n"
+        f"📅 <b>Date:</b> {parsed['date']}\n"
+        f"💰 <b>Amount:</b> {amount_str}\n"
+        f"🏷️ <b>Type:</b> {tx_type_str}\n"
+        f"📝 <b>Description:</b> {parsed['description']}\n\n"
+        f"💰 <b>Current Net Balance:</b> {formatted_balance}"
+    )
+
+    await query.edit_message_text(success_text, parse_mode="HTML")
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="Menu restored:",
+        reply_markup=get_commands_keyboard()
+    )
+
+
+async def quick_cancel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Cancels the quick add operation and clears the temporary state."""
+    query = update.callback_query
+    context.user_data.pop("quick_tx", None)
+
+    if query:
+        await query.answer()
+        await query.edit_message_text("❌ Quick add transaction cancelled.")
+        await context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text="Menu restored:",
+            reply_markup=get_commands_keyboard()
+        )
+    else:
+        await update.message.reply_html(
+            "❌ Quick add transaction cancelled.",
+            reply_markup=get_commands_keyboard()
+        )
+
+
 async def post_init(application: Application) -> None:
     """Sets up the bot command list for Telegram client input autocomplete."""
     commands = [
@@ -895,9 +1009,11 @@ async def post_init(application: Application) -> None:
         BotCommand("edit", "Edit an existing transaction step-by-step"),
         BotCommand("clear", "Remove or clear transaction history"),
         BotCommand("cancel", "Cancel current interaction/conversation"),
+        BotCommand("quick", "Quick add transaction from a single sentence"),
     ]
     await application.bot.set_my_commands(commands)
     await application.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
+
 
 def main():
     db.init_db(config.DATABASE_PATH)
@@ -969,9 +1085,13 @@ def main():
     app.add_handler(CallbackQueryHandler(
         export_sheets_callback, pattern="^export_sheets$"
     ))
+    app.add_handler(CommandHandler("quick", quick_start))
+    app.add_handler(CallbackQueryHandler(quick_confirm_callback, pattern="^quick_confirm$"))
+    app.add_handler(CallbackQueryHandler(quick_cancel_callback, pattern="^quick_cancel$"))
     app.add_handler(conv_handler)
     app.add_handler(edit_conv_handler)
     app.add_handler(clear_conv_handler)
+    app.add_handler(CommandHandler("cancel", quick_cancel_callback))
     app.run_polling()
 
 if __name__ == "__main__":
