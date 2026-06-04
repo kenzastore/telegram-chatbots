@@ -24,9 +24,9 @@ Users can log transactions through interactive chat conversations or single-comm
 3. **Viewing History (`/view`)**:
    - Lists the last N transactions (defaulting to 10) in a cleanly formatted table.
 4. **Summaries (`/summary`)**:
-   - Offers weekly and monthly aggregates of credits and debits grouped by description/category.
+   - Offers weekly summaries (last 7 days) and monthly financial summaries aggregated by calendar month (current month from day 1).
 5. **Google Sheets Export**:
-   - Allows exporting the full transaction logs and weekly/monthly summaries into a newly created Google Spreadsheet (viewable by anyone with the link) via an inline keyboard button.
+   - Allows exporting transaction logs and summaries into separate worksheets grouped dynamically by calendar month (e.g., `YYYY-MM Transactions` and `YYYY-MM Summaries`) within the Google Spreadsheet.
 
 ## Data Structure
 The chatbot stores records in a relational database with the following fields:
