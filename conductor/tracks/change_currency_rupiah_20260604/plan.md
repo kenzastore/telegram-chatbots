@@ -1,12 +1,12 @@
 # Implementation Plan - Change Currency to Rupiah
 
-## Phase 1: Helper Implementation & Tests
+## Phase 1: Helper Implementation & Tests [checkpoint: b81255e]
 
 - [x] Task: Implement Rupiah Formatting Helper (fa58485)
     - [x] Create a `format_rupiah` helper function (e.g. in `bot.py` or a helpers module) that takes a float and returns it formatted as `Rp X.XXX,XX`.
     - [x] Add unit tests for `format_rupiah` in a new or existing test file.
     - [x] Run test suite and verify coverage.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Helper Implementation & Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Helper Implementation & Tests' (Protocol in workflow.md)
 
 ## Phase 2: Refactor Bot Commands and Update Tests
 
