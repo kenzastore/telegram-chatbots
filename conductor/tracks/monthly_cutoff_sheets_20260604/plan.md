@@ -14,8 +14,8 @@
 
 ## Phase 2: Google Sheets Monthly Tabs Export
 
-- [~] Task: Group and Export Data to Monthly Tabs
-    - [~] Write failing unit tests in `tests/test_sheets.py` for grouping transactions by month and writing them to dynamic monthly tabs (e.g. `YYYY-MM Transactions`).
-    - [ ] Refactor `sheets.py` to group transactions by calendar month, check sheet/tab existence, create missing monthly tabs, and update data inside them.
-    - [ ] Run test suite, verify code coverage is >80%, and commit changes.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Google Sheets Monthly Tabs Export' (Protocol in workflow.md)
+- [x] Task: Group and Export Data to Monthly Tabs (d574e93)
+    - [x] Write failing unit tests in `tests/test_sheets.py` for grouping transactions by month and writing them to dynamic monthly tabs (e.g. `YYYY-MM Transactions`).
+    - [x] Refactor `sheets.py` to group transactions by calendar month, check sheet/tab existence, create missing monthly tabs, and update data inside them.
+    - [x] Run test suite, verify code coverage is >80%, and commit changes.
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Google Sheets Monthly Tabs Export' (Protocol in workflow.md)
