@@ -254,7 +254,10 @@ def test_exchange_code_for_credentials(mock_from_client_config):
     mock_from_client_config.return_value = mock_flow
 
     creds_json = sheets.exchange_code_for_credentials("my_auth_code", "verifier123")
-    assert creds_json == '{"token": "my_access_token"}'
+    import json
+    data = json.loads(creds_json)
+    assert data["token"] == "my_access_token"
+    assert data["google_email"] == ""
     mock_flow.fetch_token.assert_called_once_with(code="my_auth_code", code_verifier="verifier123")
 
 

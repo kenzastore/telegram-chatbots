@@ -337,3 +337,52 @@ def test_database_user_isolation(temp_db):
     assert txs_b[0]["description"] == "Salary B"
 
 
+def test_google_account_isolation_same_user(temp_db):
+    user_id = 123
+    
+    # 1. Log in with Google Account A
+    creds_a = '{"token": "token_a", "google_email": "account_a@gmail.com"}'
+    db.set_user_credentials(temp_db, user_id, creds_a)
+    
+    # User adds a transaction
+    db.add_transaction(temp_db, user_id, "2026-06-01", 100.0, "Transaction A", "credit")
+    
+    # Verify balance & history for Account A
+    assert db.get_balance(temp_db, user_id) == 100.0
+    history_a = db.get_all_transactions(temp_db, user_id)
+    assert len(history_a) == 1
+    assert history_a[0]["description"] == "Transaction A"
+    
+    # 2. Log out
+    db.clear_user_config(temp_db, user_id)
+    assert db.get_user_config(temp_db, user_id) is None
+    
+    # Verify transaction still exists but is not retrieved since user is logged out (or defaults to empty email)
+    assert db.get_balance(temp_db, user_id) == 0.0
+    assert len(db.get_all_transactions(temp_db, user_id)) == 0
+    
+    # 3. Log in with Google Account B
+    creds_b = '{"token": "token_b", "google_email": "account_b@gmail.com"}'
+    db.set_user_credentials(temp_db, user_id, creds_b)
+    
+    # Verify balance & history for Account B is empty/isolated
+    assert db.get_balance(temp_db, user_id) == 0.0
+    assert len(db.get_all_transactions(temp_db, user_id)) == 0
+    
+    # User adds a transaction under Account B
+    db.add_transaction(temp_db, user_id, "2026-06-02", 50.0, "Transaction B", "debit")
+    
+    # Verify balance & history for Account B
+    assert db.get_balance(temp_db, user_id) == -50.0
+    history_b = db.get_all_transactions(temp_db, user_id)
+    assert len(history_b) == 1
+    assert history_b[0]["description"] == "Transaction B"
+    
+    # 4. Switch back to Account A
+    db.set_user_credentials(temp_db, user_id, creds_a)
+    assert db.get_balance(temp_db, user_id) == 100.0
+    history_a_back = db.get_all_transactions(temp_db, user_id)
+    assert len(history_a_back) == 1
+    assert history_a_back[0]["description"] == "Transaction A"
+
+

@@ -22,7 +22,8 @@ def get_authorization_url() -> tuple:
         client_config,
         scopes=[
             'https://www.googleapis.com/auth/spreadsheets',
-            'https://www.googleapis.com/auth/drive.file'
+            'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/userinfo.email'
         ],
         redirect_uri=redirect_uri
     )
@@ -32,9 +33,12 @@ def get_authorization_url() -> tuple:
     )
     return authorization_url, state, flow.code_verifier
 
+
 def exchange_code_for_credentials(auth_code: str, code_verifier: str = None) -> str:
     """Exchanges an authorization code for credentials (JSON string)."""
     import config
+    import json
+    import base64
     client_config = {
         "web": {
             "client_id": config.GOOGLE_CLIENT_ID,
@@ -49,12 +53,36 @@ def exchange_code_for_credentials(auth_code: str, code_verifier: str = None) -> 
         client_config,
         scopes=[
             'https://www.googleapis.com/auth/spreadsheets',
-            'https://www.googleapis.com/auth/drive.file'
+            'https://www.googleapis.com/auth/drive.file',
+            'https://www.googleapis.com/auth/userinfo.email'
         ],
         redirect_uri=redirect_uri
     )
     flow.fetch_token(code=auth_code, code_verifier=code_verifier)
-    return flow.credentials.to_json()
+    creds = flow.credentials
+    creds_json = creds.to_json()
+    
+    # Try to extract the email from the id_token
+    email = ""
+    if hasattr(creds, "id_token") and creds.id_token:
+        try:
+            parts = creds.id_token.split('.')
+            if len(parts) >= 2:
+                payload_b64 = parts[1]
+                payload_b64 += '=' * (4 - len(payload_b64) % 4)
+                payload = json.loads(base64.b64decode(payload_b64).decode('utf-8'))
+                email = payload.get("email", "")
+        except Exception:
+            pass
+            
+    try:
+        creds_dict = json.loads(creds_json)
+        creds_dict["google_email"] = email
+        creds_json = json.dumps(creds_dict)
+    except Exception:
+        pass
+        
+    return creds_json
 
 def get_user_sheets_service(user_credentials_str: str):
     """Instantiates the Google Sheets service using serialized user credentials."""
