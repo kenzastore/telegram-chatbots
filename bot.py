@@ -12,6 +12,7 @@ from telegram.ext import (
 )
 import config
 import db
+import sheets
 
 START_TEXT = (
     "Welcome to the <b>Savings &amp; Financial Transaction Tracker</b> bot!\n\n"
@@ -37,6 +38,7 @@ TYPE, AMOUNT, DESCRIPTION, DATE = range(4)
 EDIT_ID, EDIT_DATE, EDIT_TYPE, EDIT_AMOUNT, EDIT_DESCRIPTION, EDIT_CONFIRM = range(4, 10)
 CLEAR_CHOICE, CLEAR_ID_INPUT, CLEAR_MONTH_INPUT, CLEAR_CONFIRM = range(10, 14)
 QUICK_SENTENCE = 14
+GOOGLE_AUTH_CODE = 15
 
 def format_rupiah(amount: float) -> str:
     """Formats a float as Indonesian Rupiah with decimal places.
@@ -833,6 +835,96 @@ async def summary_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     period = "weekly" if "weekly" in query.data else "monthly"
     await show_summary(update, period)
 
+async def google_login_start(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
+    """Starts the Google OAuth2 authentication flow."""
+    user_id = update.effective_user.id
+    config_data = db.get_user_config(config.DATABASE_PATH, user_id)
+    if config_data and config_data.get("google_credentials"):
+        await update.message.reply_html(
+            "ℹ️ You are already authorized with Google. To change accounts, use /google_logout first."
+        )
+        return ConversationHandler.END
+
+    try:
+        url, _ = sheets.get_authorization_url()
+        await update.message.reply_html(
+            "To connect your Google account, please click the link below, authorize the application, "
+            "and copy the authorization code.\n\n"
+            f'<a href="{url}">Authorize Google Sheets & Drive Access</a>\n\n'
+            "After authorizing, please paste the authorization code here, or use /cancel to abort.",
+            parse_mode="HTML",
+            disable_web_page_preview=True
+        )
+        return GOOGLE_AUTH_CODE
+    except Exception as e:
+        await update.message.reply_html(
+            f"❌ Failed to generate authorization URL: {e}"
+        )
+        return ConversationHandler.END
+
+async def google_login_code(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
+    """Exchanges authorization code for credentials and saves them."""
+    user_id = update.effective_user.id
+    auth_code = update.message.text.strip()
+    try:
+        creds_json = sheets.exchange_code_for_credentials(auth_code)
+        db.set_user_credentials(config.DATABASE_PATH, user_id, creds_json)
+        await update.message.reply_html(
+            "✅ Authenticated successfully! Your Google Account is now connected.\n"
+            "⏳ Exporting your data to Google Sheets..."
+        )
+        
+        # Retrieve config to get spreadsheet_id
+        config_data = db.get_user_config(config.DATABASE_PATH, user_id)
+        spreadsheet_id = config_data.get("spreadsheet_id")
+        
+        transactions = db.get_all_transactions(config.DATABASE_PATH)
+        weekly = db.get_summaries(config.DATABASE_PATH, "weekly")
+        monthly = db.get_summaries(config.DATABASE_PATH, "monthly")
+        
+        sheet_url = sheets.export_data_to_sheets(
+            config.GOOGLE_SERVICE_ACCOUNT_FILE,
+            transactions,
+            weekly,
+            monthly,
+            spreadsheet_id,
+            user_credentials_str=creds_json
+        )
+        
+        # Save spreadsheet ID if it was newly created
+        if not spreadsheet_id:
+            parts = sheet_url.split("/")
+            try:
+                new_id = parts[parts.index("d") + 1]
+                db.set_user_spreadsheet(config.DATABASE_PATH, user_id, new_id)
+            except Exception:
+                pass
+                
+        await update.message.reply_html(
+            f"✅ Google Sheet generated successfully!\n\n"
+            f"📊 <a href=\"{sheet_url}\">Open Exported Google Sheet</a>",
+            parse_mode="HTML"
+        )
+        return ConversationHandler.END
+    except Exception as e:
+        await update.message.reply_html(
+            f"❌ Authentication failed: {e}\n\nPlease try again or use /cancel to abort."
+        )
+        return GOOGLE_AUTH_CODE
+
+async def google_login_cancel(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> int:
+    """Cancels the Google login process."""
+    await update.message.reply_html(
+        "❌ Google login process cancelled."
+    )
+    return ConversationHandler.END
+
 async def export_sheets_callback(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> None:
@@ -1048,6 +1140,8 @@ async def post_init(application: Application) -> None:
         BotCommand("clear", "Remove or clear transaction history"),
         BotCommand("cancel", "Cancel current interaction/conversation"),
         BotCommand("quick", "Quick add transaction from a single sentence"),
+        BotCommand("google_login", "Connect your Google account for sheets export"),
+        BotCommand("google_logout", "Disconnect your Google account"),
     ]
     await application.bot.set_my_commands(commands)
     await application.bot.set_chat_menu_button(menu_button=MenuButtonCommands())
@@ -1123,6 +1217,15 @@ def main():
         per_message=False,
     )
 
+    google_login_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("google_login", google_login_start)],
+        states={
+            GOOGLE_AUTH_CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, google_login_code)],
+        },
+        fallbacks=[CommandHandler("cancel", google_login_cancel)],
+        per_message=False,
+    )
+
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("help", help_command))
     app.add_handler(CommandHandler("balance", balance_command))
@@ -1133,6 +1236,7 @@ def main():
         export_sheets_callback, pattern="^export_sheets$"
     ))
     app.add_handler(quick_conv_handler)
+    app.add_handler(google_login_conv_handler)
     app.add_handler(CallbackQueryHandler(quick_confirm_callback, pattern="^quick_confirm$"))
     app.add_handler(CallbackQueryHandler(quick_cancel_callback, pattern="^quick_cancel$"))
     app.add_handler(conv_handler)

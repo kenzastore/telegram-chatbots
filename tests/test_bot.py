@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from telegram import Update, MenuButtonCommands, ReplyKeyboardRemove, ReplyKeyboardMarkup
 from telegram.ext import CallbackContext, Application
 
@@ -56,7 +56,7 @@ def test_main(monkeypatch):
     bot.main()
     
     mock_app.add_handler.assert_called()
-    assert mock_app.add_handler.call_count == 14
+    assert mock_app.add_handler.call_count == 15
     mock_app.run_polling.assert_called_once()
 
 @pytest.mark.asyncio
@@ -69,7 +69,7 @@ async def test_post_init():
     mock_app.bot.set_my_commands.assert_called_once()
     args, kwargs = mock_app.bot.set_my_commands.call_args
     commands = args[0]
-    assert len(commands) == 10
+    assert len(commands) == 12
     assert commands[0].command == "start"
     assert commands[1].command == "help"
     assert commands[2].command == "add"
@@ -80,6 +80,8 @@ async def test_post_init():
     assert commands[7].command == "clear"
     assert commands[8].command == "cancel"
     assert commands[9].command == "quick"
+    assert commands[10].command == "google_login"
+    assert commands[11].command == "google_logout"
     
     mock_app.bot.set_chat_menu_button.assert_called_once()
     menu_kwargs = mock_app.bot.set_chat_menu_button.call_args[1]
@@ -856,5 +858,112 @@ async def test_quick_sentence_input_invalid():
     assert res == bot.QUICK_SENTENCE
     update.message.reply_html.assert_called_once()
     assert "could not parse" in update.message.reply_html.call_args[0][0].lower()
+
+
+@pytest.mark.asyncio
+@patch("bot.sheets.get_authorization_url")
+@patch("bot.db.get_user_config")
+async def test_google_login_start(mock_get_config, mock_get_url):
+    mock_get_config.return_value = None
+    mock_get_url.return_value = ("https://mock-auth-url", "state123")
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.effective_user = MagicMock()
+    update.effective_user.id = 12345
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+
+    state = await bot.google_login_start(update, context)
+    assert state == bot.GOOGLE_AUTH_CODE
+    update.message.reply_html.assert_called_once()
+    assert "https://mock-auth-url" in update.message.reply_html.call_args[0][0]
+
+
+@pytest.mark.asyncio
+@patch("bot.db.get_user_config")
+@patch("bot.sheets.get_authorization_url")
+async def test_google_login_start_already_authenticated(mock_get_url, mock_get_config):
+    mock_get_config.return_value = {"google_credentials": '{"token": "xyz"}'}
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.effective_user = MagicMock()
+    update.effective_user.id = 12345
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+
+    state = await bot.google_login_start(update, context)
+    assert state == bot.ConversationHandler.END
+    update.message.reply_html.assert_called_once()
+    assert "already authorized" in update.message.reply_html.call_args[0][0].lower()
+
+
+@pytest.mark.asyncio
+@patch("bot.sheets.exchange_code_for_credentials")
+@patch("bot.db.set_user_credentials")
+@patch("bot.db.get_user_config")
+@patch("bot.db.set_user_spreadsheet")
+@patch("bot.sheets.export_data_to_sheets")
+@patch("bot.db.get_all_transactions")
+@patch("bot.db.get_summaries")
+async def test_google_login_code_success(
+    mock_summaries, mock_tx, mock_export, mock_set_sheet, mock_get_config, mock_set_creds, mock_exchange
+):
+    mock_exchange.return_value = '{"token": "mock_token"}'
+    # First get_user_config returns None spreadsheet_id, second returns new_sheet_123
+    mock_get_config.side_effect = [
+        {"google_credentials": '{"token": "mock_token"}', "spreadsheet_id": None},
+        {"google_credentials": '{"token": "mock_token"}', "spreadsheet_id": "new_sheet_123"}
+    ]
+    mock_export.return_value = "https://docs.google.com/spreadsheets/d/new_sheet_123"
+    
+    mock_tx.return_value = []
+    mock_summaries.return_value = []
+
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.message.text = "valid_auth_code_123"
+    update.effective_user = MagicMock()
+    update.effective_user.id = 12345
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+
+    state = await bot.google_login_code(update, context)
+    assert state == bot.ConversationHandler.END
+    mock_exchange.assert_called_once_with("valid_auth_code_123")
+    mock_set_creds.assert_called_once_with(config.DATABASE_PATH, 12345, '{"token": "mock_token"}')
+    update.message.reply_html.assert_called()
+    assert "authenticated successfully" in update.message.reply_html.call_args_list[0][0][0].lower()
+
+
+@pytest.mark.asyncio
+@patch("bot.sheets.exchange_code_for_credentials")
+async def test_google_login_code_invalid(mock_exchange):
+    mock_exchange.side_effect = Exception("Invalid code")
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.message.text = "invalid_code"
+    update.effective_user = MagicMock()
+    update.effective_user.id = 12345
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+
+    state = await bot.google_login_code(update, context)
+    assert state == bot.GOOGLE_AUTH_CODE
+    update.message.reply_html.assert_called_once()
+    assert "failed" in update.message.reply_html.call_args[0][0].lower()
+
+
+@pytest.mark.asyncio
+async def test_google_login_cancel():
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+
+    state = await bot.google_login_cancel(update, context)
+    assert state == bot.ConversationHandler.END
+    update.message.reply_html.assert_called_once()
+    assert "cancelled" in update.message.reply_html.call_args[0][0].lower()
+
 
 

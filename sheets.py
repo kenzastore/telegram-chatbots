@@ -76,13 +76,14 @@ def export_data_to_sheets(
     transactions: list,
     weekly_summary: list,
     monthly_summary: list,
-    spreadsheet_id: str = None
+    spreadsheet_id: str = None,
+    user_credentials_str: str = None
 ) -> str:
     """Exports transaction history and summaries to a Google Spreadsheet.
 
-    Authenticates using the Google Service Account credentials file. If
-    spreadsheet_id is provided, updates that existing sheet. Otherwise,
-    creates a new sheet and shares it with 'anyone with link' (role=reader).
+    Authenticates using the Google Service Account credentials file or user OAuth2 credentials.
+    If spreadsheet_id is provided, updates that existing sheet. Otherwise,
+    creates a new sheet.
 
     Args:
         credentials_file: Path to Google Service Account credentials JSON file.
@@ -90,31 +91,37 @@ def export_data_to_sheets(
         weekly_summary: List of weekly summary dicts to write.
         monthly_summary: List of monthly summary dicts to write.
         spreadsheet_id: Optional ID of an existing spreadsheet.
+        user_credentials_str: Optional JSON serialized user OAuth2 credentials.
 
     Returns:
         The URL of the Google Spreadsheet.
 
     Raises:
-        ValueError: If credentials_file is not configured.
-        FileNotFoundError: If credentials_file does not exist.
+        ValueError: If credentials_file is not configured (when user_credentials_str is not provided).
+        FileNotFoundError: If credentials_file does not exist (when user_credentials_str is not provided).
     """
-    if not credentials_file:
-        raise ValueError(
-            "Google Service Account credentials file path is not configured."
-        )
-    if not os.path.exists(credentials_file):
-        raise FileNotFoundError(
-            f"Google Service Account credentials file not found at: "
-            f"{credentials_file}"
-        )
+    if user_credentials_str:
+        import json
+        creds_info = json.loads(user_credentials_str)
+        creds = Credentials.from_authorized_user_info(creds_info)
+    else:
+        if not credentials_file:
+            raise ValueError(
+                "Google Service Account credentials file path is not configured."
+            )
+        if not os.path.exists(credentials_file):
+            raise FileNotFoundError(
+                f"Google Service Account credentials file not found at: "
+                f"{credentials_file}"
+            )
 
-    creds = service_account.Credentials.from_service_account_file(
-        credentials_file,
-        scopes=[
-            'https://www.googleapis.com/auth/spreadsheets',
-            'https://www.googleapis.com/auth/drive.file'
-        ]
-    )
+        creds = service_account.Credentials.from_service_account_file(
+            credentials_file,
+            scopes=[
+                'https://www.googleapis.com/auth/spreadsheets',
+                'https://www.googleapis.com/auth/drive.file'
+            ]
+        )
     
     # Initialize the APIs
     sheets_service = build('sheets', 'v4', credentials=creds)
@@ -125,9 +132,10 @@ def export_data_to_sheets(
     
     if not spreadsheet_id:
         is_new = True
+        title = 'Savings & Transaction Bot Export' if user_credentials_str else f'Finance Bot Export - {today_str}'
         spreadsheet_body = {
             'properties': {
-                'title': f'Finance Bot Export - {today_str}'
+                'title': title
             }
         }
         spreadsheet = sheets_service.spreadsheets().create(
@@ -233,8 +241,8 @@ def export_data_to_sheets(
             body={"values": summary_rows}
         ).execute()
         
-    # 4. Set sharing permission to "anyone with the link can view" (only for new spreadsheets)
-    if is_new:
+    # 4. Set sharing permission to "anyone with the link can view" (only for new spreadsheets and not using user credentials)
+    if is_new and not user_credentials_str:
         drive_service.permissions().create(
             fileId=spreadsheet_id,
             body={
