@@ -30,7 +30,7 @@ Users can log transactions through interactive chat conversations or single-comm
 6. **Clearing Transactions (`/clear`)**:
    - Initiates an interactive selection menu (Recent, ID, Week, Month) with double-confirmation confirmation prompts to delete transactions, recalculating balances.
 7. **Google Sheets Export**:
-   - Allows exporting transaction logs and summaries into separate worksheets grouped dynamically by calendar month (e.g., `YYYY-MM Transactions` and `YYYY-MM Summaries`) within the Google Spreadsheet.
+   - Allows users to connect their Google accounts via OAuth2 and export transaction logs and summaries into separate worksheets grouped dynamically by calendar month (e.g., `YYYY-MM Transactions` and `YYYY-MM Summaries`) within a dynamically created spreadsheet in their own Google Drive.
 8. **Quick Add (`/quick`)**:
    - **Trigger**: User types `/quick <sentence>`.
    - **Inputs**: A single natural language sentence (supports both English and Indonesian) containing transaction type, amount (with multipliers), date (today, yesterday, etc.), and description.
@@ -54,6 +54,8 @@ The chatbot stores records in a relational database with the following fields:
 * `/view` - View recent transaction history.
 * `/summary` - View financial summaries (weekly/monthly).
 * `/balance` - Retrieve current running balance.
+* `/google_login` - Connect Google account for sheets export.
+* `/google_logout` - Disconnect Google account.
 * `/help` - Show command usage guide and descriptions.
 
 ## Technology Stack
