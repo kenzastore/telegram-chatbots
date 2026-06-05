@@ -14,6 +14,13 @@ def init_db(db_path):
             balance_after REAL NOT NULL
         )
     """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_configs (
+            user_id INTEGER PRIMARY KEY,
+            spreadsheet_id TEXT,
+            google_credentials TEXT
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -317,4 +324,68 @@ def clear_transactions(db_path: str, choice: str, param: str = None) -> int:
         recalculate_balances(db_path)
 
     return deleted_count
+
+
+def get_user_config(db_path, user_id):
+    """Retrieves the configuration for a specific user ID, or None."""
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT user_id, spreadsheet_id, google_credentials
+        FROM user_configs
+        WHERE user_id = ?
+    """, (user_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def set_user_credentials(db_path, user_id, credentials_str):
+    """Saves or updates Google credentials for a user ID."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM user_configs WHERE user_id = ?", (user_id,))
+    if cursor.fetchone():
+        cursor.execute("""
+            UPDATE user_configs
+            SET google_credentials = ?
+            WHERE user_id = ?
+        """, (credentials_str, user_id))
+    else:
+        cursor.execute("""
+            INSERT INTO user_configs (user_id, google_credentials)
+            VALUES (?, ?)
+        """, (user_id, credentials_str))
+    conn.commit()
+    conn.close()
+
+
+def set_user_spreadsheet(db_path, user_id, spreadsheet_id):
+    """Saves or updates Google spreadsheet ID for a user ID."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM user_configs WHERE user_id = ?", (user_id,))
+    if cursor.fetchone():
+        cursor.execute("""
+            UPDATE user_configs
+            SET spreadsheet_id = ?
+            WHERE user_id = ?
+        """, (spreadsheet_id, user_id))
+    else:
+        cursor.execute("""
+            INSERT INTO user_configs (user_id, spreadsheet_id)
+            VALUES (?, ?)
+        """, (user_id, spreadsheet_id))
+    conn.commit()
+    conn.close()
+
+
+def clear_user_config(db_path, user_id):
+    """Clears the configuration for a user ID."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM user_configs WHERE user_id = ?", (user_id,))
+    conn.commit()
+    conn.close()
 

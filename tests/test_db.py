@@ -18,6 +18,9 @@ def test_init_db(temp_db):
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='transactions'")
     table = cursor.fetchone()
     assert table is not None
+    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='user_configs'")
+    table_configs = cursor.fetchone()
+    assert table_configs is not None
     conn.close()
 
 def test_add_transaction(temp_db):
@@ -222,4 +225,34 @@ def test_clear_transactions_month(temp_db):
     assert db.get_transaction(temp_db, id2) is None
     assert db.get_transaction(temp_db, id1) is not None
     assert db.get_balance(temp_db) == 100.0
+
+
+def test_user_config_helpers(temp_db):
+    user_id = 123456
+    
+    # Init state: config should be empty
+    config_empty = db.get_user_config(temp_db, user_id)
+    assert config_empty is None
+    
+    # Store credentials
+    creds_json = '{"token": "xyz", "refresh_token": "abc"}'
+    db.set_user_credentials(temp_db, user_id, creds_json)
+    
+    config_after_creds = db.get_user_config(temp_db, user_id)
+    assert config_after_creds is not None
+    assert config_after_creds["google_credentials"] == creds_json
+    assert config_after_creds["spreadsheet_id"] is None
+    
+    # Store spreadsheet
+    sheet_id = "sheet_123_abc"
+    db.set_user_spreadsheet(temp_db, user_id, sheet_id)
+    
+    config_after_sheet = db.get_user_config(temp_db, user_id)
+    assert config_after_sheet is not None
+    assert config_after_sheet["google_credentials"] == creds_json
+    assert config_after_sheet["spreadsheet_id"] == sheet_id
+    
+    # Clear config
+    db.clear_user_config(temp_db, user_id)
+    assert db.get_user_config(temp_db, user_id) is None
 
