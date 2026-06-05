@@ -14,7 +14,7 @@
     - [x] Run tests and verify they pass (Green Phase).
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Database Setup and Google OAuth Helper Functions' (Protocol in workflow.md)
 
-## Phase 2: Telegram Bot Flow Integration and Logout Command [checkpoint: ]
+## Phase 2: Telegram Bot Flow Integration and Logout Command [checkpoint: 51fcc89]
 
 - [x] Task: Implement auth prompt & code submission conversation flow (fb343e8)
     - [x] Write integration tests for auth prompt flow, handling invalid codes, and cancellation.
@@ -29,4 +29,4 @@
     - [x] Write tests for `/google_logout` validating DB cleanup and message responses.
     - [x] Implement `google_logout` handler in `bot.py` to remove DB credentials and spreadsheet ID and revoke tokens if possible.
     - [x] Run tests and verify they pass (Green Phase).
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Telegram Bot Flow Integration and Logout Command' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Telegram Bot Flow Integration and Logout Command' (Protocol in workflow.md)
