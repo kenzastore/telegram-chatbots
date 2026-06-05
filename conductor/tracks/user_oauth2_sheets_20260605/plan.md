@@ -25,8 +25,8 @@
     - [x] Write integration tests for `export_sheets_callback` verifying it checks login status, prompts if unauthenticated, and uses custom spreadsheets.
     - [x] Modify `export_sheets_callback` in `bot.py` to check user credentials in the DB. If missing, redirect to auth flow. If present, retrieve sheets service, check for saved `spreadsheet_id`, dynamically create a new sheet if missing, and perform the export.
     - [x] Run tests and verify they pass (Green Phase).
-- [ ] Task: Implement /google_logout command
-    - [ ] Write tests for `/google_logout` validating DB cleanup and message responses.
-    - [ ] Implement `google_logout` handler in `bot.py` to remove DB credentials and spreadsheet ID and revoke tokens if possible.
-    - [ ] Run tests and verify they pass (Green Phase).
+- [x] Task: Implement /google_logout command (7809482)
+    - [x] Write tests for `/google_logout` validating DB cleanup and message responses.
+    - [x] Implement `google_logout` handler in `bot.py` to remove DB credentials and spreadsheet ID and revoke tokens if possible.
+    - [x] Run tests and verify they pass (Green Phase).
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Telegram Bot Flow Integration and Logout Command' (Protocol in workflow.md)
