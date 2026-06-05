@@ -7,11 +7,11 @@
     - [x] Update `init_db` in `db.py` to create the `user_configs` table containing `user_id` (PRIMARY KEY), `spreadsheet_id`, and `google_credentials`.
     - [x] Implement helpers: `get_user_config(db_path, user_id)`, `set_user_credentials(db_path, user_id, credentials_str)`, `set_user_spreadsheet(db_path, user_id, spreadsheet_id)`, and `clear_user_config(db_path, user_id)`.
     - [x] Run tests and verify they pass (Green Phase).
-- [ ] Task: Implement Google OAuth2 helper functions
-    - [ ] Write failing unit tests for authorization URL generation and token exchange in `tests/test_sheets.py` (or similar).
-    - [ ] Implement `get_authorization_url()` and `exchange_code_for_credentials(auth_code)` in `sheets.py`.
-    - [ ] Implement a helper `get_user_sheets_service(user_credentials_str)` to instantiate the Google Sheets/Drive client using user credentials.
-    - [ ] Run tests and verify they pass (Green Phase).
+- [x] Task: Implement Google OAuth2 helper functions (b1e8b88)
+    - [x] Write failing unit tests for authorization URL generation and token exchange in `tests/test_sheets.py` (or similar).
+    - [x] Implement `get_authorization_url()` and `exchange_code_for_credentials(auth_code)` in `sheets.py`.
+    - [x] Implement a helper `get_user_sheets_service(user_credentials_str)` to instantiate the Google Sheets/Drive client using user credentials.
+    - [x] Run tests and verify they pass (Green Phase).
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Database Setup and Google OAuth Helper Functions' (Protocol in workflow.md)
 
 ## Phase 2: Telegram Bot Flow Integration and Logout Command [checkpoint: ]
