@@ -34,5 +34,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Google OAuth2 Authentication and Dynamic Sheets Creation**
+- [x] **Track: Google OAuth2 Authentication and Dynamic Sheets Creation**
   *Link: [./tracks/user_oauth2_sheets_20260605/](./tracks/user_oauth2_sheets_20260605/)*
