@@ -10,10 +10,10 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Database Multi-User Schema Migration' (Protocol in workflow.md) [50fcf4c]
 
 ## Phase 2: Mandatory Google Login Gate & Bot Scoping
-- [ ] Task: Implement Authentication Middleware/Gate in Telegram Bot
-    - [ ] Write tests in `tests/test_bot.py` verifying that commands sent by an unauthenticated user (other than `/start`, `/help`, `/google_login`, `/cancel`) are intercepted and blocked with a login prompt.
-    - [ ] Implement an authentication check gate in `bot.py` to block commands and prompt for Google login if the user has no Google credentials in the database.
-- [ ] Task: Update Bot Command Handlers to Pass `user_id` to DB
-    - [ ] Update tests in `tests/test_bot.py` to verify commands operate on the current user's isolated data.
-    - [ ] Update bot handlers (like `/add`, `/quick`, `/balance`, `/view`, `/summary`, `/edit`, `/clear`) to retrieve the user's Telegram ID and pass it to the scoped database helper functions.
+- [x] Task: Implement Authentication Middleware/Gate in Telegram Bot [b161273]
+    - [x] Write tests in `tests/test_bot.py` verifying that commands sent by an unauthenticated user (other than `/start`, `/help`, `/google_login`, `/cancel`) are intercepted and blocked with a login prompt.
+    - [x] Implement an authentication check gate in `bot.py` to block commands and prompt for Google login if the user has no Google credentials in the database.
+- [x] Task: Update Bot Command Handlers to Pass `user_id` to DB [b161273]
+    - [x] Update tests in `tests/test_bot.py` to verify commands operate on the current user's isolated data.
+    - [x] Update bot handlers (like `/add`, `/quick`, `/balance`, `/view`, `/summary`, `/edit`, `/clear`) to retrieve the user's Telegram ID and pass it to the scoped database helper functions.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Mandatory Google Login Gate & Bot Scoping' (Protocol in workflow.md)
