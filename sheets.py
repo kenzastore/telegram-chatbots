@@ -6,7 +6,7 @@ from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 
 def get_authorization_url() -> tuple:
-    """Generates a Google OAuth2 authorization URL and returns it along with state."""
+    """Generates a Google OAuth2 authorization URL and returns it along with state and code_verifier."""
     import config
     client_config = {
         "web": {
@@ -30,9 +30,9 @@ def get_authorization_url() -> tuple:
         access_type='offline',
         include_granted_scopes='true'
     )
-    return authorization_url, state
+    return authorization_url, state, flow.code_verifier
 
-def exchange_code_for_credentials(auth_code: str) -> str:
+def exchange_code_for_credentials(auth_code: str, code_verifier: str = None) -> str:
     """Exchanges an authorization code for credentials (JSON string)."""
     import config
     client_config = {
@@ -53,7 +53,7 @@ def exchange_code_for_credentials(auth_code: str) -> str:
         ],
         redirect_uri=redirect_uri
     )
-    flow.fetch_token(code=auth_code)
+    flow.fetch_token(code=auth_code, code_verifier=code_verifier)
     return flow.credentials.to_json()
 
 def get_user_sheets_service(user_credentials_str: str):

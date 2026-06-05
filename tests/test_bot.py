@@ -877,7 +877,7 @@ async def test_quick_sentence_input_invalid():
 @patch("bot.db.get_user_config")
 async def test_google_login_start(mock_get_config, mock_get_url):
     mock_get_config.return_value = None
-    mock_get_url.return_value = ("https://mock-auth-url", "state123")
+    mock_get_url.return_value = ("https://mock-auth-url", "state123", "verifier123")
     update = MagicMock(spec=Update)
     update.message = AsyncMock()
     update.effective_user = MagicMock()
@@ -887,6 +887,7 @@ async def test_google_login_start(mock_get_config, mock_get_url):
 
     state = await bot.google_login_start(update, context)
     assert state == bot.GOOGLE_AUTH_CODE
+    assert context.user_data.get("code_verifier") == "verifier123"
     update.message.reply_html.assert_called_once()
     assert "https://mock-auth-url" in update.message.reply_html.call_args[0][0]
 
@@ -937,11 +938,11 @@ async def test_google_login_code_success(
     update.effective_user = MagicMock()
     update.effective_user.id = 12345
     context = MagicMock(spec=CallbackContext)
-    context.user_data = {}
+    context.user_data = {"code_verifier": "verifier123"}
 
     state = await bot.google_login_code(update, context)
     assert state == bot.ConversationHandler.END
-    mock_exchange.assert_called_once_with("valid_auth_code_123")
+    mock_exchange.assert_called_once_with("valid_auth_code_123", "verifier123")
     mock_set_creds.assert_called_once_with(config.DATABASE_PATH, 12345, '{"token": "mock_token"}')
     update.message.reply_html.assert_called()
     assert "authenticated successfully" in update.message.reply_html.call_args_list[0][0][0].lower()
@@ -1016,7 +1017,7 @@ async def test_export_sheets_callback_unauthenticated(
     mock_get_url, mock_get_config
 ):
     mock_get_config.return_value = None
-    mock_get_url.return_value = ("https://mock-auth-url", "state123")
+    mock_get_url.return_value = ("https://mock-auth-url", "state123", "verifier123")
 
     update = MagicMock(spec=Update)
     update.callback_query = AsyncMock()
@@ -1028,6 +1029,7 @@ async def test_export_sheets_callback_unauthenticated(
 
     res = await bot.export_sheets_callback(update, context)
     assert res == bot.GOOGLE_AUTH_CODE
+    assert context.user_data.get("code_verifier") == "verifier123"
     update.callback_query.answer.assert_called_once()
     update.callback_query.edit_message_text.assert_called_once()
     assert "https://mock-auth-url" in update.callback_query.edit_message_text.call_args[0][0]

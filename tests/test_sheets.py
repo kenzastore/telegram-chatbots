@@ -236,11 +236,13 @@ def test_export_data_to_sheets_monthly_tabs(mock_exists, mock_build, mock_from_f
 def test_get_authorization_url(mock_from_client_config):
     mock_flow = MagicMock()
     mock_flow.authorization_url.return_value = ("https://accounts.google.com/o/oauth2/auth?xyz", "state123")
+    mock_flow.code_verifier = "verifier123"
     mock_from_client_config.return_value = mock_flow
 
-    url, state = sheets.get_authorization_url()
+    url, state, verifier = sheets.get_authorization_url()
     assert url.startswith("https://accounts.google.com")
     assert state == "state123"
+    assert verifier == "verifier123"
 
 
 @patch("sheets.Flow.from_client_config")
@@ -251,9 +253,9 @@ def test_exchange_code_for_credentials(mock_from_client_config):
     mock_flow.credentials = mock_creds
     mock_from_client_config.return_value = mock_flow
 
-    creds_json = sheets.exchange_code_for_credentials("my_auth_code")
+    creds_json = sheets.exchange_code_for_credentials("my_auth_code", "verifier123")
     assert creds_json == '{"token": "my_access_token"}'
-    mock_flow.fetch_token.assert_called_once_with(code="my_auth_code")
+    mock_flow.fetch_token.assert_called_once_with(code="my_auth_code", code_verifier="verifier123")
 
 
 @patch("sheets.Credentials.from_authorized_user_info")

@@ -848,7 +848,8 @@ async def google_login_start(
         return ConversationHandler.END
 
     try:
-        url, _ = sheets.get_authorization_url()
+        url, _, verifier = sheets.get_authorization_url()
+        context.user_data["code_verifier"] = verifier
         await update.message.reply_html(
             "To connect your Google account, please click the link below, authorize the application, "
             "and copy the authorization code.\n\n"
@@ -871,7 +872,8 @@ async def google_login_code(
     user_id = update.effective_user.id
     auth_code = update.message.text.strip()
     try:
-        creds_json = sheets.exchange_code_for_credentials(auth_code)
+        verifier = context.user_data.pop("code_verifier", None)
+        creds_json = sheets.exchange_code_for_credentials(auth_code, verifier)
         db.set_user_credentials(config.DATABASE_PATH, user_id, creds_json)
         await update.message.reply_html(
             "✅ Authenticated successfully! Your Google Account is now connected.\n"
@@ -983,7 +985,8 @@ async def export_sheets_callback(
     if not config_data or not config_data.get("google_credentials"):
         # Not authenticated: prompt user for Google login
         try:
-            url, _ = sheets.get_authorization_url()
+            url, _, verifier = sheets.get_authorization_url()
+            context.user_data["code_verifier"] = verifier
             await query.edit_message_text(
                 "🔑 You are not authenticated to export to Google Sheets.\n\n"
                 "Please click the link below to authorize the application, "
