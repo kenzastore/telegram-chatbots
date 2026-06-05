@@ -2,11 +2,11 @@
 
 ## Phase 1: Database Setup and Google OAuth Helper Functions [checkpoint: ]
 
-- [ ] Task: Create database tables and helpers
-    - [ ] Write failing unit tests for new DB configuration functions in `tests/test_db.py` (or `tests/test_bot.py`).
-    - [ ] Update `init_db` in `db.py` to create the `user_configs` table containing `user_id` (PRIMARY KEY), `spreadsheet_id`, and `google_credentials`.
-    - [ ] Implement helpers: `get_user_config(db_path, user_id)`, `set_user_credentials(db_path, user_id, credentials_str)`, `set_user_spreadsheet(db_path, user_id, spreadsheet_id)`, and `clear_user_config(db_path, user_id)`.
-    - [ ] Run tests and verify they pass (Green Phase).
+- [x] Task: Create database tables and helpers (db34273)
+    - [x] Write failing unit tests for new DB configuration functions in `tests/test_db.py` (or `tests/test_bot.py`).
+    - [x] Update `init_db` in `db.py` to create the `user_configs` table containing `user_id` (PRIMARY KEY), `spreadsheet_id`, and `google_credentials`.
+    - [x] Implement helpers: `get_user_config(db_path, user_id)`, `set_user_credentials(db_path, user_id, credentials_str)`, `set_user_spreadsheet(db_path, user_id, spreadsheet_id)`, and `clear_user_config(db_path, user_id)`.
+    - [x] Run tests and verify they pass (Green Phase).
 - [ ] Task: Implement Google OAuth2 helper functions
     - [ ] Write failing unit tests for authorization URL generation and token exchange in `tests/test_sheets.py` (or similar).
     - [ ] Implement `get_authorization_url()` and `exchange_code_for_credentials(auth_code)` in `sheets.py`.
