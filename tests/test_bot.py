@@ -5,6 +5,13 @@ from telegram.ext import CallbackContext, Application
 
 import bot
 import config
+import db
+
+@pytest.fixture(autouse=True)
+def setup_test_db(monkeypatch, tmp_path):
+    test_db = str(tmp_path / "test_finance.db")
+    monkeypatch.setattr(config, "DATABASE_PATH", test_db)
+    db.init_db(test_db)
 
 @pytest.mark.asyncio
 async def test_start_command():
@@ -180,7 +187,7 @@ async def test_add_date_today(monkeypatch):
     mock_add.assert_called_once()
     args, kwargs = mock_add.call_args
     from datetime import datetime
-    assert args[1] == datetime.now().strftime("%Y-%m-%d")
+    assert args[2] == datetime.now().strftime("%Y-%m-%d")
     
     update.callback_query.edit_message_text.assert_called_once()
     kwargs = update.callback_query.edit_message_text.call_args.kwargs
@@ -211,7 +218,7 @@ async def test_add_date_manual(monkeypatch):
     assert state == ConversationHandler.END
     mock_add.assert_called_once()
     args, kwargs = mock_add.call_args
-    assert args[1] == "2026-05-15"
+    assert args[2] == "2026-05-15"
     
     update.message.reply_html.assert_called_once()
     args, kwargs = update.message.reply_html.call_args
@@ -414,7 +421,7 @@ async def test_export_sheets_callback_success(monkeypatch):
     monkeypatch.setattr(db, "get_all_transactions", MagicMock(return_value=[
         {"id": 1, "date": "2026-06-04", "amount": 10.0, "description": "Test", "type": "credit", "balance_after": 10.0}
     ]))
-    monkeypatch.setattr(db, "get_summaries", MagicMock(side_effect=lambda db_path, period: [
+    monkeypatch.setattr(db, "get_summaries", MagicMock(side_effect=lambda *args, **kwargs: [
         {"description": "Test", "type": "credit", "total": 10.0}
     ]))
     
@@ -589,6 +596,8 @@ async def test_edit_confirm(monkeypatch):
     update = MagicMock(spec=Update)
     update.callback_query = AsyncMock()
     update.callback_query.data = "confirm"
+    update.effective_user = MagicMock()
+    update.effective_user.id = 12345
     context = MagicMock(spec=CallbackContext)
     context.bot = AsyncMock()
     context.user_data = {
@@ -607,7 +616,7 @@ async def test_edit_confirm(monkeypatch):
     from telegram.ext import ConversationHandler
     state = await bot.edit_confirm(update, context)
     assert state == ConversationHandler.END
-    mock_update.assert_called_once_with(config.DATABASE_PATH, 1, "2026-06-02", 50.0, "Salary", "debit")
+    mock_update.assert_called_once_with(config.DATABASE_PATH, 12345, 1, "2026-06-02", 50.0, "Salary", "debit")
     update.callback_query.edit_message_text.assert_called_once()
     assert "successfully updated" in update.callback_query.edit_message_text.call_args[0][0].lower()
     context.bot.send_message.assert_called_once()
@@ -674,6 +683,8 @@ async def test_clear_confirm_yes(monkeypatch):
     update = MagicMock(spec=Update)
     update.callback_query = AsyncMock()
     update.callback_query.data = "clear_confirm"
+    update.effective_user = MagicMock()
+    update.effective_user.id = 12345
     context = MagicMock(spec=CallbackContext)
     context.bot = AsyncMock()
     context.user_data = {
@@ -689,7 +700,7 @@ async def test_clear_confirm_yes(monkeypatch):
     from telegram.ext import ConversationHandler
     state = await bot.clear_confirm_callback(update, context)
     assert state == ConversationHandler.END
-    mock_clear.assert_called_once_with(config.DATABASE_PATH, "week", None)
+    mock_clear.assert_called_once_with(config.DATABASE_PATH, 12345, "week", None)
     update.callback_query.edit_message_text.assert_called_once()
     assert "deleted 3 transaction" in update.callback_query.edit_message_text.call_args[0][0].lower()
     context.bot.send_message.assert_called_once()
@@ -798,6 +809,8 @@ async def test_quick_confirm_callback(monkeypatch):
     update = MagicMock(spec=Update)
     update.callback_query = AsyncMock()
     update.callback_query.data = "quick_confirm"
+    update.effective_user = MagicMock()
+    update.effective_user.id = 12345
     context = MagicMock(spec=CallbackContext)
     context.bot = AsyncMock()
     context.user_data = {
@@ -817,7 +830,7 @@ async def test_quick_confirm_callback(monkeypatch):
     
     await bot.quick_confirm_callback(update, context)
     
-    mock_add.assert_called_once_with(config.DATABASE_PATH, "2026-06-04", 50000.0, "lunch", "debit")
+    mock_add.assert_called_once_with(config.DATABASE_PATH, 12345, "2026-06-04", 50000.0, "lunch", "debit")
     update.callback_query.edit_message_text.assert_called_once()
     assert "saved successfully" in update.callback_query.edit_message_text.call_args[0][0].lower()
     context.bot.send_message.assert_called_once()
@@ -1073,6 +1086,34 @@ async def test_google_logout_not_logged_in(mock_get_config):
     await bot.google_logout_command(update, context)
     update.message.reply_html.assert_called_once()
     assert "not currently authorized" in update.message.reply_html.call_args[0][0].lower()
+
+
+@pytest.mark.asyncio
+@patch("bot.db.get_user_config")
+async def test_commands_blocked_when_unauthenticated(mock_get_config):
+    mock_get_config.return_value = None  # Unauthenticated
+    
+    # 1. Test add_start is blocked
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.effective_user = MagicMock()
+    update.effective_user.id = 12345
+    context = MagicMock(spec=CallbackContext)
+    
+    state = await bot.add_start(update, context)
+    assert state == bot.ConversationHandler.END
+    update.message.reply_html.assert_called_once()
+    assert "must connect your Google account" in update.message.reply_html.call_args[0][0]
+    
+    # 2. Test balance_command is blocked
+    update_bal = MagicMock(spec=Update)
+    update_bal.message = AsyncMock()
+    update_bal.effective_user = MagicMock()
+    update_bal.effective_user.id = 12345
+    
+    await bot.balance_command(update_bal, context)
+    update_bal.message.reply_html.assert_called_once()
+    assert "must connect your Google account" in update_bal.message.reply_html.call_args[0][0]
 
 
 

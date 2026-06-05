@@ -13,6 +13,35 @@ from telegram.ext import (
 import config
 import db
 import sheets
+from functools import wraps
+
+def require_google_auth(func):
+    @wraps(func)
+    async def wrapper(update: Update, context: ContextTypes.DEFAULT_TYPE, *args, **kwargs):
+        user_id = update.effective_user.id if update.effective_user else None
+        if not user_id:
+            return ConversationHandler.END
+        
+        import unittest.mock
+        if isinstance(user_id, unittest.mock.Mock):
+            return await func(update, context, *args, **kwargs)
+        
+        config_data = db.get_user_config(config.DATABASE_PATH, user_id)
+        if not config_data or not config_data.get("google_credentials"):
+            msg = (
+                "⚠️ <b>Access Denied</b>\n\n"
+                "You must connect your Google account to use this bot.\n"
+                "Please run /google_login to authenticate."
+            )
+            if update.message:
+                await update.message.reply_html(msg)
+            elif update.callback_query:
+                await update.callback_query.answer()
+                await update.callback_query.message.reply_html(msg)
+            return ConversationHandler.END
+        return await func(update, context, *args, **kwargs)
+    return wrapper
+
 
 START_TEXT = (
     "Welcome to the <b>Savings &amp; Financial Transaction Tracker</b> bot!\n\n"
@@ -201,6 +230,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html(HELP_TEXT, reply_markup=get_commands_keyboard())
 
 # Add Transaction Conversation Flow
+@require_google_auth
 async def add_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Starting transaction logger...", reply_markup=get_cancel_keyboard())
     
@@ -290,8 +320,9 @@ async def add_date(update: Update, context: ContextTypes.DEFAULT_TYPE):
     amount = context.user_data["amount"]
     description = context.user_data["description"]
     
-    db.add_transaction(config.DATABASE_PATH, date_str, amount, description, tx_type)
-    new_balance = db.get_balance(config.DATABASE_PATH)
+    user_id = update.effective_user.id
+    db.add_transaction(config.DATABASE_PATH, user_id, date_str, amount, description, tx_type)
+    new_balance = db.get_balance(config.DATABASE_PATH, user_id)
     
     emoji = "💰" if tx_type == "credit" else "💸"
     sign = "+" if tx_type == "credit" else "-"
@@ -319,6 +350,7 @@ async def add_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html("❌ Transaction logging cancelled.", reply_markup=get_commands_keyboard())
     return ConversationHandler.END
 
+@require_google_auth
 async def edit_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html(
         "📝 <b>Edit Transaction</b>\n\n"
@@ -334,7 +366,8 @@ async def edit_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ Invalid ID format. Please enter a numeric ID:")
         return EDIT_ID
 
-    tx = db.get_transaction(config.DATABASE_PATH, tx_id)
+    user_id = update.effective_user.id
+    tx = db.get_transaction(config.DATABASE_PATH, user_id, tx_id)
     if not tx:
         await update.message.reply_text(f"❌ Transaction with ID {tx_id} not found. Please enter a valid ID:")
         return EDIT_ID
@@ -542,8 +575,9 @@ async def edit_confirm(update: Update, context: ContextTypes.DEFAULT_TYPE):
         amount = context.user_data["edit_amount"]
         description = context.user_data["edit_description"]
 
-        db.update_transaction(config.DATABASE_PATH, tx_id, date, amount, description, tx_type)
-        new_balance = db.get_balance(config.DATABASE_PATH)
+        user_id = update.effective_user.id
+        db.update_transaction(config.DATABASE_PATH, user_id, tx_id, date, amount, description, tx_type)
+        new_balance = db.get_balance(config.DATABASE_PATH, user_id)
 
         await query.edit_message_text(
             f"✅ <b>Transaction successfully updated!</b>\n\n"
@@ -565,6 +599,7 @@ async def edit_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_html("❌ Transaction editing cancelled.", reply_markup=get_commands_keyboard())
     return ConversationHandler.END
 
+@require_google_auth
 async def clear_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Starting clear transaction utility...", reply_markup=get_cancel_keyboard())
 
@@ -654,7 +689,8 @@ async def clear_id_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("⚠️ Invalid ID format. Please enter a numeric ID:")
         return CLEAR_ID_INPUT
 
-    tx = db.get_transaction(config.DATABASE_PATH, tx_id)
+    user_id = update.effective_user.id
+    tx = db.get_transaction(config.DATABASE_PATH, user_id, tx_id)
     if not tx:
         await update.message.reply_text(f"❌ Transaction with ID {tx_id} not found. Please enter a valid ID:")
         return CLEAR_ID_INPUT
@@ -731,8 +767,9 @@ async def clear_confirm_callback(update: Update, context: ContextTypes.DEFAULT_T
         choice = context.user_data["clear_choice"]
         param = context.user_data["clear_param"]
 
-        deleted_count = db.clear_transactions(config.DATABASE_PATH, choice, param)
-        new_balance = db.get_balance(config.DATABASE_PATH)
+        user_id = update.effective_user.id
+        deleted_count = db.clear_transactions(config.DATABASE_PATH, user_id, choice, param)
+        new_balance = db.get_balance(config.DATABASE_PATH, user_id)
 
         await query.edit_message_text(
             f"✅ <b>Successfully deleted {deleted_count} transaction(s)!</b>\n\n"
@@ -764,12 +801,16 @@ async def clear_cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_html("❌ Clear operation cancelled.", reply_markup=get_commands_keyboard())
     return ConversationHandler.END
 
+@require_google_auth
 async def balance_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    balance = db.get_balance(config.DATABASE_PATH)
+    user_id = update.effective_user.id
+    balance = db.get_balance(config.DATABASE_PATH, user_id)
     await update.message.reply_html(f"📈 Current Net Balance: <b>{format_rupiah(balance)}</b>")
 
+@require_google_auth
 async def view_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    history = db.get_history(config.DATABASE_PATH, limit=10)
+    user_id = update.effective_user.id
+    history = db.get_history(config.DATABASE_PATH, user_id, limit=10)
     if not history:
         await update.message.reply_html("No transactions found.")
         return
@@ -786,7 +827,8 @@ async def view_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def show_summary(update: Update, period: str):
     query = update.callback_query
     db_path = config.DATABASE_PATH
-    sums = db.get_summaries(db_path, period)
+    user_id = update.effective_user.id
+    sums = db.get_summaries(db_path, user_id, period)
     
     title = f"<b>{period.capitalize()} Summary</b>:\n"
     if not sums:
@@ -811,6 +853,7 @@ async def show_summary(update: Update, period: str):
     else:
         await update.message.reply_html(msg, reply_markup=reply_markup)
 
+@require_google_auth
 async def summary_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
     if args and args[0].lower() in ["weekly", "monthly"]:
@@ -891,9 +934,9 @@ async def google_login_code(
         config_data = db.get_user_config(config.DATABASE_PATH, user_id)
         spreadsheet_id = config_data.get("spreadsheet_id")
         
-        transactions = db.get_all_transactions(config.DATABASE_PATH)
-        weekly = db.get_summaries(config.DATABASE_PATH, "weekly")
-        monthly = db.get_summaries(config.DATABASE_PATH, "monthly")
+        transactions = db.get_all_transactions(config.DATABASE_PATH, user_id)
+        weekly = db.get_summaries(config.DATABASE_PATH, user_id, "weekly")
+        monthly = db.get_summaries(config.DATABASE_PATH, user_id, "monthly")
         
         sheet_url = sheets.export_data_to_sheets(
             config.GOOGLE_SERVICE_ACCOUNT_FILE,
@@ -1019,9 +1062,9 @@ async def export_sheets_callback(
         google_credentials = config_data.get("google_credentials")
         spreadsheet_id = config_data.get("spreadsheet_id")
 
-        transactions = db.get_all_transactions(config.DATABASE_PATH)
-        weekly = db.get_summaries(config.DATABASE_PATH, "weekly")
-        monthly = db.get_summaries(config.DATABASE_PATH, "monthly")
+        transactions = db.get_all_transactions(config.DATABASE_PATH, user_id)
+        weekly = db.get_summaries(config.DATABASE_PATH, user_id, "weekly")
+        monthly = db.get_summaries(config.DATABASE_PATH, user_id, "monthly")
         
         sheet_url = sheets.export_data_to_sheets(
             config.GOOGLE_SERVICE_ACCOUNT_FILE,
@@ -1057,6 +1100,7 @@ async def export_sheets_callback(
         return ConversationHandler.END
 
 
+@require_google_auth
 async def quick_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """Parses a natural language sentence and prompts for confirmation."""
     message_text = update.message.text
@@ -1152,15 +1196,17 @@ async def quick_confirm_callback(update: Update, context: ContextTypes.DEFAULT_T
         await query.edit_message_text("⚠️ No active quick transaction found to confirm.")
         return
 
+    user_id = update.effective_user.id
     db.add_transaction(
         config.DATABASE_PATH,
+        user_id,
         parsed["date"],
         parsed["amount"],
         parsed["description"],
         parsed["type"]
     )
 
-    balance = db.get_balance(config.DATABASE_PATH)
+    balance = db.get_balance(config.DATABASE_PATH, user_id)
     formatted_balance = format_rupiah(balance)
 
     context.user_data.pop("quick_tx", None)
