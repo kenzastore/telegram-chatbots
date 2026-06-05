@@ -1,13 +1,13 @@
 # Implementation Plan - Google OAuth Mandatory Login and Multi-User Separation
 
-## Phase 1: Database Multi-User Schema Migration
+## Phase 1: Database Multi-User Schema Migration [checkpoint: 50fcf4c]
 - [x] Task: Add `user_id` column to `transactions` table and migrate existing records [10dcae2]
     - [x] Write unit tests verifying schema migration and fallback user ID mapping in database setup.
     - [x] Update `init_db` in `db.py` to add `user_id` to `transactions` table (gracefully using `ALTER TABLE ... ADD COLUMN` if already exists).
 - [x] Task: Refactor database functions for `user_id` scoping [1a915c4]
     - [x] Update tests in `tests/test_db.py` to pass `user_id` in database operations and check multi-user isolation (assert User A cannot see User B's data).
     - [x] Update all transaction DB helpers in `db.py` to accept `user_id` and filter/write queries using `user_id` scoping (e.g. `get_balance`, `add_transaction`, `get_all_transactions`, `get_summaries`, `clear_transactions`).
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Database Multi-User Schema Migration' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Database Multi-User Schema Migration' (Protocol in workflow.md) [50fcf4c]
 
 ## Phase 2: Mandatory Google Login Gate & Bot Scoping
 - [ ] Task: Implement Authentication Middleware/Gate in Telegram Bot
