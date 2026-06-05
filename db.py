@@ -36,16 +36,16 @@ def init_db(db_path):
     conn.commit()
     conn.close()
 
-def get_balance(db_path):
+def get_balance(db_path, user_id):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    cursor.execute("SELECT balance_after FROM transactions ORDER BY id DESC LIMIT 1")
+    cursor.execute("SELECT balance_after FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 1", (user_id,))
     row = cursor.fetchone()
     conn.close()
     return row[0] if row else 0.0
 
-def add_transaction(db_path, date, amount, description, tx_type):
-    current_balance = get_balance(db_path)
+def add_transaction(db_path, user_id, date, amount, description, tx_type):
+    current_balance = get_balance(db_path, user_id)
     if tx_type == "credit":
         new_balance = current_balance + amount
     elif tx_type == "debit":
@@ -56,32 +56,33 @@ def add_transaction(db_path, date, amount, description, tx_type):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("""
-        INSERT INTO transactions (date, amount, description, type, balance_after)
-        VALUES (?, ?, ?, ?, ?)
-    """, (date, amount, description, tx_type, new_balance))
+        INSERT INTO transactions (user_id, date, amount, description, type, balance_after)
+        VALUES (?, ?, ?, ?, ?, ?)
+    """, (user_id, date, amount, description, tx_type, new_balance))
     tx_id = cursor.lastrowid
     conn.commit()
     conn.close()
     return tx_id
 
-def get_history(db_path, limit=10):
+def get_history(db_path, user_id, limit=10):
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute("""
         SELECT id, date, amount, description, type, balance_after
         FROM transactions
+        WHERE user_id = ?
         ORDER BY date DESC, id DESC
         LIMIT ?
-    """, (limit,))
+    """, (user_id, limit))
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
 
 def get_summaries(
-    db_path: str, period: str = "weekly", year: int = None, month: int = None
+    db_path: str, user_id: int, period: str = "weekly", year: int = None, month: int = None
 ) -> list:
-    """Retrieves financial summaries grouped by description and type.
+    """Retrieves financial summaries grouped by description and type for a user.
 
     If period is 'weekly', retrieves aggregates for the last 7 days.
     If period is 'monthly', retrieves aggregates for the specified calendar month
@@ -89,6 +90,7 @@ def get_summaries(
 
     Args:
         db_path: Path to the SQLite database file.
+        user_id: The Telegram user ID.
         period: Summary period ('weekly' or 'monthly').
         year: Optional calendar year.
         month: Optional calendar month (1-12).
@@ -110,9 +112,9 @@ def get_summaries(
         cursor.execute("""
             SELECT description, type, SUM(amount) as total
             FROM transactions
-            WHERE date >= ?
+            WHERE user_id = ? AND date >= ?
             GROUP BY description, type
-        """, (start_str,))
+        """, (user_id, start_str))
     elif period == "monthly":
         if year is None or month is None:
             today = datetime.now()
@@ -122,9 +124,9 @@ def get_summaries(
         cursor.execute("""
             SELECT description, type, SUM(amount) as total
             FROM transactions
-            WHERE date LIKE ?
+            WHERE user_id = ? AND date LIKE ?
             GROUP BY description, type
-        """, (month_pattern,))
+        """, (user_id, month_pattern))
     else:
         conn.close()
         raise ValueError("Period must be 'weekly' or 'monthly'")
@@ -133,11 +135,12 @@ def get_summaries(
     conn.close()
     return [dict(row) for row in rows]
 
-def get_all_transactions(db_path: str) -> list:
-    """Retrieves all transactions from the database in chronological order.
+def get_all_transactions(db_path: str, user_id: int) -> list:
+    """Retrieves all transactions from the database for a user in chronological order.
 
     Args:
         db_path: Path to the SQLite database file.
+        user_id: The Telegram user ID.
 
     Returns:
         A list of dictionaries containing transaction details.
@@ -148,18 +151,20 @@ def get_all_transactions(db_path: str) -> list:
     cursor.execute("""
         SELECT id, date, amount, description, type, balance_after
         FROM transactions
+        WHERE user_id = ?
         ORDER BY date ASC, id ASC
-    """)
+    """, (user_id,))
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
 
 
-def get_transactions_by_month(db_path: str, year: int, month: int) -> list:
-    """Retrieves all transactions for a specific calendar month.
+def get_transactions_by_month(db_path: str, user_id: int, year: int, month: int) -> list:
+    """Retrieves all transactions for a specific user and calendar month.
 
     Args:
         db_path: Path to the SQLite database file.
+        user_id: The Telegram user ID.
         year: Calendar year.
         month: Calendar month (1-12).
 
@@ -173,29 +178,31 @@ def get_transactions_by_month(db_path: str, year: int, month: int) -> list:
     cursor.execute("""
         SELECT id, date, amount, description, type, balance_after
         FROM transactions
-        WHERE date LIKE ?
+        WHERE user_id = ? AND date LIKE ?
         ORDER BY date ASC, id ASC
-    """, (month_pattern,))
+    """, (user_id, month_pattern))
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
 
 
-def recalculate_balances(db_path: str) -> None:
-    """Recalculates the running balances of all transactions in chronological order.
+def recalculate_balances(db_path: str, user_id: int) -> None:
+    """Recalculates the running balances of all transactions in chronological order for a user.
 
     Sorted by date ASC, id ASC to maintain ledger consistency.
 
     Args:
         db_path: Path to the SQLite database file.
+        user_id: The Telegram user ID.
     """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("""
         SELECT id, amount, type
         FROM transactions
+        WHERE user_id = ?
         ORDER BY date ASC, id ASC
-    """)
+    """, (user_id,))
     rows = cursor.fetchall()
 
     current_balance = 0.0
@@ -216,11 +223,12 @@ def recalculate_balances(db_path: str) -> None:
     conn.close()
 
 
-def get_transaction(db_path: str, tx_id: int) -> dict:
-    """Retrieves a single transaction by its ID.
+def get_transaction(db_path: str, user_id: int, tx_id: int) -> dict:
+    """Retrieves a single transaction by its ID, scoped to a user.
 
     Args:
         db_path: Path to the SQLite database file.
+        user_id: The Telegram user ID.
         tx_id: The transaction ID.
 
     Returns:
@@ -230,10 +238,10 @@ def get_transaction(db_path: str, tx_id: int) -> dict:
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT id, date, amount, description, type, balance_after
+        SELECT id, date, amount, description, type, balance_after, user_id
         FROM transactions
-        WHERE id = ?
-    """, (tx_id,))
+        WHERE id = ? AND user_id = ?
+    """, (tx_id, user_id))
     row = cursor.fetchone()
     conn.close()
     return dict(row) if row else None
@@ -241,16 +249,18 @@ def get_transaction(db_path: str, tx_id: int) -> dict:
 
 def update_transaction(
     db_path: str,
+    user_id: int,
     tx_id: int,
     date: str,
     amount: float,
     description: str,
     tx_type: str
 ) -> None:
-    """Updates a transaction's fields and recalculates subsequent balances.
+    """Updates a transaction's fields and recalculates subsequent balances for a user.
 
     Args:
         db_path: Path to the SQLite database file.
+        user_id: The Telegram user ID.
         tx_id: The ID of the transaction to update.
         date: The updated date (YYYY-MM-DD).
         amount: The updated numeric amount.
@@ -268,33 +278,35 @@ def update_transaction(
     cursor.execute("""
         UPDATE transactions
         SET date = ?, amount = ?, description = ?, type = ?
-        WHERE id = ?
-    """, (date, amount, description, tx_type, tx_id))
+        WHERE id = ? AND user_id = ?
+    """, (date, amount, description, tx_type, tx_id, user_id))
     conn.commit()
     conn.close()
-    recalculate_balances(db_path)
+    recalculate_balances(db_path, user_id)
 
 
-def delete_transaction(db_path: str, tx_id: int) -> None:
-    """Deletes a transaction and recalculates subsequent balances.
+def delete_transaction(db_path: str, user_id: int, tx_id: int) -> None:
+    """Deletes a transaction and recalculates subsequent balances for a user.
 
     Args:
         db_path: Path to the SQLite database file.
+        user_id: The Telegram user ID.
         tx_id: The ID of the transaction to delete.
     """
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM transactions WHERE id = ?", (tx_id,))
+    cursor.execute("DELETE FROM transactions WHERE id = ? AND user_id = ?", (tx_id, user_id))
     conn.commit()
     conn.close()
-    recalculate_balances(db_path)
+    recalculate_balances(db_path, user_id)
 
 
-def clear_transactions(db_path: str, choice: str, param: str = None) -> int:
-    """Clears transactions based on the choice: recent, id, week, or month.
+def clear_transactions(db_path: str, user_id: int, choice: str, param: str = None) -> int:
+    """Clears transactions for a user based on the choice: recent, id, week, or month.
 
     Args:
         db_path: Path to the SQLite database file.
+        user_id: The Telegram user ID.
         choice: The clearing choice ('recent', 'id', 'week', 'month').
         param: Optional parameter (e.g. YYYY-MM for 'month', transaction ID for 'id').
 
@@ -306,34 +318,34 @@ def clear_transactions(db_path: str, choice: str, param: str = None) -> int:
     deleted_count = 0
 
     if choice == "recent":
-        # Find the most recently added transaction (highest ID)
-        cursor.execute("SELECT id FROM transactions ORDER BY id DESC LIMIT 1")
+        # Find the most recently added transaction (highest ID) for the user
+        cursor.execute("SELECT id FROM transactions WHERE user_id = ? ORDER BY id DESC LIMIT 1", (user_id,))
         row = cursor.fetchone()
         if row:
-            cursor.execute("DELETE FROM transactions WHERE id = ?", (row[0],))
+            cursor.execute("DELETE FROM transactions WHERE id = ? AND user_id = ?", (row[0], user_id))
             deleted_count = 1
     elif choice == "id":
         if param:
-            cursor.execute("DELETE FROM transactions WHERE id = ?", (int(param),))
+            cursor.execute("DELETE FROM transactions WHERE id = ? AND user_id = ?", (int(param), user_id))
             deleted_count = cursor.rowcount
     elif choice == "week":
-        # Deletes transactions from the last 7 days
+        # Deletes transactions from the last 7 days for the user
         start_date = datetime.now() - timedelta(days=7)
         start_str = start_date.strftime("%Y-%m-%d")
-        cursor.execute("DELETE FROM transactions WHERE date >= ?", (start_str,))
+        cursor.execute("DELETE FROM transactions WHERE user_id = ? AND date >= ?", (user_id, start_str))
         deleted_count = cursor.rowcount
     elif choice == "month":
         if param:
             # param is YYYY-MM
             month_pattern = f"{param}-%"
-            cursor.execute("DELETE FROM transactions WHERE date LIKE ?", (month_pattern,))
+            cursor.execute("DELETE FROM transactions WHERE user_id = ? AND date LIKE ?", (user_id, month_pattern))
             deleted_count = cursor.rowcount
 
     conn.commit()
     conn.close()
 
     if deleted_count > 0:
-        recalculate_balances(db_path)
+        recalculate_balances(db_path, user_id)
 
     return deleted_count
 
