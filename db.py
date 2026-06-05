@@ -7,6 +7,7 @@ def init_db(db_path):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS transactions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
             date TEXT NOT NULL,
             amount REAL NOT NULL,
             description TEXT NOT NULL,
@@ -24,6 +25,11 @@ def init_db(db_path):
     """)
     try:
         cursor.execute("ALTER TABLE user_configs ADD COLUMN google_code_verifier TEXT")
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
+    try:
+        cursor.execute("ALTER TABLE transactions ADD COLUMN user_id INTEGER DEFAULT 0")
     except sqlite3.OperationalError:
         # Column already exists
         pass

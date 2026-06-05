@@ -23,6 +23,48 @@ def test_init_db(temp_db):
     assert table_configs is not None
     conn.close()
 
+def test_schema_migration_user_id(tmp_path):
+    db_file = tmp_path / "test_migration.db"
+    db_path = str(db_file)
+    
+    # Create database and table with old schema (no user_id)
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
+            amount REAL NOT NULL,
+            description TEXT NOT NULL,
+            type TEXT NOT NULL,
+            balance_after REAL NOT NULL
+        )
+    """)
+    # Insert a transaction
+    cursor.execute("""
+        INSERT INTO transactions (date, amount, description, type, balance_after)
+        VALUES (?, ?, ?, ?, ?)
+    """, ("2026-06-01", 100.0, "Old Item", "credit", 100.0))
+    conn.commit()
+    conn.close()
+    
+    # Call init_db which should perform migration
+    db.init_db(db_path)
+    
+    # Verify the user_id column exists and the record was updated to default user_id 0
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(transactions)")
+    columns = [row["name"] for row in cursor.fetchall()]
+    assert "user_id" in columns
+    
+    cursor.execute("SELECT * FROM transactions WHERE id = 1")
+    row = cursor.fetchone()
+    assert row is not None
+    assert row["user_id"] == 0
+    conn.close()
+
 def test_add_transaction(temp_db):
     tx_id = db.add_transaction(temp_db, "2026-06-03", 100.0, "Salary", "credit")
     assert tx_id == 1
