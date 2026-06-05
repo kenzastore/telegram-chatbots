@@ -16,11 +16,11 @@
 
 ## Phase 2: Telegram Bot Flow Integration and Logout Command [checkpoint: ]
 
-- [ ] Task: Implement auth prompt & code submission conversation flow
-    - [ ] Write integration tests for auth prompt flow, handling invalid codes, and cancellation.
-    - [ ] Implement `/google_login` command and state handler to catch the code submission in `bot.py`.
-    - [ ] Ensure user states are cleaned up and user is notified on successful authentication.
-    - [ ] Run tests and verify they pass (Green Phase).
+- [x] Task: Implement auth prompt & code submission conversation flow (fb343e8)
+    - [x] Write integration tests for auth prompt flow, handling invalid codes, and cancellation.
+    - [x] Implement `/google_login` command and state handler to catch the code submission in `bot.py`.
+    - [x] Ensure user states are cleaned up and user is notified on successful authentication.
+    - [x] Run tests and verify they pass (Green Phase).
 - [ ] Task: Integrate auth check & dynamic creation into export flow
     - [ ] Write integration tests for `export_sheets_callback` verifying it checks login status, prompts if unauthenticated, and uses custom spreadsheets.
     - [ ] Modify `export_sheets_callback` in `bot.py` to check user credentials in the DB. If missing, redirect to auth flow. If present, retrieve sheets service, check for saved `spreadsheet_id`, dynamically create a new sheet if missing, and perform the export.
