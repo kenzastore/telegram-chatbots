@@ -36,3 +36,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: Google OAuth2 Authentication and Dynamic Sheets Creation**
   *Link: [./tracks/user_oauth2_sheets_20260605/](./tracks/user_oauth2_sheets_20260605/)*
+
+---
+
+- [ ] **Track: Google OAuth Mandatory Login and Multi-User Separation**
+  *Link: [./tracks/user_oauth_mandatory_start_20260605/](./tracks/user_oauth_mandatory_start_20260605/)*
