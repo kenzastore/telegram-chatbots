@@ -10,7 +10,10 @@ Design a comprehensive project plan for a personal Telegram chatbot dedicated to
 A lightweight, personal Telegram chatbot designed to make logging daily income (credits) and expenditures (debits) as frictionless as possible. The bot aims to help users track their savings, understand their daily spending habits, and view real-time balances directly from their chat client.
 
 ## Core Functionality & User Workflow
-Users can log transactions through interactive chat conversations or single-command parsing.
+Every user accessing the bot must first log in to Google via OAuth2. Unauthenticated commands (other than `/start`, `/help`, and `/cancel`) are blocked. Users can log transactions through interactive chat conversations or single-command parsing once authenticated.
+
+0. **Mandatory Google Login Gate**:
+   - When a user starts the bot or executes any transactional command, the bot checks for valid Google credentials. If missing, the user is prompted to connect their account via `/google_login` and cannot proceed until authenticated.
 1. **Adding a Transaction (`/add`)**:
    - **Trigger**: User types `/add` or selects the option.
    - **Inputs**:
@@ -38,6 +41,7 @@ Users can log transactions through interactive chat conversations or single-comm
 
 ## Data Structure
 The chatbot stores records in a relational database with the following fields:
+* **user_id**: INTEGER (Telegram user ID used to scope and isolate transactions per user)
 * **id**: INTEGER PRIMARY KEY AUTOINCREMENT
 * **date**: TEXT (ISO 8601 format: `YYYY-MM-DD`)
 * **amount**: REAL (Numeric value, always positive)
