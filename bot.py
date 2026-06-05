@@ -850,6 +850,7 @@ async def google_login_start(
     try:
         url, _, verifier = sheets.get_authorization_url()
         context.user_data["code_verifier"] = verifier
+        db.set_user_code_verifier(config.DATABASE_PATH, user_id, verifier)
         await update.message.reply_html(
             "To connect your Google account, please click the link below, authorize the application, "
             "and copy the authorization code.\n\n"
@@ -872,9 +873,16 @@ async def google_login_code(
     user_id = update.effective_user.id
     auth_code = update.message.text.strip()
     try:
-        verifier = context.user_data.pop("code_verifier", None)
+        config_data = db.get_user_config(config.DATABASE_PATH, user_id)
+        verifier = config_data.get("google_code_verifier") if config_data else None
+        if not verifier:
+            verifier = context.user_data.pop("code_verifier", None)
+        else:
+            context.user_data.pop("code_verifier", None)  # Clean up context as well if present
+            
         creds_json = sheets.exchange_code_for_credentials(auth_code, verifier)
         db.set_user_credentials(config.DATABASE_PATH, user_id, creds_json)
+        db.set_user_code_verifier(config.DATABASE_PATH, user_id, None)
         await update.message.reply_html(
             "✅ Authenticated successfully! Your Google Account is now connected.\n"
             "⏳ Exporting your data to Google Sheets..."
@@ -987,6 +995,7 @@ async def export_sheets_callback(
         try:
             url, _, verifier = sheets.get_authorization_url()
             context.user_data["code_verifier"] = verifier
+            db.set_user_code_verifier(config.DATABASE_PATH, user_id, verifier)
             await query.edit_message_text(
                 "🔑 You are not authenticated to export to Google Sheets.\n\n"
                 "Please click the link below to authorize the application, "

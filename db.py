@@ -18,9 +18,15 @@ def init_db(db_path):
         CREATE TABLE IF NOT EXISTS user_configs (
             user_id INTEGER PRIMARY KEY,
             spreadsheet_id TEXT,
-            google_credentials TEXT
+            google_credentials TEXT,
+            google_code_verifier TEXT
         )
     """)
+    try:
+        cursor.execute("ALTER TABLE user_configs ADD COLUMN google_code_verifier TEXT")
+    except sqlite3.OperationalError:
+        # Column already exists
+        pass
     conn.commit()
     conn.close()
 
@@ -332,13 +338,33 @@ def get_user_config(db_path, user_id):
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
     cursor.execute("""
-        SELECT user_id, spreadsheet_id, google_credentials
+        SELECT user_id, spreadsheet_id, google_credentials, google_code_verifier
         FROM user_configs
         WHERE user_id = ?
     """, (user_id,))
     row = cursor.fetchone()
     conn.close()
     return dict(row) if row else None
+
+
+def set_user_code_verifier(db_path, user_id, verifier):
+    """Saves or updates temporary Google OAuth2 code verifier for a user ID."""
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    cursor.execute("SELECT 1 FROM user_configs WHERE user_id = ?", (user_id,))
+    if cursor.fetchone():
+        cursor.execute("""
+            UPDATE user_configs
+            SET google_code_verifier = ?
+            WHERE user_id = ?
+        """, (verifier, user_id))
+    else:
+        cursor.execute("""
+            INSERT INTO user_configs (user_id, google_code_verifier)
+            VALUES (?, ?)
+        """, (user_id, verifier))
+    conn.commit()
+    conn.close()
 
 
 def set_user_credentials(db_path, user_id, credentials_str):

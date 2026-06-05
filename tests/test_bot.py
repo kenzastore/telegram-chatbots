@@ -873,9 +873,10 @@ async def test_quick_sentence_input_invalid():
 
 
 @pytest.mark.asyncio
+@patch("bot.db.set_user_code_verifier")
 @patch("bot.sheets.get_authorization_url")
 @patch("bot.db.get_user_config")
-async def test_google_login_start(mock_get_config, mock_get_url):
+async def test_google_login_start(mock_get_config, mock_get_url, mock_set_verifier):
     mock_get_config.return_value = None
     mock_get_url.return_value = ("https://mock-auth-url", "state123", "verifier123")
     update = MagicMock(spec=Update)
@@ -888,6 +889,7 @@ async def test_google_login_start(mock_get_config, mock_get_url):
     state = await bot.google_login_start(update, context)
     assert state == bot.GOOGLE_AUTH_CODE
     assert context.user_data.get("code_verifier") == "verifier123"
+    mock_set_verifier.assert_called_once_with(config.DATABASE_PATH, 12345, "verifier123")
     update.message.reply_html.assert_called_once()
     assert "https://mock-auth-url" in update.message.reply_html.call_args[0][0]
 
@@ -911,6 +913,7 @@ async def test_google_login_start_already_authenticated(mock_get_url, mock_get_c
 
 
 @pytest.mark.asyncio
+@patch("bot.db.set_user_code_verifier")
 @patch("bot.sheets.exchange_code_for_credentials")
 @patch("bot.db.set_user_credentials")
 @patch("bot.db.get_user_config")
@@ -919,13 +922,13 @@ async def test_google_login_start_already_authenticated(mock_get_url, mock_get_c
 @patch("bot.db.get_all_transactions")
 @patch("bot.db.get_summaries")
 async def test_google_login_code_success(
-    mock_summaries, mock_tx, mock_export, mock_set_sheet, mock_get_config, mock_set_creds, mock_exchange
+    mock_summaries, mock_tx, mock_export, mock_set_sheet, mock_get_config, mock_set_creds, mock_exchange, mock_set_verifier
 ):
     mock_exchange.return_value = '{"token": "mock_token"}'
-    # First get_user_config returns None spreadsheet_id, second returns new_sheet_123
+    # First get_user_config returns None spreadsheet_id (and google_code_verifier), second returns new_sheet_123
     mock_get_config.side_effect = [
-        {"google_credentials": '{"token": "mock_token"}', "spreadsheet_id": None},
-        {"google_credentials": '{"token": "mock_token"}', "spreadsheet_id": "new_sheet_123"}
+        {"google_credentials": '{"token": "mock_token"}', "spreadsheet_id": None, "google_code_verifier": "verifier123"},
+        {"google_credentials": '{"token": "mock_token"}', "spreadsheet_id": "new_sheet_123", "google_code_verifier": "verifier123"}
     ]
     mock_export.return_value = "https://docs.google.com/spreadsheets/d/new_sheet_123"
     
@@ -944,13 +947,16 @@ async def test_google_login_code_success(
     assert state == bot.ConversationHandler.END
     mock_exchange.assert_called_once_with("valid_auth_code_123", "verifier123")
     mock_set_creds.assert_called_once_with(config.DATABASE_PATH, 12345, '{"token": "mock_token"}')
+    mock_set_verifier.assert_called_once_with(config.DATABASE_PATH, 12345, None)
     update.message.reply_html.assert_called()
     assert "authenticated successfully" in update.message.reply_html.call_args_list[0][0][0].lower()
 
 
 @pytest.mark.asyncio
+@patch("bot.db.get_user_config")
 @patch("bot.sheets.exchange_code_for_credentials")
-async def test_google_login_code_invalid(mock_exchange):
+async def test_google_login_code_invalid(mock_exchange, mock_get_config):
+    mock_get_config.return_value = None
     mock_exchange.side_effect = Exception("Invalid code")
     update = MagicMock(spec=Update)
     update.message = AsyncMock()
@@ -1011,10 +1017,11 @@ async def test_export_sheets_callback_authenticated(
 
 
 @pytest.mark.asyncio
+@patch("bot.db.set_user_code_verifier")
 @patch("bot.db.get_user_config")
 @patch("bot.sheets.get_authorization_url")
 async def test_export_sheets_callback_unauthenticated(
-    mock_get_url, mock_get_config
+    mock_get_url, mock_get_config, mock_set_verifier
 ):
     mock_get_config.return_value = None
     mock_get_url.return_value = ("https://mock-auth-url", "state123", "verifier123")
@@ -1030,6 +1037,7 @@ async def test_export_sheets_callback_unauthenticated(
     res = await bot.export_sheets_callback(update, context)
     assert res == bot.GOOGLE_AUTH_CODE
     assert context.user_data.get("code_verifier") == "verifier123"
+    mock_set_verifier.assert_called_once_with(config.DATABASE_PATH, 12345, "verifier123")
     update.callback_query.answer.assert_called_once()
     update.callback_query.edit_message_text.assert_called_once()
     assert "https://mock-auth-url" in update.callback_query.edit_message_text.call_args[0][0]

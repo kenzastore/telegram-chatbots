@@ -242,6 +242,15 @@ def test_user_config_helpers(temp_db):
     assert config_after_creds is not None
     assert config_after_creds["google_credentials"] == creds_json
     assert config_after_creds["spreadsheet_id"] is None
+    assert config_after_creds["google_code_verifier"] is None
+    
+    # Store code verifier
+    verifier = "verifier_test_123"
+    db.set_user_code_verifier(temp_db, user_id, verifier)
+    
+    config_after_verifier = db.get_user_config(temp_db, user_id)
+    assert config_after_verifier is not None
+    assert config_after_verifier["google_code_verifier"] == verifier
     
     # Store spreadsheet
     sheet_id = "sheet_123_abc"
@@ -251,6 +260,12 @@ def test_user_config_helpers(temp_db):
     assert config_after_sheet is not None
     assert config_after_sheet["google_credentials"] == creds_json
     assert config_after_sheet["spreadsheet_id"] == sheet_id
+    assert config_after_sheet["google_code_verifier"] == verifier
+    
+    # Clear code verifier
+    db.set_user_code_verifier(temp_db, user_id, None)
+    config_cleared_verifier = db.get_user_config(temp_db, user_id)
+    assert config_cleared_verifier["google_code_verifier"] is None
     
     # Clear config
     db.clear_user_config(temp_db, user_id)
