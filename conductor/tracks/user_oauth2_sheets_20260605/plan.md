@@ -1,6 +1,6 @@
 # Implementation Plan - User Google OAuth2 Authentication and Dynamic Sheets Creation
 
-## Phase 1: Database Setup and Google OAuth Helper Functions [checkpoint: ]
+## Phase 1: Database Setup and Google OAuth Helper Functions [checkpoint: 1b6677d]
 
 - [x] Task: Create database tables and helpers (db34273)
     - [x] Write failing unit tests for new DB configuration functions in `tests/test_db.py` (or `tests/test_bot.py`).
@@ -12,7 +12,7 @@
     - [x] Implement `get_authorization_url()` and `exchange_code_for_credentials(auth_code)` in `sheets.py`.
     - [x] Implement a helper `get_user_sheets_service(user_credentials_str)` to instantiate the Google Sheets/Drive client using user credentials.
     - [x] Run tests and verify they pass (Green Phase).
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Database Setup and Google OAuth Helper Functions' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Database Setup and Google OAuth Helper Functions' (Protocol in workflow.md)
 
 ## Phase 2: Telegram Bot Flow Integration and Logout Command [checkpoint: ]
 
