@@ -856,7 +856,6 @@ async def google_login_start(
             "and copy the authorization code.\n\n"
             f'<a href="{url}">Authorize Google Sheets & Drive Access</a>\n\n'
             "After authorizing, please paste the authorization code here, or use /cancel to abort.",
-            parse_mode="HTML",
             disable_web_page_preview=True
         )
         return GOOGLE_AUTH_CODE
@@ -916,8 +915,7 @@ async def google_login_code(
                 
         await update.message.reply_html(
             f"✅ Google Sheet generated successfully!\n\n"
-            f"📊 <a href=\"{sheet_url}\">Open Exported Google Sheet</a>",
-            parse_mode="HTML"
+            f"📊 <a href=\"{sheet_url}\">Open Exported Google Sheet</a>"
         )
         return ConversationHandler.END
     except Exception as e:
