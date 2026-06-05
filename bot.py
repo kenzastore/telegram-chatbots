@@ -925,6 +925,44 @@ async def google_login_cancel(
     )
     return ConversationHandler.END
 
+async def google_logout_command(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+) -> None:
+    """Disconnects the user's Google account and clears configurations from the database."""
+    user_id = update.effective_user.id
+    config_data = db.get_user_config(config.DATABASE_PATH, user_id)
+    if not config_data or not config_data.get("google_credentials"):
+        await update.message.reply_html(
+            "ℹ️ You are not currently authorized with Google."
+        )
+        return
+
+    try:
+        # Revoke token if possible
+        import json
+        import requests
+        try:
+            creds = json.loads(config_data.get("google_credentials"))
+            token = creds.get("token")
+            if token:
+                requests.post(
+                    "https://oauth2.googleapis.com/revoke",
+                    params={"token": token},
+                    headers={"content-type": "application/x-www-form-urlencoded"},
+                    timeout=5
+                )
+        except Exception:
+            pass
+
+        db.clear_user_config(config.DATABASE_PATH, user_id)
+        await update.message.reply_html(
+            "✅ You have successfully logged out and disconnected your Google account."
+        )
+    except Exception as e:
+        await update.message.reply_html(
+            f"❌ Failed to clear configuration: {e}"
+        )
+
 async def export_sheets_callback(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ) -> int:
@@ -1267,6 +1305,7 @@ def main():
     app.add_handler(CallbackQueryHandler(summary_callback, pattern="^summary_"))
     app.add_handler(quick_conv_handler)
     app.add_handler(google_login_conv_handler)
+    app.add_handler(CommandHandler("google_logout", google_logout_command))
     app.add_handler(CallbackQueryHandler(quick_confirm_callback, pattern="^quick_confirm$"))
     app.add_handler(CallbackQueryHandler(quick_cancel_callback, pattern="^quick_cancel$"))
     app.add_handler(conv_handler)

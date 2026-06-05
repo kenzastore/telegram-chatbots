@@ -56,7 +56,7 @@ def test_main(monkeypatch):
     bot.main()
     
     mock_app.add_handler.assert_called()
-    assert mock_app.add_handler.call_count == 14
+    assert mock_app.add_handler.call_count == 15
     mock_app.run_polling.assert_called_once()
 
 @pytest.mark.asyncio
@@ -1031,6 +1031,39 @@ async def test_export_sheets_callback_unauthenticated(
     update.callback_query.answer.assert_called_once()
     update.callback_query.edit_message_text.assert_called_once()
     assert "https://mock-auth-url" in update.callback_query.edit_message_text.call_args[0][0]
+
+
+@pytest.mark.asyncio
+@patch("bot.db.get_user_config")
+@patch("bot.db.clear_user_config")
+async def test_google_logout_success(mock_clear_config, mock_get_config):
+    mock_get_config.return_value = {"google_credentials": '{"token": "xyz"}'}
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.effective_user = MagicMock()
+    update.effective_user.id = 12345
+    context = MagicMock(spec=CallbackContext)
+
+    await bot.google_logout_command(update, context)
+    mock_clear_config.assert_called_once_with(config.DATABASE_PATH, 12345)
+    update.message.reply_html.assert_called_once()
+    assert "logged out" in update.message.reply_html.call_args[0][0].lower()
+
+
+@pytest.mark.asyncio
+@patch("bot.db.get_user_config")
+async def test_google_logout_not_logged_in(mock_get_config):
+    mock_get_config.return_value = None
+    update = MagicMock(spec=Update)
+    update.message = AsyncMock()
+    update.effective_user = MagicMock()
+    update.effective_user.id = 12345
+    context = MagicMock(spec=CallbackContext)
+
+    await bot.google_logout_command(update, context)
+    update.message.reply_html.assert_called_once()
+    assert "not currently authorized" in update.message.reply_html.call_args[0][0].lower()
+
 
 
 
