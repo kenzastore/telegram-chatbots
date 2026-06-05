@@ -927,11 +927,11 @@ async def google_login_cancel(
 
 async def export_sheets_callback(
     update: Update, context: ContextTypes.DEFAULT_TYPE
-) -> None:
+) -> int:
     """Callback for exporting transaction data to a Google Spreadsheet.
 
-    Fetches transactions and weekly/monthly summaries, invokes the sheets
-    helper, and returns a public Google Spreadsheet link to the user.
+    Checks user login status, prompts for authorization if unauthenticated,
+    otherwise exports summaries/transactions to the user's spreadsheet.
 
     Args:
         update: The incoming Telegram update.
@@ -939,20 +939,38 @@ async def export_sheets_callback(
     """
     query = update.callback_query
     await query.answer()
+    user_id = update.effective_user.id
 
-    if not config.GOOGLE_SERVICE_ACCOUNT_FILE:
-        await query.edit_message_text(
-            "❌ Google Sheets export is not configured "
-            "(missing credentials file path)."
-        )
-        return
+    config_data = db.get_user_config(config.DATABASE_PATH, user_id)
+    if not config_data or not config_data.get("google_credentials"):
+        # Not authenticated: prompt user for Google login
+        try:
+            url, _ = sheets.get_authorization_url()
+            await query.edit_message_text(
+                "🔑 You are not authenticated to export to Google Sheets.\n\n"
+                "Please click the link below to authorize the application, "
+                "then copy the authorization code and paste/reply it here:\n\n"
+                f'<a href="{url}">Authorize Google Sheets & Drive Access</a>\n\n'
+                "Alternatively, use /cancel to abort.",
+                parse_mode="HTML",
+                disable_web_page_preview=True
+            )
+            return GOOGLE_AUTH_CODE
+        except Exception as e:
+            await query.edit_message_text(
+                f"❌ Failed to generate authorization URL: {e}"
+            )
+            return ConversationHandler.END
 
+    # Authenticated: proceed with export
     await query.edit_message_text(
         "⏳ Generating Google Sheet export, please wait..."
     )
     
     try:
-        import sheets
+        google_credentials = config_data.get("google_credentials")
+        spreadsheet_id = config_data.get("spreadsheet_id")
+
         transactions = db.get_all_transactions(config.DATABASE_PATH)
         weekly = db.get_summaries(config.DATABASE_PATH, "weekly")
         monthly = db.get_summaries(config.DATABASE_PATH, "monthly")
@@ -962,14 +980,25 @@ async def export_sheets_callback(
             transactions,
             weekly,
             monthly,
-            config.SPREADSHEET_ID
+            spreadsheet_id,
+            user_credentials_str=google_credentials
         )
         
+        # Save spreadsheet ID if it was newly created
+        if not spreadsheet_id:
+            parts = sheet_url.split("/")
+            try:
+                new_id = parts[parts.index("d") + 1]
+                db.set_user_spreadsheet(config.DATABASE_PATH, user_id, new_id)
+            except Exception:
+                pass
+
         await query.edit_message_text(
             f"✅ Google Sheet generated successfully!\n\n"
             f"📊 <a href=\"{sheet_url}\">Open Exported Google Sheet</a>",
             parse_mode="HTML"
         )
+        return ConversationHandler.END
     except Exception as e:
         import html
         await query.edit_message_text(
@@ -977,6 +1006,7 @@ async def export_sheets_callback(
             f"Error details: <code>{html.escape(str(e))}</code>",
             parse_mode="HTML"
         )
+        return ConversationHandler.END
 
 
 async def quick_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -1218,7 +1248,10 @@ def main():
     )
 
     google_login_conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("google_login", google_login_start)],
+        entry_points=[
+            CommandHandler("google_login", google_login_start),
+            CallbackQueryHandler(export_sheets_callback, pattern="^export_sheets$")
+        ],
         states={
             GOOGLE_AUTH_CODE: [MessageHandler(filters.TEXT & ~filters.COMMAND, google_login_code)],
         },
@@ -1232,9 +1265,6 @@ def main():
     app.add_handler(CommandHandler("view", view_command))
     app.add_handler(CommandHandler("summary", summary_command))
     app.add_handler(CallbackQueryHandler(summary_callback, pattern="^summary_"))
-    app.add_handler(CallbackQueryHandler(
-        export_sheets_callback, pattern="^export_sheets$"
-    ))
     app.add_handler(quick_conv_handler)
     app.add_handler(google_login_conv_handler)
     app.add_handler(CallbackQueryHandler(quick_confirm_callback, pattern="^quick_confirm$"))

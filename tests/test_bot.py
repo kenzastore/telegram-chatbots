@@ -56,7 +56,7 @@ def test_main(monkeypatch):
     bot.main()
     
     mock_app.add_handler.assert_called()
-    assert mock_app.add_handler.call_count == 15
+    assert mock_app.add_handler.call_count == 14
     mock_app.run_polling.assert_called_once()
 
 @pytest.mark.asyncio
@@ -382,15 +382,18 @@ async def test_export_sheets_callback_not_configured(monkeypatch):
     update.callback_query.data = "export_sheets"
     context = MagicMock(spec=CallbackContext)
     
-    import config
-    monkeypatch.setattr(config, "GOOGLE_SERVICE_ACCOUNT_FILE", None)
+    import db
+    monkeypatch.setattr(db, "get_user_config", MagicMock(return_value=None))
+    
+    import sheets
+    monkeypatch.setattr(sheets, "get_authorization_url", MagicMock(side_effect=Exception("Failed to generate URL")))
     
     await bot.export_sheets_callback(update, context)
     
     update.callback_query.answer.assert_called_once()
     update.callback_query.edit_message_text.assert_called_once()
     args, kwargs = update.callback_query.edit_message_text.call_args
-    assert "Google Sheets export is not configured" in args[0]
+    assert "Failed to generate authorization URL" in args[0]
 
 @pytest.mark.asyncio
 async def test_export_sheets_callback_success(monkeypatch):
@@ -404,6 +407,10 @@ async def test_export_sheets_callback_success(monkeypatch):
     monkeypatch.setattr(config, "SPREADSHEET_ID", "test_spreadsheet_id")
     
     import db
+    monkeypatch.setattr(db, "get_user_config", MagicMock(return_value={
+        "google_credentials": '{"token": "xyz"}',
+        "spreadsheet_id": "test_spreadsheet_id"
+    }))
     monkeypatch.setattr(db, "get_all_transactions", MagicMock(return_value=[
         {"id": 1, "date": "2026-06-04", "amount": 10.0, "description": "Test", "type": "credit", "balance_after": 10.0}
     ]))
@@ -423,7 +430,8 @@ async def test_export_sheets_callback_success(monkeypatch):
         [{"id": 1, "date": "2026-06-04", "amount": 10.0, "description": "Test", "type": "credit", "balance_after": 10.0}],
         [{"description": "Test", "type": "credit", "total": 10.0}],
         [{"description": "Test", "type": "credit", "total": 10.0}],
-        "test_spreadsheet_id"
+        "test_spreadsheet_id",
+        user_credentials_str='{"token": "xyz"}'
     )
     
     assert update.callback_query.edit_message_text.call_count == 2
@@ -442,6 +450,10 @@ async def test_export_sheets_callback_error(monkeypatch):
     monkeypatch.setattr(config, "GOOGLE_SERVICE_ACCOUNT_FILE", "credentials.json")
     
     import db
+    monkeypatch.setattr(db, "get_user_config", MagicMock(return_value={
+        "google_credentials": '{"token": "xyz"}',
+        "spreadsheet_id": "test_spreadsheet_id"
+    }))
     monkeypatch.setattr(db, "get_all_transactions", MagicMock(return_value=[]))
     monkeypatch.setattr(db, "get_summaries", MagicMock(return_value=[]))
     
@@ -964,6 +976,62 @@ async def test_google_login_cancel():
     assert state == bot.ConversationHandler.END
     update.message.reply_html.assert_called_once()
     assert "cancelled" in update.message.reply_html.call_args[0][0].lower()
+
+
+@pytest.mark.asyncio
+@patch("bot.db.get_user_config")
+@patch("bot.sheets.export_data_to_sheets")
+@patch("bot.db.get_all_transactions")
+@patch("bot.db.get_summaries")
+async def test_export_sheets_callback_authenticated(
+    mock_summaries, mock_tx, mock_export, mock_get_config
+):
+    mock_get_config.return_value = {
+        "google_credentials": '{"token": "user_token"}',
+        "spreadsheet_id": "user_sheet_123"
+    }
+    mock_export.return_value = "https://docs.google.com/spreadsheets/d/user_sheet_123"
+    mock_tx.return_value = [{"id": 1, "amount": 10.0}]
+    mock_summaries.return_value = []
+
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "export_sheets"
+    update.effective_user = MagicMock()
+    update.effective_user.id = 12345
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+
+    res = await bot.export_sheets_callback(update, context)
+    assert res == bot.ConversationHandler.END
+    update.callback_query.answer.assert_called_once()
+    update.callback_query.edit_message_text.assert_called()
+    assert "https://docs.google.com/spreadsheets/d/user_sheet_123" in update.callback_query.edit_message_text.call_args[0][0]
+
+
+@pytest.mark.asyncio
+@patch("bot.db.get_user_config")
+@patch("bot.sheets.get_authorization_url")
+async def test_export_sheets_callback_unauthenticated(
+    mock_get_url, mock_get_config
+):
+    mock_get_config.return_value = None
+    mock_get_url.return_value = ("https://mock-auth-url", "state123")
+
+    update = MagicMock(spec=Update)
+    update.callback_query = AsyncMock()
+    update.callback_query.data = "export_sheets"
+    update.effective_user = MagicMock()
+    update.effective_user.id = 12345
+    context = MagicMock(spec=CallbackContext)
+    context.user_data = {}
+
+    res = await bot.export_sheets_callback(update, context)
+    assert res == bot.GOOGLE_AUTH_CODE
+    update.callback_query.answer.assert_called_once()
+    update.callback_query.edit_message_text.assert_called_once()
+    assert "https://mock-auth-url" in update.callback_query.edit_message_text.call_args[0][0]
+
 
 
 
