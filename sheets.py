@@ -1,7 +1,75 @@
 import os
 from datetime import datetime
 from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
+
+def get_authorization_url() -> tuple:
+    """Generates a Google OAuth2 authorization URL and returns it along with state."""
+    import config
+    client_config = {
+        "web": {
+            "client_id": config.GOOGLE_CLIENT_ID,
+            "client_secret": config.GOOGLE_CLIENT_SECRET,
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs"
+        }
+    }
+    redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+    flow = Flow.from_client_config(
+        client_config,
+        scopes=[
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive.file'
+        ],
+        redirect_uri=redirect_uri
+    )
+    authorization_url, state = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true'
+    )
+    return authorization_url, state
+
+def exchange_code_for_credentials(auth_code: str) -> str:
+    """Exchanges an authorization code for credentials (JSON string)."""
+    import config
+    client_config = {
+        "web": {
+            "client_id": config.GOOGLE_CLIENT_ID,
+            "client_secret": config.GOOGLE_CLIENT_SECRET,
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs"
+        }
+    }
+    redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
+    flow = Flow.from_client_config(
+        client_config,
+        scopes=[
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive.file'
+        ],
+        redirect_uri=redirect_uri
+    )
+    flow.fetch_token(code=auth_code)
+    return flow.credentials.to_json()
+
+def get_user_sheets_service(user_credentials_str: str):
+    """Instantiates the Google Sheets service using serialized user credentials."""
+    import json
+    creds_info = json.loads(user_credentials_str)
+    creds = Credentials.from_authorized_user_info(creds_info)
+    return build('sheets', 'v4', credentials=creds)
+
+def get_user_drive_service(user_credentials_str: str):
+    """Instantiates the Google Drive service using serialized user credentials."""
+    import json
+    creds_info = json.loads(user_credentials_str)
+    creds = Credentials.from_authorized_user_info(creds_info)
+    return build('drive', 'v3', credentials=creds)
+
 
 def export_data_to_sheets(
     credentials_file: str,
