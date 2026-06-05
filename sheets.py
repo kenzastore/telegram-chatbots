@@ -23,7 +23,8 @@ def get_authorization_url() -> tuple:
         scopes=[
             'https://www.googleapis.com/auth/spreadsheets',
             'https://www.googleapis.com/auth/drive.file',
-            'https://www.googleapis.com/auth/userinfo.email'
+            'https://www.googleapis.com/auth/userinfo.email',
+            'openid'
         ],
         redirect_uri=redirect_uri
     )
@@ -54,7 +55,8 @@ def exchange_code_for_credentials(auth_code: str, code_verifier: str = None) -> 
         scopes=[
             'https://www.googleapis.com/auth/spreadsheets',
             'https://www.googleapis.com/auth/drive.file',
-            'https://www.googleapis.com/auth/userinfo.email'
+            'https://www.googleapis.com/auth/userinfo.email',
+            'openid'
         ],
         redirect_uri=redirect_uri
     )
