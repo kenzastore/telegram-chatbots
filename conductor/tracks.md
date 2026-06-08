@@ -49,6 +49,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implement and run until running stable / well**
+- [~] **Track: Implement and run until running stable / well**
   *Link: [./tracks/apps_script_implement_20260608/](./tracks/apps_script_implement_20260608/)*
 
