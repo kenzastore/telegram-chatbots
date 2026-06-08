@@ -1,6 +1,6 @@
 # Implementation Plan - Google Apps Script Bot Implementation & Stabilization
 
-## Phase 1: Environment Setup & OAuth2 Authentication
+## Phase 1: Environment Setup & OAuth2 Authentication [checkpoint: a80c490]
 
 - [x] Task: Set Up clasp Config and OAuth Library Configuration
     - [x] Configure `appsscript.json` with required OAuth scopes (Drive, Spreadsheet, Script Properties).
