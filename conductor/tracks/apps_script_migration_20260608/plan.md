@@ -14,7 +14,7 @@
 
 ## Phase 2: System Migration, Limitations & Code Snippets
 
-- [ ] Task: Document Database, State & Library Migration
+- [~] Task: Document Database, State & Library Migration
     - [ ] Define the SQLite-to-Google Sheets schema mapping and worksheets setup.
     - [ ] Detail user session/state management using `PropertiesService` or `CacheService`.
     - [ ] Document how to handle Apps Script runtime limitations (30-second execution limit).
