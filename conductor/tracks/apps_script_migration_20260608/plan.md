@@ -25,7 +25,7 @@
     - [x] Write a lightweight router and callback dispatcher in TypeScript.
     - [x] Write Google Sheet database wrapper functions (inserting/retrieving transactions, balance calculations).
     - [x] Write the natural language quick add parser using TypeScript regex (handling amounts, suffixes, relative/absolute dates, descriptions).
-- [~] Task: Conductor - User Manual Verification 'Phase 2: System Migration, Limitations & Code Snippets' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: System Migration, Limitations & Code Snippets' (Protocol in workflow.md)
 
 ## Phase 3: Final Review and Integration
 
