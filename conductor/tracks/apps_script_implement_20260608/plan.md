@@ -9,7 +9,7 @@
     - [x] Write `/google_login` and `/google_logout` handlers.
     - [x] Write the `doGet(e)` callback to handle authorization code redirects and retrieve/store refresh tokens.
     - [x] Create authentication gate middleware to block unauthenticated transactional commands.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Environment Setup & OAuth2 Authentication' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Environment Setup & OAuth2 Authentication' (Protocol in workflow.md)
 
 ## Phase 2: Database Wrapper & Core Commands
 
