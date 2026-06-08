@@ -13,10 +13,10 @@
 
 ## Phase 2: Database Wrapper & Core Commands
 
-- [~] Task: Implement Google Sheets Database Wrapper
-    - [ ] Write functions to check, create, and initialize the `Telegram Savings Bot` spreadsheet in the user's Google Drive.
-    - [ ] Implement worksheet sheet creators for monthly tabs (`YYYY-MM Transactions`).
-    - [ ] Write transaction append and balance calculation helpers using LockService.
+- [x] Task: Implement Google Sheets Database Wrapper
+    - [x] Write functions to check, create, and initialize the `Telegram Savings Bot` spreadsheet in the user's Google Drive.
+    - [x] Implement worksheet sheet creators for monthly tabs (`YYYY-MM Transactions`).
+    - [x] Write transaction append and balance calculation helpers using LockService.
 - [ ] Task: Implement State Machine Router & Core Chatbot Commands
     - [ ] Write state machine update router to store user progress in PropertiesService.
     - [ ] Implement `/start`, `/help`, `/balance`, and `/view` commands.
