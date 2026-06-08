@@ -32,8 +32,8 @@ Every user accessing the bot must first log in to Google via OAuth2. Unauthentic
    - Initiates an interactive conversation flow to update Date, Type, Amount, and Description of a transaction by ID, recalculating balances chronologically.
 6. **Clearing Transactions (`/clear`)**:
    - Initiates an interactive selection menu (Recent, ID, Week, Month) with double-confirmation confirmation prompts to delete transactions, recalculating balances.
-7. **Google Sheets Export**:
-   - Allows users to connect their Google accounts via OAuth2 and export transaction logs and summaries into separate worksheets grouped dynamically by calendar month (e.g., `YYYY-MM Transactions` and `YYYY-MM Summaries`) within a dynamically created spreadsheet in their own Google Drive.
+7. **Google Sheets Integration**:
+   - Allows users to connect their Google accounts via OAuth2 and write transaction logs and summaries directly into separate worksheets grouped dynamically by calendar month (e.g., `YYYY-MM Transactions` and `YYYY-MM Summaries`) within a dynamically created spreadsheet in their own Google Drive.
 8. **Quick Add (`/quick`)**:
    - **Trigger**: User types `/quick <sentence>`.
    - **Inputs**: A single natural language sentence (supports both English and Indonesian) containing transaction type, amount (with multipliers), date (today, yesterday, etc.), and description.
