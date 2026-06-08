@@ -1,0 +1,10 @@
+Verification Report for Phase 3: Advanced Commands & Parsing
+Automated Tests: None (no local tests requested)
+Manual Verification Steps:
+1. Verify interactive add flow (ADD_TYPE, ADD_AMOUNT, ADD_DESC) works correctly.
+2. Verify quick add natural language parser (TEMP_QUICK, confirm/cancel callbacks) works.
+3. Verify clear transaction options (recent, week, month, id) and batch deletion range helpers.
+4. Verify edit transaction flow, row modifying, and balance recalculating.
+5. Verify financial weekly/monthly summary aggregation.
+
+User Confirmation: Yes
