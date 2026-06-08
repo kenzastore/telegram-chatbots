@@ -47,3 +47,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: Provide a comprehensive architectural plan and step-by-step refactoring guide to migrate an entire Telegram chatbot project to run on Google Apps Script.**
   *Link: [./tracks/apps_script_migration_20260608/](./tracks/apps_script_migration_20260608/)*
 
+---
+
+- [ ] **Track: Implement and run until running stable / well**
+  *Link: [./tracks/apps_script_implement_20260608/](./tracks/apps_script_implement_20260608/)*
+
