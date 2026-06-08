@@ -31,4 +31,4 @@
     - [x] Write `/edit` command to modify transactions by ID.
     - [x] Write `/clear` command with double confirmation.
     - [x] Write `/summary` command for weekly/monthly aggregation.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Advanced Commands & Parsing' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 3: Advanced Commands & Parsing' (Protocol in workflow.md)
