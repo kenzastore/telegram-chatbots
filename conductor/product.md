@@ -63,7 +63,7 @@ The chatbot stores records in a relational database with the following fields:
 * `/help` - Show command usage guide and descriptions.
 
 ## Technology Stack
-* **Language**: Python 3.9+
-* **Telegram Framework**: `python-telegram-bot` (v20+ with asyncio)
-* **Database**: SQLite (built-in, file-based, highly portable)
-* **Deployment/Hosting**: Docker (for local run or self-hosting on a cheap VPS)
+* **Language**: TypeScript (compiled to Google Apps Script JavaScript via clasp)
+* **Telegram Service**: Raw HTTP requests using Google Apps Script `UrlFetchApp`
+* **Database**: Google Sheets (via Google Apps Script `SpreadsheetApp` service)
+* **Deployment/Hosting**: Google Apps Script Web App (stateless webhook environment)

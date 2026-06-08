@@ -1,14 +1,16 @@
 # Tech Stack: Savings & Financial Transaction Telegram Chatbot
 
 ## Language
-*   **Python (v3.9+)**: A modern, readable language with robust support for asynchronous programming and libraries.
+*   **TypeScript / JavaScript (ES6)**: Local development is done in TypeScript, compiled and uploaded to Google Apps Script.
 
 ## Libraries & Frameworks
-*   **python-telegram-bot (v20+)**: An active, asynchronous library for interacting with the Telegram Bot API. It supports async/await, conversation handlers, inline keyboards, and clean application building.
-*   **sqlite3**: The standard library module for SQLite integration, providing a lightweight, disk-based database requiring no server process.
-*   **pytest**: A robust framework for testing python code.
+*   **Google Apps Script Built-in Services**:
+    *   **UrlFetchApp**: Used for outgoing raw HTTP API requests to the Telegram Bot API.
+    *   **SpreadsheetApp**: Used to interact with Google Sheets as the relational database storage.
+    *   **PropertiesService**: Used for storing persistent script configurations (e.g., bot tokens) and user state machine records.
+    *   **LockService**: Used to manage concurrent write operations and prevent database race conditions.
 
-## Tools & Devops
-*   **Docker**: A containerization platform to package the application, ensuring it runs identically on local environments and hosting environments.
-*   **python-dotenv**: To read key-value pairs from a `.env` file and set them as environment variables (e.g., `TELEGRAM_BOT_TOKEN`).
-*   **Google API Client Libraries (google-api-python-client, google-auth, google-auth-oauthlib)**: To authenticate (OAuth2 & service accounts) and interact with Google Sheets and Drive APIs.
+## Tools & DevOps
+*   **@google/clasp**: Command Line Apps Script Projects tool to manage, pull, push, and deploy Apps Script code locally.
+*   **Google Sheets**: Serving both as the backend database and the user-facing financial dashboard.
+*   **Google Cloud Logging**: Integrated execution logs (`console.log`, `console.error`) accessible via the Apps Script dashboard.
