@@ -6,10 +6,10 @@
     - [x] Create `apps_script_migration_guide.md` in the project root.
     - [x] Write the introduction and the core architectural comparison between Python server process (polling) and Google Apps Script (stateless webhook).
     - [x] Define a detailed file-to-file mapping table from the Python project (`bot.py`, `db.py`, `sheets.py`, `config.py`) to Google Apps Script files.
-- [~] Task: Document Execution Model & Webhook Registration
-    - [ ] Explain the stateless `doPost(e)` execution model.
-    - [ ] Document the Telegram webhook registration process, including `curl` commands to register and check webhook status.
-    - [ ] Design the command routing architecture to handle stateless incoming updates.
+- [x] Task: Document Execution Model & Webhook Registration
+    - [x] Explain the stateless `doPost(e)` execution model.
+    - [x] Document the Telegram webhook registration process, including `curl` commands to register and check webhook status.
+    - [x] Design the command routing architecture to handle stateless incoming updates.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Architectural Design & File Mapping' (Protocol in workflow.md)
 
 ## Phase 2: System Migration, Limitations & Code Snippets
