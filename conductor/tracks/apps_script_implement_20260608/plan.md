@@ -22,7 +22,7 @@
     - [x] Implement `/start`, `/help`, `/balance`, and `/view` commands.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Database Wrapper & Core Commands' (Protocol in workflow.md)
 
-## Phase 3: Advanced Commands & Parsing
+## Phase 3: Advanced Commands & Parsing [checkpoint: 4d5516a]
 
 - [x] Task: Implement Interactive `/add` and `/quick` commands
     - [x] Write the multi-step interactive conversation flow for `/add`.
