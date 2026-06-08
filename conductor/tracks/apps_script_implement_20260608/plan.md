@@ -13,7 +13,7 @@
 
 ## Phase 2: Database Wrapper & Core Commands
 
-- [ ] Task: Implement Google Sheets Database Wrapper
+- [~] Task: Implement Google Sheets Database Wrapper
     - [ ] Write functions to check, create, and initialize the `Telegram Savings Bot` spreadsheet in the user's Google Drive.
     - [ ] Implement worksheet sheet creators for monthly tabs (`YYYY-MM Transactions`).
     - [ ] Write transaction append and balance calculation helpers using LockService.
