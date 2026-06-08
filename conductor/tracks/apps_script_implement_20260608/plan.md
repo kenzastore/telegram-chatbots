@@ -11,7 +11,7 @@
     - [x] Create authentication gate middleware to block unauthenticated transactional commands.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Environment Setup & OAuth2 Authentication' (Protocol in workflow.md)
 
-## Phase 2: Database Wrapper & Core Commands
+## Phase 2: Database Wrapper & Core Commands [checkpoint: d0ecaf0]
 
 - [x] Task: Implement Google Sheets Database Wrapper
     - [x] Write functions to check, create, and initialize the `Telegram Savings Bot` spreadsheet in the user's Google Drive.
