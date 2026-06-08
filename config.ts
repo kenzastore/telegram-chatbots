@@ -1,4 +1,4 @@
-export const Config = {
+const Config = {
   getTelegramBotToken(): string {
     const token = PropertiesService.getScriptProperties().getProperty("TELEGRAM_BOT_TOKEN");
     if (!token) {

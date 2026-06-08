@@ -1,4 +1,3 @@
-```typescript
 interface TelegramUpdate {
   update_id: number;
   message?: {
@@ -42,6 +41,55 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
   }
 }
 
+/**
+ * Handles incoming GET requests (Google OAuth2 redirect callback).
+ */
+function doGet(e: GoogleAppsScript.Events.DoGet) {
+  try {
+    const code = e.parameter.code;
+    const state = e.parameter.state; // Telegram user ID
+
+    if (!code || !state) {
+      return HtmlService.createHtmlOutput(
+        "<html><body style='font-family: sans-serif; text-align: center; padding-top: 50px;'>" +
+        "<h2 style='color: #c62828;'>Authentication Failed</h2>" +
+        "<p>Missing code or state parameters.</p>" +
+        "</body></html>"
+      );
+    }
+
+    // Exchange auth code and save refresh token
+    OAuth.handleAuthRedirect(code, state);
+
+    // Notify user on Telegram
+    const token = PropertiesService.getScriptProperties().getProperty("TELEGRAM_BOT_TOKEN");
+    if (token) {
+      sendTelegramMessage(
+        Number(state),
+        "🎉 <b>Google account connected successfully!</b>\n\nYour transactions will now be saved in your Google Drive under a spreadsheet named <code>Telegram Savings Bot</code>.",
+        token
+      );
+    }
+
+    return HtmlService.createHtmlOutput(
+      "<html><body style='font-family: sans-serif; text-align: center; padding-top: 50px;'>" +
+      "<h2 style='color: #2e7d32;'>Authentication Successful!</h2>" +
+      "<p>Your Google account has been connected to the bot.</p>" +
+      "<p>You can now close this window and return to Telegram.</p>" +
+      "</body></html>"
+    );
+  } catch (error) {
+    console.error("Error handling redirect doGet:", error);
+    return HtmlService.createHtmlOutput(
+      "<html><body style='font-family: sans-serif; text-align: center; padding-top: 50px;'>" +
+      "<h2 style='color: #c62828;'>Authentication Failed</h2>" +
+      `<p>Error details: ${error.message}</p>` +
+      "<p>Please try initiating `/google_login` again from Telegram.</p>" +
+      "</body></html>"
+    );
+  }
+}
+
 function logErrorToSheet(error: any) {
   try {
     const ssId = PropertiesService.getScriptProperties().getProperty("SPREADSHEET_ID");
@@ -56,4 +104,3 @@ function logErrorToSheet(error: any) {
     console.error("Failed to write to ErrorLogs sheet:", e);
   }
 }
-```
