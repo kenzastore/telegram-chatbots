@@ -1,6 +1,6 @@
 # Implementation Plan - Telegram Chatbot to Google Apps Script Migration Guide
 
-## Phase 1: Architectural Design & File Mapping
+## Phase 1: Architectural Design & File Mapping [checkpoint: 8e6ab64]
 
 - [x] Task: Define Architectural Comparison & File Mapping
     - [x] Create `apps_script_migration_guide.md` in the project root.
