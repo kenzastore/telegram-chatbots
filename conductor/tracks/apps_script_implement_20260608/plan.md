@@ -20,7 +20,7 @@
 - [x] Task: Implement State Machine Router & Core Chatbot Commands
     - [x] Write state machine update router to store user progress in PropertiesService.
     - [x] Implement `/start`, `/help`, `/balance`, and `/view` commands.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Database Wrapper & Core Commands' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Database Wrapper & Core Commands' (Protocol in workflow.md)
 
 ## Phase 3: Advanced Commands & Parsing
 
