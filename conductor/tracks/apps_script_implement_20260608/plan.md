@@ -2,7 +2,7 @@
 
 ## Phase 1: Environment Setup & OAuth2 Authentication
 
-- [ ] Task: Set Up clasp Config and OAuth Library Configuration
+- [~] Task: Set Up clasp Config and OAuth Library Configuration
     - [ ] Configure `appsscript.json` with required OAuth scopes (Drive, Spreadsheet, Script Properties).
     - [ ] Set up the redirect URI and developer credentials in Script Properties.
 - [ ] Task: Implement Google OAuth2 Authentication Flow
