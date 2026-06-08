@@ -108,20 +108,219 @@ function formatCurrency(amount: number): string {
  */
 
 function handleQuickCommand(userId: number, chatId: number, args: string, token: string) {
-  sendTelegramMessage(chatId, "⏳ <i>Quick add implementation in progress...</i>", token);
+  try {
+    if (!args) {
+      sendTelegramMessage(chatId, "💡 <b>Usage:</b> <code>/quick &lt;spent/got&gt; &lt;amount&gt; &lt;description&gt; [yesterday/today]</code>\n\nExample:\n• <code>/quick spent 50k for lunch yesterday</code>\n• <code>/quick got 1.5jt from salary</code>", token);
+      return;
+    }
+
+    const parsed = parseTransactionSentence(args);
+    if (!parsed) {
+      sendTelegramMessage(chatId, "⚠️ <b>Could not parse sentence.</b> Make sure to include transaction type (spent/got/bayar/etc.), amount, and description.\n\nExample:\n• <code>/quick spent 50k for lunch yesterday</code>", token);
+      return;
+    }
+
+    const scriptProperties = PropertiesService.getScriptProperties();
+    scriptProperties.setProperty(`TEMP_QUICK_${userId}`, JSON.stringify(parsed));
+
+    const formattedAmount = formatCurrency(parsed.amount);
+    const typeLabel = parsed.type === 'credit' ? '🟢 Credit (Income)' : '🔴 Debit (Expense)';
+
+    const confirmText = `📝 <b>Confirm Transaction Details:</b>\n\n` +
+      `📅 <b>Date:</b> ${parsed.date}\n` +
+      `➕ <b>Type:</b> ${typeLabel}\n` +
+      `💰 <b>Amount:</b> ${formattedAmount}\n` +
+      `📝 <b>Description:</b> ${parsed.description}\n\n` +
+      `Do you want to save this transaction?`;
+
+    const keyboard = {
+      inline_keyboard: [[
+        { text: "✅ Yes, Save", callback_data: "quick_confirm_yes" },
+        { text: "❌ Cancel", callback_data: "quick_confirm_no" }
+      ]]
+    };
+
+    sendTelegramMessage(chatId, confirmText, token, keyboard);
+  } catch (error) {
+    console.error("Error in handleQuickCommand:", error);
+    sendTelegramMessage(chatId, `❌ Error: ${error.message}`, token);
+  }
 }
 
 function startAddFlow(userId: number, chatId: number, token: string) {
-  sendTelegramMessage(chatId, "⏳ <i>Interactive add flow implementation in progress...</i>", token);
+  try {
+    const userProperties = PropertiesService.getUserProperties();
+    userProperties.setProperty(`STATE_${userId}`, "ADD_TYPE");
+
+    const keyboard = {
+      inline_keyboard: [[
+        { text: "🔴 Expense (Debit)", callback_data: "add_type_debit" },
+        { text: "🟢 Income (Credit)", callback_data: "add_type_credit" }
+      ]]
+    };
+
+    sendTelegramMessage(chatId, "➕ <b>Log Transaction:</b>\n\nPlease select the transaction type:", token, keyboard);
+  } catch (error) {
+    console.error("Error in startAddFlow:", error);
+    sendTelegramMessage(chatId, `❌ Error initiating log flow: ${error.message}`, token);
+  }
 }
 
 function handleStatefulMessage(userId: number, chatId: number, text: string, activeState: string, token: string) {
-  sendTelegramMessage(chatId, `Received stateful input: ${text} in state ${activeState}. Feature in progress.`, token);
+  try {
+    const userProperties = PropertiesService.getUserProperties();
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const tempTxKey = `TEMP_TX_${userId}`;
+    const stateKey = `STATE_${userId}`;
+
+    const tempTxStr = scriptProperties.getProperty(tempTxKey);
+    const tempTx = tempTxStr ? JSON.parse(tempTxStr) : {};
+
+    if (activeState === "ADD_AMOUNT") {
+      const cleanedText = text.replace(/rp\.?/gi, "").replace(/\./g, "").replace(/,/g, "").replace(/\s+/g, "").trim();
+      const amount = parseFloat(cleanedText);
+      if (isNaN(amount) || amount <= 0) {
+        sendTelegramMessage(chatId, "⚠️ <b>Invalid amount.</b> Please send a positive numeric value (e.g., <code>50000</code>):", token);
+        return;
+      }
+
+      tempTx.amount = amount;
+      scriptProperties.setProperty(tempTxKey, JSON.stringify(tempTx));
+
+      userProperties.setProperty(stateKey, "ADD_DESC");
+      sendTelegramMessage(chatId, "📝 Please enter a brief description (e.g., <code>Lunch</code>, <code>Monthly Salary</code>):", token);
+      return;
+    }
+
+    if (activeState === "ADD_DESC") {
+      if (!text) {
+        sendTelegramMessage(chatId, "⚠️ Description cannot be empty. Please enter a brief description:", token);
+        return;
+      }
+
+      tempTx.description = text;
+      tempTx.date = Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd");
+
+      const accessToken = OAuth.getAccessTokenForUser(userId);
+      const savedTx = Database.addTransaction(userId, tempTx, accessToken);
+
+      userProperties.deleteProperty(stateKey);
+      scriptProperties.deleteProperty(tempTxKey);
+
+      const typeSign = savedTx.type === 'credit' ? '🟢' : '🔴';
+      const typeLabel = savedTx.type === 'credit' ? 'Income' : 'Expense';
+      
+      const successText = `✅ <b>Transaction Saved Successfully!</b>\n\n` +
+        `📅 <b>Date:</b> ${savedTx.date}\n` +
+        `➕ <b>Type:</b> ${typeSign} ${typeLabel}\n` +
+        `💰 <b>Amount:</b> ${formatCurrency(savedTx.amount)}\n` +
+        `📝 <b>Description:</b> ${savedTx.description}\n\n` +
+        `💰 <b>Current Balance:</b> <code>${formatCurrency(savedTx.balanceAfter)}</code>`;
+
+      sendTelegramMessage(chatId, successText, token);
+      return;
+    }
+  } catch (error) {
+    console.error("Error in handleStatefulMessage:", error);
+    sendTelegramMessage(chatId, `❌ Error processing input: ${error.message}`, token);
+    PropertiesService.getUserProperties().deleteProperty(`STATE_${userId}`);
+    PropertiesService.getScriptProperties().deleteProperty(`TEMP_TX_${userId}`);
+  }
 }
 
 function handleCallbackQuery(callbackQuery: any, token: string) {
   const chatId = callbackQuery.message.chat.id;
-  sendTelegramMessage(chatId, `Callback received: ${callbackQuery.data}. Feature in progress.`, token);
+  const userId = callbackQuery.from.id;
+  const data = callbackQuery.data;
+
+  try {
+    const userProperties = PropertiesService.getUserProperties();
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const stateKey = `STATE_${userId}`;
+    const tempTxKey = `TEMP_TX_${userId}`;
+
+    if (data.startsWith("add_type_")) {
+      const type = data.replace("add_type_", "") as 'debit' | 'credit';
+      const tempTx = { type: type };
+      scriptProperties.setProperty(tempTxKey, JSON.stringify(tempTx));
+
+      userProperties.setProperty(stateKey, "ADD_AMOUNT");
+      
+      const typeSign = type === 'credit' ? '🟢 Income' : '🔴 Expense';
+      const text = `➕ <b>Log Transaction:</b>\n\nSelected Type: <b>${typeSign}</b>\n\n👉 Please type and send the transaction amount:`;
+      
+      answerCallbackQuery(callbackQuery.id, "Type selected", token);
+      updateTelegramMessage(chatId, callbackQuery.message.message_id, text, token);
+      return;
+    }
+
+    if (data === "quick_confirm_yes") {
+      const tempQuickStr = scriptProperties.getProperty(`TEMP_QUICK_${userId}`);
+      if (!tempQuickStr) {
+        answerCallbackQuery(callbackQuery.id, "❌ Error: Details not found.", token);
+        return;
+      }
+
+      const tempQuick = JSON.parse(tempQuickStr);
+      const accessToken = OAuth.getAccessTokenForUser(userId);
+      const savedTx = Database.addTransaction(userId, tempQuick, accessToken);
+
+      scriptProperties.deleteProperty(`TEMP_QUICK_${userId}`);
+
+      const typeSign = savedTx.type === 'credit' ? '🟢' : '🔴';
+      const typeLabel = savedTx.type === 'credit' ? 'Income' : 'Expense';
+
+      const successText = `✅ <b>Quick Transaction Saved!</b>\n\n` +
+        `📅 <b>Date:</b> ${savedTx.date}\n` +
+        `➕ <b>Type:</b> ${typeSign} ${typeLabel}\n` +
+        `💰 <b>Amount:</b> ${formatCurrency(savedTx.amount)}\n` +
+        `📝 <b>Description:</b> ${savedTx.description}\n\n` +
+        `💰 <b>Current Balance:</b> <code>${formatCurrency(savedTx.balanceAfter)}</code>`;
+
+      answerCallbackQuery(callbackQuery.id, "Transaction saved!", token);
+      updateTelegramMessage(chatId, callbackQuery.message.message_id, successText, token);
+      return;
+    }
+
+    if (data === "quick_confirm_no") {
+      scriptProperties.deleteProperty(`TEMP_QUICK_${userId}`);
+      answerCallbackQuery(callbackQuery.id, "Cancelled", token);
+      updateTelegramMessage(chatId, callbackQuery.message.message_id, "❌ Quick add transaction cancelled.", token);
+      return;
+    }
+
+    answerCallbackQuery(callbackQuery.id, "Processing...", token);
+    
+    if (data.startsWith("clear_")) {
+      handleClearCallback(userId, chatId, callbackQuery.message.message_id, data, token);
+    } else if (data.startsWith("edit_")) {
+      handleEditCallback(userId, chatId, callbackQuery.message.message_id, data, token);
+    }
+  } catch (error) {
+    console.error("Error in handleCallbackQuery:", error);
+    answerCallbackQuery(callbackQuery.id, "❌ Error", token);
+    sendTelegramMessage(chatId, `❌ Callback Error: ${error.message}`, token);
+  }
+}
+
+function updateTelegramMessage(chatId: number, messageId: number, text: string, token: string, replyMarkup?: any) {
+  const url = `https://api.telegram.org/bot${token}/editMessageText`;
+  const payload = {
+    chat_id: chatId,
+    message_id: messageId,
+    text: text,
+    parse_mode: "HTML",
+    reply_markup: replyMarkup ? JSON.stringify(replyMarkup) : undefined
+  };
+
+  const options: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
+    method: "post",
+    contentType: "application/json",
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  UrlFetchApp.fetch(url, options);
 }
 
 function startClearFlow(userId: number, chatId: number, token: string) {
@@ -134,4 +333,12 @@ function startEditFlow(userId: number, chatId: number, args: string, token: stri
 
 function handleSummaryCommand(userId: number, chatId: number, token: string) {
   sendTelegramMessage(chatId, "⏳ <i>Summary Aggregation implementation in progress...</i>", token);
+}
+
+function handleClearCallback(userId: number, chatId: number, messageId: number, data: string, token: string) {
+  sendTelegramMessage(chatId, `Clear callback received: ${data}. Feature in progress.`, token);
+}
+
+function handleEditCallback(userId: number, chatId: number, messageId: number, data: string, token: string) {
+  sendTelegramMessage(chatId, `Edit callback received: ${data}. Feature in progress.`, token);
 }

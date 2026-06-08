@@ -1,4 +1,3 @@
-```typescript
 interface ParsedTx {
   amount: number;
   type: 'debit' | 'credit';
@@ -41,8 +40,8 @@ function parseTransactionSentence(sentence: string, refDate: Date = new Date()):
   else if (hasCredit) txType = 'credit';
   else return null;
 
-  // 3. Extract Date (assumes GMT+7 timezone for this example)
-  let txDate = Utilities.formatDate(refDate, "GMT+7", "yyyy-MM-dd");
+  // 3. Extract Date (assumes GMT+7/Asia/Jakarta timezone)
+  let txDate = Utilities.formatDate(refDate, "Asia/Jakarta", "yyyy-MM-dd");
   let matchedDateStr: string | null = null;
 
   const yesterdayPattern = /\b(yesterday|kemarin)\b/i;
@@ -52,7 +51,7 @@ function parseTransactionSentence(sentence: string, refDate: Date = new Date()):
     matchedDateStr = yesterdayPattern.exec(sClean)![0];
     const prevDate = new Date(refDate);
     prevDate.setDate(refDate.getDate() - 1);
-    txDate = Utilities.formatDate(prevDate, "GMT+7", "yyyy-MM-dd");
+    txDate = Utilities.formatDate(prevDate, "Asia/Jakarta", "yyyy-MM-dd");
   } else if (todayPattern.test(sClean)) {
     matchedDateStr = todayPattern.exec(sClean)![0];
   }
@@ -80,4 +79,3 @@ function parseTransactionSentence(sentence: string, refDate: Date = new Date()):
     description: descClean
   };
 }
-```

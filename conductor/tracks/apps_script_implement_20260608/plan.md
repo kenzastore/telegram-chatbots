@@ -24,9 +24,9 @@
 
 ## Phase 3: Advanced Commands & Parsing
 
-- [~] Task: Implement Interactive `/add` and `/quick` commands
-    - [ ] Write the multi-step interactive conversation flow for `/add`.
-    - [ ] Integrate the natural language parser `quick.ts` with confirmation buttons.
+- [x] Task: Implement Interactive `/add` and `/quick` commands
+    - [x] Write the multi-step interactive conversation flow for `/add`.
+    - [x] Integrate the natural language parser `quick.ts` with confirmation buttons.
 - [ ] Task: Implement `/edit`, `/clear`, and `/summary` commands
     - [ ] Write `/edit` command to modify transactions by ID.
     - [ ] Write `/clear` command with double confirmation.
