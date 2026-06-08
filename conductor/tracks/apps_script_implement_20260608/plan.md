@@ -27,8 +27,8 @@
 - [x] Task: Implement Interactive `/add` and `/quick` commands
     - [x] Write the multi-step interactive conversation flow for `/add`.
     - [x] Integrate the natural language parser `quick.ts` with confirmation buttons.
-- [~] Task: Implement `/edit`, `/clear`, and `/summary` commands
-    - [ ] Write `/edit` command to modify transactions by ID.
-    - [ ] Write `/clear` command with double confirmation.
-    - [ ] Write `/summary` command for weekly/monthly aggregation.
+- [x] Task: Implement `/edit`, `/clear`, and `/summary` commands
+    - [x] Write `/edit` command to modify transactions by ID.
+    - [x] Write `/clear` command with double confirmation.
+    - [x] Write `/summary` command for weekly/monthly aggregation.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Advanced Commands & Parsing' (Protocol in workflow.md)

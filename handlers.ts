@@ -21,7 +21,6 @@ function handleViewCommand(userId: number, chatId: number, token: string) {
     const ssId = Database.getSpreadsheetId(userId, accessToken);
     const sheets = Database.getSheetsList(ssId, accessToken);
     
-    // Find the current or latest transactions sheet
     const txSheets = sheets.filter(s => s.endsWith(" Transactions")).sort().reverse();
     if (txSheets.length === 0) {
       sendTelegramMessage(chatId, "📭 You don't have any logged transactions yet. Start with /add or /quick!", token);
@@ -37,7 +36,6 @@ function handleViewCommand(userId: number, chatId: number, token: string) {
       return;
     }
 
-    // Filter transactions belonging to this user
     const userTxs: any[] = [];
     for (let i = data.values.length - 1; i >= 1; i--) {
       const row = data.values[i];
@@ -51,7 +49,7 @@ function handleViewCommand(userId: number, chatId: number, token: string) {
           balanceAfter: Number(row[6])
         });
       }
-      if (userTxs.length >= 10) break; // Limit to last 10
+      if (userTxs.length >= 10) break;
     }
 
     if (userTxs.length === 0) {
@@ -60,7 +58,6 @@ function handleViewCommand(userId: number, chatId: number, token: string) {
     }
 
     let messageText = `📊 <b>Recent History (Last ${userTxs.length} Transactions)</b>\nSheet: <code>${latestSheet}</code>\n\n`;
-    // Print in chronological order (reverse the userTxs back)
     userTxs.reverse().forEach(tx => {
       const typeSign = tx.type === 'credit' ? '🟢 +' : '🔴 -';
       const formattedAmount = formatCurrency(tx.amount);
@@ -84,12 +81,10 @@ function formatCurrency(amount: number): string {
   const isNegative = amount < 0;
   const absVal = Math.abs(amount);
   
-  // Format numeric values manually to avoid internationalization formatting variations in GAS runtime
   const parts = absVal.toFixed(2).split(".");
   let integerPart = parts[0];
   const decimalPart = parts[1];
   
-  // Add thousand separators
   let formattedInteger = "";
   let count = 0;
   for (let i = integerPart.length - 1; i >= 0; i--) {
@@ -104,7 +99,7 @@ function formatCurrency(amount: number): string {
 }
 
 /**
- * Stubs for Stateful and Advanced Commands (To be implemented in Phase 3)
+ * Quick Command and Interactive Add Flow Handlers
  */
 
 function handleQuickCommand(userId: number, chatId: number, args: string, token: string) {
@@ -220,11 +215,95 @@ function handleStatefulMessage(userId: number, chatId: number, text: string, act
       sendTelegramMessage(chatId, successText, token);
       return;
     }
+
+    // STATEFUL CLEAR ID ENTRY
+    if (activeState === "CLEAR_AWAITING_ID") {
+      const txId = Number(text.trim());
+      if (isNaN(txId) || txId <= 0) {
+        sendTelegramMessage(chatId, "⚠️ <b>Invalid ID.</b> Please send a positive numeric transaction ID (e.g., <code>12</code>):", token);
+        return;
+      }
+
+      userProperties.deleteProperty(stateKey);
+
+      const keyboard = {
+        inline_keyboard: [[
+          { text: "✅ Yes, Delete", callback_data: `clear_confirm_id_${txId}` },
+          { text: "❌ Cancel", callback_data: "clear_confirm_no" }
+        ]]
+      };
+
+      sendTelegramMessage(chatId, `⚠️ <b>Are you sure you want to permanently delete transaction ID ${txId}?</b>`, token, keyboard);
+      return;
+    }
+
+    // STATEFUL EDIT ENTRY HANDLERS
+    if (activeState.startsWith("EDIT_AWAITING_")) {
+      const tempEditStr = scriptProperties.getProperty(`TEMP_EDIT_${userId}`);
+      if (!tempEditStr) {
+        sendTelegramMessage(chatId, "❌ Error: Temporary edit details not found. Please initiate /edit again.", token);
+        userProperties.deleteProperty(stateKey);
+        return;
+      }
+
+      const tempEdit = JSON.parse(tempEditStr);
+      const txId = tempEdit.targetId;
+      const field = activeState.replace("EDIT_AWAITING_", "") as 'DATE' | 'AMOUNT' | 'DESC';
+      const updates: any = {};
+
+      if (field === 'DATE') {
+        const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+        if (!datePattern.test(text.trim())) {
+          sendTelegramMessage(chatId, "⚠️ <b>Invalid date format.</b> Please send date in <code>YYYY-MM-DD</code> format (e.g. <code>2026-06-08</code>):", token);
+          return;
+        }
+        updates.date = text.trim();
+      }
+
+      if (field === 'AMOUNT') {
+        const cleanedText = text.replace(/rp\.?/gi, "").replace(/\./g, "").replace(/,/g, "").replace(/\s+/g, "").trim();
+        const amount = parseFloat(cleanedText);
+        if (isNaN(amount) || amount <= 0) {
+          sendTelegramMessage(chatId, "⚠️ <b>Invalid amount.</b> Please enter a positive number:", token);
+          return;
+        }
+        updates.amount = amount;
+      }
+
+      if (field === 'DESC') {
+        if (!text.trim()) {
+          sendTelegramMessage(chatId, "⚠️ Description cannot be empty:", token);
+          return;
+        }
+        updates.description = text.trim();
+      }
+
+      const accessToken = OAuth.getAccessTokenForUser(userId);
+      const result = Database.editTransaction(userId, txId, updates, accessToken);
+
+      userProperties.deleteProperty(stateKey);
+      scriptProperties.deleteProperty(`TEMP_EDIT_${userId}`);
+
+      if (result) {
+        const typeSign = result.type === 'credit' ? '🟢' : '🔴';
+        const successText = `✅ <b>Transaction Updated Successfully!</b>\n\n` +
+          `📅 <b>Date:</b> ${result.date}\n` +
+          `➕ <b>Type:</b> ${typeSign} ${result.type}\n` +
+          `💰 <b>Amount:</b> ${formatCurrency(result.amount)}\n` +
+          `📝 <b>Description:</b> ${result.description}\n\n` +
+          `💰 <b>New Running Balance:</b> <code>${formatCurrency(result.balanceAfter)}</code>`;
+        sendTelegramMessage(chatId, successText, token);
+      } else {
+        sendTelegramMessage(chatId, `❌ Error: Transaction ID ${txId} was not found.`, token);
+      }
+      return;
+    }
   } catch (error) {
     console.error("Error in handleStatefulMessage:", error);
     sendTelegramMessage(chatId, `❌ Error processing input: ${error.message}`, token);
     PropertiesService.getUserProperties().deleteProperty(`STATE_${userId}`);
     PropertiesService.getScriptProperties().deleteProperty(`TEMP_TX_${userId}`);
+    PropertiesService.getScriptProperties().deleteProperty(`TEMP_EDIT_${userId}`);
   }
 }
 
@@ -289,13 +368,21 @@ function handleCallbackQuery(callbackQuery: any, token: string) {
       return;
     }
 
-    answerCallbackQuery(callbackQuery.id, "Processing...", token);
-    
+    // 4. CLEAR FLOW CALLBACKS
     if (data.startsWith("clear_")) {
+      answerCallbackQuery(callbackQuery.id, "Processing clear choice...", token);
       handleClearCallback(userId, chatId, callbackQuery.message.message_id, data, token);
-    } else if (data.startsWith("edit_")) {
-      handleEditCallback(userId, chatId, callbackQuery.message.message_id, data, token);
+      return;
     }
+
+    // 5. EDIT FLOW CALLBACKS
+    if (data.startsWith("edit_")) {
+      answerCallbackQuery(callbackQuery.id, "Processing edit choice...", token);
+      handleEditCallback(userId, chatId, callbackQuery.message.message_id, data, token);
+      return;
+    }
+
+    answerCallbackQuery(callbackQuery.id, "Processing...", token);
   } catch (error) {
     console.error("Error in handleCallbackQuery:", error);
     answerCallbackQuery(callbackQuery.id, "❌ Error", token);
@@ -323,22 +410,379 @@ function updateTelegramMessage(chatId: number, messageId: number, text: string, 
   UrlFetchApp.fetch(url, options);
 }
 
+/**
+ * Clear Command and Callback Handlers
+ */
+
 function startClearFlow(userId: number, chatId: number, token: string) {
-  sendTelegramMessage(chatId, "⏳ <i>Clear flow implementation in progress...</i>", token);
-}
+  try {
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "🕒 Delete Recent", callback_data: "clear_opt_recent" },
+          { text: "🔢 Delete by ID", callback_data: "clear_opt_id" }
+        ],
+        [
+          { text: "📅 Clear Last 7 Days", callback_data: "clear_opt_week" },
+          { text: "🗓️ Clear This Month", callback_data: "clear_opt_month" }
+        ],
+        [
+          { text: "❌ Cancel", callback_data: "clear_opt_cancel" }
+        ]
+      ]
+    };
 
-function startEditFlow(userId: number, chatId: number, args: string, token: string) {
-  sendTelegramMessage(chatId, "⏳ <i>Edit flow implementation in progress...</i>", token);
-}
-
-function handleSummaryCommand(userId: number, chatId: number, token: string) {
-  sendTelegramMessage(chatId, "⏳ <i>Summary Aggregation implementation in progress...</i>", token);
+    sendTelegramMessage(chatId, "🗑️ <b>Clear Transactions Option Menu</b>\n\nChoose what range of transactions you wish to delete:", token, keyboard);
+  } catch (error) {
+    console.error("Error in startClearFlow:", error);
+    sendTelegramMessage(chatId, `❌ Error: ${error.message}`, token);
+  }
 }
 
 function handleClearCallback(userId: number, chatId: number, messageId: number, data: string, token: string) {
-  sendTelegramMessage(chatId, `Clear callback received: ${data}. Feature in progress.`, token);
+  try {
+    const accessToken = OAuth.getAccessTokenForUser(userId);
+
+    if (data === "clear_opt_cancel") {
+      updateTelegramMessage(chatId, messageId, "❌ Clear operation cancelled.", token);
+      return;
+    }
+
+    if (data === "clear_opt_recent") {
+      const confirmText = "⚠️ <b>Are you sure you want to delete your most recent transaction?</b>";
+      const keyboard = {
+        inline_keyboard: [[
+          { text: "✅ Yes, Delete", callback_data: "clear_confirm_recent" },
+          { text: "❌ Cancel", callback_data: "clear_opt_cancel" }
+        ]]
+      };
+      updateTelegramMessage(chatId, messageId, confirmText, token, keyboard);
+      return;
+    }
+
+    if (data === "clear_opt_week") {
+      const confirmText = "⚠️ <b>Are you sure you want to permanently delete all transactions from the last 7 days?</b>";
+      const keyboard = {
+        inline_keyboard: [[
+          { text: "✅ Yes, Clear Week", callback_data: "clear_confirm_week" },
+          { text: "❌ Cancel", callback_data: "clear_opt_cancel" }
+        ]]
+      };
+      updateTelegramMessage(chatId, messageId, confirmText, token, keyboard);
+      return;
+    }
+
+    if (data === "clear_opt_month") {
+      const confirmText = "⚠️ <b>Are you sure you want to permanently delete all your transactions in this calendar month?</b>";
+      const keyboard = {
+        inline_keyboard: [[
+          { text: "✅ Yes, Clear Month", callback_data: "clear_confirm_month" },
+          { text: "❌ Cancel", callback_data: "clear_opt_cancel" }
+        ]]
+      };
+      updateTelegramMessage(chatId, messageId, confirmText, token, keyboard);
+      return;
+    }
+
+    if (data === "clear_opt_id") {
+      const userProperties = PropertiesService.getUserProperties();
+      userProperties.setProperty(`STATE_${userId}`, "CLEAR_AWAITING_ID");
+      updateTelegramMessage(chatId, messageId, "👉 Please type and send the Transaction ID you wish to delete:", token);
+      return;
+    }
+
+    // CONFIRM ACTIONS
+    if (data === "clear_confirm_recent") {
+      const resultText = Database.clearTransactionsRange(userId, 'recent', accessToken);
+      updateTelegramMessage(chatId, messageId, resultText, token);
+      return;
+    }
+
+    if (data === "clear_confirm_week") {
+      const resultText = Database.clearTransactionsRange(userId, 'week', accessToken);
+      updateTelegramMessage(chatId, messageId, resultText, token);
+      return;
+    }
+
+    if (data === "clear_confirm_month") {
+      const resultText = Database.clearTransactionsRange(userId, 'month', accessToken);
+      updateTelegramMessage(chatId, messageId, resultText, token);
+      return;
+    }
+
+    if (data.startsWith("clear_confirm_id_")) {
+      const txId = Number(data.replace("clear_confirm_id_", ""));
+      const deleted = Database.deleteTransaction(userId, txId, accessToken);
+      if (deleted) {
+        updateTelegramMessage(chatId, messageId, `✅ <b>Transaction ID ${txId} deleted successfully!</b>\nBalances recalculated chronologically.`, token);
+      } else {
+        updateTelegramMessage(chatId, messageId, `❌ Error: Transaction ID ${txId} not found in database.`, token);
+      }
+      return;
+    }
+
+    if (data === "clear_confirm_no") {
+      updateTelegramMessage(chatId, messageId, "❌ Clear operation cancelled.", token);
+      return;
+    }
+  } catch (error) {
+    console.error("Error in handleClearCallback:", error);
+    sendTelegramMessage(chatId, `❌ Clear Error: ${error.message}`, token);
+  }
+}
+
+/**
+ * Edit Command and Callback Handlers
+ */
+
+function startEditFlow(userId: number, chatId: number, args: string, token: string) {
+  try {
+    const txId = Number(args.trim());
+    if (!args || isNaN(txId) || txId <= 0) {
+      sendTelegramMessage(chatId, "💡 <b>Usage:</b> <code>/edit &lt;transaction_id&gt;</code>\n\nExample: <code>/edit 5</code>", token);
+      return;
+    }
+
+    const accessToken = OAuth.getAccessTokenForUser(userId);
+    const ssId = Database.getSpreadsheetId(userId, accessToken);
+    const sheets = Database.getSheetsList(ssId, accessToken);
+    const txSheets = sheets.filter(s => s.endsWith(" Transactions")).sort().reverse();
+    
+    let targetTx: any = null;
+    let foundSheet = "";
+
+    // Search for transaction
+    for (const sheetName of txSheets) {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssId}/values/'${sheetName}'!A:G`;
+      const data = Database.apiCall(url, 'get', null, accessToken);
+      if (data.values && data.values.length > 1) {
+        for (let i = 1; i < data.values.length; i++) {
+          const row = data.values[i];
+          if (Number(row[0]) === userId && Number(row[1]) === txId) {
+            targetTx = {
+              userId: Number(row[0]),
+              id: Number(row[1]),
+              date: row[2],
+              amount: Number(row[3]),
+              description: row[4],
+              type: row[5],
+              balanceAfter: Number(row[6])
+            };
+            foundSheet = sheetName;
+            break;
+          }
+        }
+      }
+      if (targetTx) break;
+    }
+
+    if (!targetTx) {
+      sendTelegramMessage(chatId, `❌ Transaction ID <code>${txId}</code> not found.`, token);
+      return;
+    }
+
+    // Cache target ID details
+    const scriptProperties = PropertiesService.getScriptProperties();
+    scriptProperties.setProperty(`TEMP_EDIT_${userId}`, JSON.stringify({ targetId: txId, sheetName: foundSheet }));
+
+    const formattedAmount = formatCurrency(targetTx.amount);
+    const typeLabel = targetTx.type === 'credit' ? '🟢 Income' : '🔴 Expense';
+
+    const text = `✏️ <b>Edit Transaction ID ${txId}:</b>\n\n` +
+      `📅 <b>Date:</b> ${targetTx.date}\n` +
+      `➕ <b>Type:</b> ${typeLabel}\n` +
+      `💰 <b>Amount:</b> ${formattedAmount}\n` +
+      `📝 <b>Description:</b> ${targetTx.description}\n\n` +
+      `Choose which field you want to edit:`;
+
+    const keyboard = {
+      inline_keyboard: [
+        [
+          { text: "📅 Date", callback_data: "edit_field_date" },
+          { text: "➕ Type", callback_data: "edit_field_type" }
+        ],
+        [
+          { text: "💰 Amount", callback_data: "edit_field_amount" },
+          { text: "📝 Description", callback_data: "edit_field_desc" }
+        ],
+        [
+          { text: "❌ Cancel", callback_data: "edit_field_cancel" }
+        ]
+      ]
+    };
+
+    sendTelegramMessage(chatId, text, token, keyboard);
+  } catch (error) {
+    console.error("Error in startEditFlow:", error);
+    sendTelegramMessage(chatId, `❌ Edit Error: ${error.message}`, token);
+  }
 }
 
 function handleEditCallback(userId: number, chatId: number, messageId: number, data: string, token: string) {
-  sendTelegramMessage(chatId, `Edit callback received: ${data}. Feature in progress.`, token);
+  try {
+    const userProperties = PropertiesService.getUserProperties();
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const stateKey = `STATE_${userId}`;
+
+    if (data === "edit_field_cancel") {
+      scriptProperties.deleteProperty(`TEMP_EDIT_${userId}`);
+      userProperties.deleteProperty(stateKey);
+      updateTelegramMessage(chatId, messageId, "❌ Edit cancelled.", token);
+      return;
+    }
+
+    const tempEditStr = scriptProperties.getProperty(`TEMP_EDIT_${userId}`);
+    if (!tempEditStr) {
+      updateTelegramMessage(chatId, messageId, "❌ Error: Edit details expired. Please run /edit again.", token);
+      return;
+    }
+    const tempEdit = JSON.parse(tempEditStr);
+    const txId = tempEdit.targetId;
+
+    if (data === "edit_field_date") {
+      userProperties.setProperty(stateKey, "EDIT_AWAITING_DATE");
+      updateTelegramMessage(chatId, messageId, `📅 <b>Edit ID ${txId} Date</b>\n\n👉 Please type and send the new date (format: <code>YYYY-MM-DD</code>):`, token);
+      return;
+    }
+
+    if (data === "edit_field_amount") {
+      userProperties.setProperty(stateKey, "EDIT_AWAITING_AMOUNT");
+      updateTelegramMessage(chatId, messageId, `💰 <b>Edit ID ${txId} Amount</b>\n\n👉 Please send the new numeric amount (e.g. <code>75000</code>):`, token);
+      return;
+    }
+
+    if (data === "edit_field_desc") {
+      userProperties.setProperty(stateKey, "EDIT_AWAITING_DESC");
+      updateTelegramMessage(chatId, messageId, `📝 <b>Edit ID ${txId} Description</b>\n\n👉 Please enter the new description:`, token);
+      return;
+    }
+
+    if (data === "edit_field_type") {
+      const keyboard = {
+        inline_keyboard: [[
+          { text: "🔴 Expense (Debit)", callback_data: "edit_confirm_type_debit" },
+          { text: "🟢 Income (Credit)", callback_data: "edit_confirm_type_credit" }
+        ], [
+          { text: "❌ Cancel", callback_data: "edit_field_cancel" }
+        ]]
+      };
+      updateTelegramMessage(chatId, messageId, `➕ <b>Edit ID ${txId} Type</b>\n\nSelect the new transaction type:`, token, keyboard);
+      return;
+    }
+
+    // TYPE SELECTIONS CONFIRM
+    if (data.startsWith("edit_confirm_type_")) {
+      const newType = data.replace("edit_confirm_type_", "") as 'debit' | 'credit';
+      const accessToken = OAuth.getAccessTokenForUser(userId);
+      const result = Database.editTransaction(userId, txId, { type: newType }, accessToken);
+
+      userProperties.deleteProperty(stateKey);
+      scriptProperties.deleteProperty(`TEMP_EDIT_${userId}`);
+
+      if (result) {
+        const typeSign = result.type === 'credit' ? '🟢' : '🔴';
+        const text = `✅ <b>Transaction Type Updated!</b>\n\n` +
+          `📅 <b>Date:</b> ${result.date}\n` +
+          `➕ <b>Type:</b> ${typeSign} ${result.type}\n` +
+          `💰 <b>Amount:</b> ${formatCurrency(result.amount)}\n` +
+          `📝 <b>Description:</b> ${result.description}\n\n` +
+          `💰 <b>New Running Balance:</b> <code>${formatCurrency(result.balanceAfter)}</code>`;
+        updateTelegramMessage(chatId, messageId, text, token);
+      } else {
+        updateTelegramMessage(chatId, messageId, `❌ Error: Transaction ID ${txId} was not found.`, token);
+      }
+      return;
+    }
+  } catch (error) {
+    console.error("Error in handleEditCallback:", error);
+    sendTelegramMessage(chatId, `❌ Edit Callback Error: ${error.message}`, token);
+  }
+}
+
+/**
+ * Summary Command Handler
+ */
+
+function handleSummaryCommand(userId: number, chatId: number, token: string) {
+  try {
+    const accessToken = OAuth.getAccessTokenForUser(userId);
+    const ssId = Database.getSpreadsheetId(userId, accessToken);
+    const sheets = Database.getSheetsList(ssId, accessToken);
+    
+    // Aggregation Variables
+    let thisMonthIncome = 0;
+    let thisMonthExpense = 0;
+    let weekIncome = 0;
+    let weekExpense = 0;
+
+    const now = new Date();
+    const currentMonthSheet = Database.getMonthSheetName(Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM-dd"));
+    const thresholdDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thresholdStr = Utilities.formatDate(thresholdDate, "Asia/Jakarta", "yyyy-MM-dd");
+
+    // 1. Process Current Month Sheet
+    if (sheets.indexOf(currentMonthSheet) !== -1) {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssId}/values/'${currentMonthSheet}'!A:G`;
+      const data = Database.apiCall(url, 'get', null, accessToken);
+      if (data.values && data.values.length > 1) {
+        for (let i = 1; i < data.values.length; i++) {
+          const row = data.values[i];
+          if (Number(row[0]) === userId) {
+            const amount = Number(row[3]);
+            const type = row[5];
+            const date = row[2];
+
+            if (type === 'credit') {
+              thisMonthIncome += amount;
+              if (date >= thresholdStr) weekIncome += amount;
+            } else {
+              thisMonthExpense += amount;
+              if (date >= thresholdStr) weekExpense += amount;
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Process Previous Month Sheet (if threshold date crosses month boundaries)
+    const prevMonthSheet = Database.getMonthSheetName(Utilities.formatDate(thresholdDate, "Asia/Jakarta", "yyyy-MM-dd"));
+    if (prevMonthSheet !== currentMonthSheet && sheets.indexOf(prevMonthSheet) !== -1) {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssId}/values/'${prevMonthSheet}'!A:G`;
+      const data = Database.apiCall(url, 'get', null, accessToken);
+      if (data.values && data.values.length > 1) {
+        for (let i = 1; i < data.values.length; i++) {
+          const row = data.values[i];
+          if (Number(row[0]) === userId) {
+            const amount = Number(row[3]);
+            const type = row[5];
+            const date = row[2];
+
+            if (date >= thresholdStr) {
+              if (type === 'credit') weekIncome += amount;
+              else weekExpense += amount;
+            }
+          }
+        }
+      }
+    }
+
+    // Format results
+    const monthNet = thisMonthIncome - thisMonthExpense;
+    const weekNet = weekIncome - weekExpense;
+
+    const summaryText = `📊 <b>Financial Summary Report</b>\n\n` +
+      `📅 <b>This Calendar Month:</b>\n` +
+      `🟢 Income: <code>${formatCurrency(thisMonthIncome)}</code>\n` +
+      `🔴 Expenses: <code>${formatCurrency(thisMonthExpense)}</code>\n` +
+      `⚖️ Net: <b>${formatCurrency(monthNet)}</b>\n\n` +
+      `📅 <b>Last 7 Days (Week):</b>\n` +
+      `🟢 Income: <code>${formatCurrency(weekIncome)}</code>\n` +
+      `🔴 Expenses: <code>${formatCurrency(weekExpense)}</code>\n` +
+      `⚖️ Net: <b>${formatCurrency(weekNet)}</b>`;
+
+    sendTelegramMessage(chatId, summaryText, token);
+  } catch (error) {
+    console.error("Error in handleSummaryCommand:", error);
+    sendTelegramMessage(chatId, `❌ Summary Error: ${error.message}`, token);
+  }
 }
