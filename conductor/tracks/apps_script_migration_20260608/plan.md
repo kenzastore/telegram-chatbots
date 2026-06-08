@@ -20,11 +20,11 @@
     - [x] Document how to handle Apps Script runtime limitations (30-second execution limit).
     - [x] Map Python dependencies (`python-telegram-bot`, `google-api`, etc.) to Apps Script equivalents (`UrlFetchApp`, `SpreadsheetApp`).
     - [x] Detail error handling and logging strategies using Cloud Logging or Sheet logging.
-- [~] Task: Write TypeScript Code Snippets
-    - [ ] Write the `doPost(e)` entrypoint and webhook request parsing code in TypeScript.
-    - [ ] Write a lightweight router and callback dispatcher in TypeScript.
-    - [ ] Write Google Sheet database wrapper functions (inserting/retrieving transactions, balance calculations).
-    - [ ] Write the natural language quick add parser using TypeScript regex (handling amounts, suffixes, relative/absolute dates, descriptions).
+- [x] Task: Write TypeScript Code Snippets
+    - [x] Write the `doPost(e)` entrypoint and webhook request parsing code in TypeScript.
+    - [x] Write a lightweight router and callback dispatcher in TypeScript.
+    - [x] Write Google Sheet database wrapper functions (inserting/retrieving transactions, balance calculations).
+    - [x] Write the natural language quick add parser using TypeScript regex (handling amounts, suffixes, relative/absolute dates, descriptions).
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: System Migration, Limitations & Code Snippets' (Protocol in workflow.md)
 
 ## Phase 3: Final Review and Integration
