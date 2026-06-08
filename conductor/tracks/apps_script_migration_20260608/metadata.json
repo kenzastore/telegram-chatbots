@@ -1,0 +1,8 @@
+{
+  "track_id": "apps_script_migration_20260608",
+  "type": "refactor",
+  "status": "completed",
+  "created_at": "2026-06-08T03:59:00Z",
+  "updated_at": "2026-06-08T04:05:35Z",
+  "description": "Provide a comprehensive architectural plan and step-by-step refactoring guide to migrate an entire Telegram chatbot project to run on Google Apps Script."
+}
