@@ -5,7 +5,7 @@
 - [x] Task: Set Up clasp Config and OAuth Library Configuration
     - [x] Configure `appsscript.json` with required OAuth scopes (Drive, Spreadsheet, Script Properties).
     - [x] Set up the redirect URI and developer credentials in Script Properties.
-- [ ] Task: Implement Google OAuth2 Authentication Flow
+- [~] Task: Implement Google OAuth2 Authentication Flow
     - [ ] Write `/google_login` and `/google_logout` handlers.
     - [ ] Write the `doGet(e)` callback to handle authorization code redirects and retrieve/store refresh tokens.
     - [ ] Create authentication gate middleware to block unauthenticated transactional commands.
