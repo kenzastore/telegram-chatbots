@@ -10,7 +10,7 @@
     - [x] Explain the stateless `doPost(e)` execution model.
     - [x] Document the Telegram webhook registration process, including `curl` commands to register and check webhook status.
     - [x] Design the command routing architecture to handle stateless incoming updates.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Architectural Design & File Mapping' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Architectural Design & File Mapping' (Protocol in workflow.md)
 
 ## Phase 2: System Migration, Limitations & Code Snippets
 
