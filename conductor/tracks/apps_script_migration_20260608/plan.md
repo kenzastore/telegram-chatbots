@@ -12,7 +12,7 @@
     - [x] Design the command routing architecture to handle stateless incoming updates.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Architectural Design & File Mapping' (Protocol in workflow.md)
 
-## Phase 2: System Migration, Limitations & Code Snippets
+## Phase 2: System Migration, Limitations & Code Snippets [checkpoint: 1fe407a]
 
 - [x] Task: Document Database, State & Library Migration
     - [x] Define the SQLite-to-Google Sheets schema mapping and worksheets setup.
