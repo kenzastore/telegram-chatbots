@@ -27,7 +27,7 @@
     - [x] Write the natural language quick add parser using TypeScript regex (handling amounts, suffixes, relative/absolute dates, descriptions).
 - [x] Task: Conductor - User Manual Verification 'Phase 2: System Migration, Limitations & Code Snippets' (Protocol in workflow.md)
 
-## Phase 3: Final Review and Integration
+## Phase 3: Final Review and Integration [checkpoint: f83c750]
 
 - [x] Task: Document Review and Cleanup
     - [x] Review the entire migration guide for correctness, markdown formatting, link integrity, and clarity.
