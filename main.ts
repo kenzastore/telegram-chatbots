@@ -39,8 +39,7 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
     routeUpdate(contents, token);
 
     // Return success to Telegram
-    return ContentService.createTextOutput(JSON.stringify({ ok: true }))
-                         .setMimeType(ContentService.MimeType.JSON);
+    return HtmlService.createHtmlOutput(JSON.stringify({ ok: true }));
   } catch (error) {
     console.error("Error handling doPost:", error);
     logErrorToSheet(error);
@@ -63,8 +62,7 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
       }
     }
 
-    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: error.message }))
-                         .setMimeType(ContentService.MimeType.JSON);
+    return HtmlService.createHtmlOutput(JSON.stringify({ ok: false, error: error.message }));
   }
 }
 
