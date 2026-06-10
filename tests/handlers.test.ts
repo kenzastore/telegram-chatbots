@@ -320,6 +320,44 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       expect(keyboardObj.inline_keyboard[0][0].callback_data).toBe("export_sheets");
     });
 
+    it("should only include transactions from the 1st of the current month up to today in the monthly summary", () => {
+      const now = new Date();
+      const currentMonthPrefix = Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM");
+      const currentMonthSheet = `${currentMonthPrefix} Transactions`;
+      
+      const todayStr = Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM-dd");
+      const tomorrowDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const tomorrowStr = Utilities.formatDate(tomorrowDate, "Asia/Jakarta", "yyyy-MM-dd");
+      
+      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const prevMonthDate = new Date(firstOfMonth.getTime() - 24 * 60 * 60 * 1000);
+      const prevMonthStr = Utilities.formatDate(prevMonthDate, "Asia/Jakarta", "yyyy-MM-dd");
+
+      MockDatabase.getSpreadsheetId.mockReturnValue("ss_id");
+      MockDatabase.getSheetsList.mockReturnValue([currentMonthSheet]);
+      MockDatabase.getMonthSheetName.mockReturnValue(currentMonthSheet);
+      
+      MockDatabase.apiCall.mockReturnValue({
+        values: [
+          ["user_id", "id", "date", "amount", "description", "type", "balance_after"],
+          [String(userId), "1", todayStr, "50000", "Food", "debit", "50000"],
+          [String(userId), "2", tomorrowStr, "100000", "Future", "debit", "150000"],
+          [String(userId), "3", prevMonthStr, "200000", "Past", "debit", "350000"]
+        ]
+      });
+
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
+      handleSummaryCommand(userId, chatId, token);
+
+      const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
+      const payload = JSON.parse(lastCall[1].payload);
+      expect(payload.text).toContain("Expenses: <code>Rp 50.000,00</code>");
+    });
+
     it("should handle export_sheets callback query successfully", () => {
       const callbackQuery = {
         id: "cb_id_export",

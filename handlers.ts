@@ -734,9 +734,12 @@ function handleSummaryCommand(userId: number, chatId: number, token: string) {
     let weekExpense = 0;
 
     const now = new Date();
+    const currentMonthPrefix = Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM");
     const currentMonthSheet = Database.getMonthSheetName(Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM-dd"));
     const thresholdDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     const thresholdStr = Utilities.formatDate(thresholdDate, "Asia/Jakarta", "yyyy-MM-dd");
+    const todayStr = Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM-dd");
+    const currentMonthStartStr = `${currentMonthPrefix}-01`;
 
     // 1. Process Current Month Sheet
     if (sheets.indexOf(currentMonthSheet) !== -1) {
@@ -750,12 +753,22 @@ function handleSummaryCommand(userId: number, chatId: number, token: string) {
             const type = row[5];
             const date = row[2];
 
-            if (type === 'credit') {
-              thisMonthIncome += amount;
-              if (date >= thresholdStr) weekIncome += amount;
-            } else {
-              thisMonthExpense += amount;
-              if (date >= thresholdStr) weekExpense += amount;
+            // Monthly summary: 1st of current calendar month up to today
+            if (date >= currentMonthStartStr && date <= todayStr) {
+              if (type === 'credit') {
+                thisMonthIncome += amount;
+              } else {
+                thisMonthExpense += amount;
+              }
+            }
+
+            // Weekly summary: thresholdStr up to today
+            if (date >= thresholdStr && date <= todayStr) {
+              if (type === 'credit') {
+                weekIncome += amount;
+              } else {
+                weekExpense += amount;
+              }
             }
           }
         }
@@ -775,7 +788,7 @@ function handleSummaryCommand(userId: number, chatId: number, token: string) {
             const type = row[5];
             const date = row[2];
 
-            if (date >= thresholdStr) {
+            if (date >= thresholdStr && date <= todayStr) {
               if (type === 'credit') weekIncome += amount;
               else weekExpense += amount;
             }
