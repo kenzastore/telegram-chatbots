@@ -1,0 +1,8 @@
+Task: Implement Spreadsheet Storage and Lifecycle Logic
+Summary of changes:
+- Created helper function Database.getOrCreateExportSpreadsheet in database.ts to resolve/verify the cached export spreadsheet ID or recreate it when needed.
+- Wrote Jest unit tests in tests/database.test.ts validating successful retrieval from Script Properties, creation on empty cache, and recreation on invalid/deleted spreadsheet.
+- Suppressed expected console.warn outputs during invalid ID testing.
+Files created/modified:
+- database.ts
+- tests/database.test.ts
