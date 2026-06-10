@@ -1,0 +1,8 @@
+{
+  "track_id": "google_sheets_export_gas_20260610",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-06-10T17:20:00Z",
+  "updated_at": "2026-06-10T17:20:00Z",
+  "description": "adapt/refactor the logic from the google_sheets_export_20260604 track by translating the existing Python code into Google Apps Script."
+}
