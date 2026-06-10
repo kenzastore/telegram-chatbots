@@ -497,3 +497,7 @@ const Database = {
     }
   }
 };
+
+if (typeof module !== 'undefined') {
+  module.exports = { Database };
+}
