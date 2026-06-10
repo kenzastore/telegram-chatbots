@@ -41,7 +41,7 @@ Every user accessing the bot must first log in to Google via OAuth2. Unauthentic
 9. **Manual Export to Google Sheets**:
    - **Trigger**: User clicks "Export to Google Sheets 📊" button.
    - **Workflow**: If the user has not exported before, the bot automatically creates a new spreadsheet in the user's Google Drive titled `Finance Bot Export - <UserId>` and updates permissions to "anyone with the link can view". On subsequent requests, the existing spreadsheet is updated.
-   - **Output Sheets**: Export consists of a "Transactions" sheet containing all transactions sorted by date ascending, and a "Summaries" sheet containing month-by-month financial summary aggregations.
+   - **Output Sheets**: Export consists of worksheets grouped dynamically by calendar month, specifically `YYYY-MM Transactions` and `YYYY-MM Summaries` tabs for each month represented in the database (defaulting to the current month if no transactions).
    - **Confirmation**: A Telegram message is sent back to the user with the direct link to the exported spreadsheet.
 
 ## Data Structure
