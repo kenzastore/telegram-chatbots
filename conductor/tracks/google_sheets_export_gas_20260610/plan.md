@@ -10,13 +10,13 @@
     - [x] Write Jest unit tests to mock and verify these raw HTTP Sheets & Drive API calls.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Inline Trigger & Google Sheets/Drive API Client Setup' (Protocol in workflow.md) (7a64829)
 
-## Phase 2: Spreadsheet Selection & Lifecycle Logic [checkpoint: pending]
+## Phase 2: Spreadsheet Selection & Lifecycle Logic [checkpoint: e9e952f]
 
 - [x] Task: Implement Spreadsheet Storage and Lifecycle Logic (b34e741)
     - [x] Implement the look-up and check logic for `EXPORT_SS_ID_<userId>` in `PropertiesService`.
     - [x] Build first-time creation vs reuse/overwrite logic for the spreadsheet.
     - [x] Write Jest unit tests in a new `tests/export.test.ts` (or update `tests/handlers.test.ts`) covering first-time vs subsequent export lifecycle and verify mock calls.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Spreadsheet Selection & Lifecycle Logic' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Spreadsheet Selection & Lifecycle Logic' (Protocol in workflow.md) (e9e952f)
 
 ## Phase 3: Data Export Format & Response Handler [checkpoint: pending]
 
