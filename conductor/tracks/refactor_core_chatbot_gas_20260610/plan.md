@@ -1,11 +1,11 @@
 # Implementation Plan - Refactor Core Chatbot Logic and DB to Google Apps Script
 
-## Phase 1: Test Suite Setup & GAS Mocking [checkpoint: pending]
+## Phase 1: Test Suite Setup & GAS Mocking [checkpoint: dee2e66]
 
 - [x] Task: Configure Jest and GAS Mocks (0d5a32c)
     - [x] Install `jest`, `ts-jest`, `@types/jest` as devDependencies.
     - [x] Create a `jest.config.js` and a testing setup file (`tests/setup.ts`) to mock the global Google Apps Script API (e.g. `UrlFetchApp`, `PropertiesService`, `LockService`, `SpreadsheetApp`).
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Test Suite Setup & GAS Mocking' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Test Suite Setup & GAS Mocking' (Protocol in workflow.md) (dee2e66)
 
 ## Phase 2: Database Module & Test Refactoring [checkpoint: pending]
 
