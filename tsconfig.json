@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es2019",
     "lib": ["esnext"],
-    "types": ["google-apps-script"],
+    "types": ["google-apps-script", "jest", "node"],
     "noImplicitAny": false,
     "useUnknownInCatchVariables": false,
     "strictNullChecks": false,

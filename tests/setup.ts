@@ -75,5 +75,5 @@ const MockSpreadsheetApp = {
 (global as any).HtmlService = MockHtmlService;
 (global as any).SpreadsheetApp = MockSpreadsheetApp;
 (global as any).Logger = {
-  log: jest.fn((...args) => console.log(...args)),
+  log: jest.fn((...args: any[]) => console.log(args.join(' '))),
 };
