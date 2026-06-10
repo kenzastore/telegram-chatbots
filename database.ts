@@ -525,6 +525,30 @@ const Database = {
       type: "anyone"
     };
     this.apiCall(url, 'post', payload, accessToken);
+  },
+
+  /**
+   * Returns valid export spreadsheet ID, creating it if it doesn't exist.
+   */
+  getOrCreateExportSpreadsheet(userId: number, accessToken: string): string {
+    const key = `EXPORT_SS_ID_${userId}`;
+    let ssId = PropertiesService.getScriptProperties().getProperty(key);
+
+    if (ssId) {
+      try {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssId}`;
+        this.apiCall(url, 'get', null, accessToken);
+        return ssId;
+      } catch (e) {
+        console.warn(`Stored export spreadsheet ID ${ssId} is invalid/inaccessible. Recreating...`, e);
+      }
+    }
+
+    const title = `Finance Bot Export - ${userId}`;
+    ssId = this.createExportSpreadsheet(title, accessToken);
+    this.setSpreadsheetPublicReader(ssId, accessToken);
+    PropertiesService.getScriptProperties().setProperty(key, ssId);
+    return ssId;
   }
 };
 

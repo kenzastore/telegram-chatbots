@@ -530,4 +530,69 @@ describe("Database Module Tests", () => {
       expect(payload.type).toBe("anyone");
     });
   });
+
+  describe("getOrCreateExportSpreadsheet Lifecycle", () => {
+    it("should return existing spreadsheet ID from script properties if it is valid", () => {
+      PropertiesService.getScriptProperties().setProperty(`EXPORT_SS_ID_${userId}`, "cached_export_ss_id");
+
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ spreadsheetId: "cached_export_ss_id" })
+      });
+
+      const ssId = Database.getOrCreateExportSpreadsheet(userId, accessToken);
+
+      expect(ssId).toBe("cached_export_ss_id");
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0]).toBe("https://sheets.googleapis.com/v4/spreadsheets/cached_export_ss_id");
+    });
+
+    it("should create new spreadsheet if script properties is empty", () => {
+      fetchMock
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({ spreadsheetId: "new_export_ss_id" })
+        })
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({ id: "perm_id" })
+        });
+
+      const ssId = Database.getOrCreateExportSpreadsheet(userId, accessToken);
+
+      expect(ssId).toBe("new_export_ss_id");
+      expect(PropertiesService.getScriptProperties().getProperty(`EXPORT_SS_ID_${userId}`)).toBe("new_export_ss_id");
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls[0][0]).toBe("https://sheets.googleapis.com/v4/spreadsheets");
+      expect(fetchMock.mock.calls[1][0]).toBe("https://www.googleapis.com/drive/v3/files/new_export_ss_id/permissions");
+    });
+
+    it("should create new spreadsheet if cached ID is invalid/deleted", () => {
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      PropertiesService.getScriptProperties().setProperty(`EXPORT_SS_ID_${userId}`, "deleted_ss_id");
+
+      fetchMock
+        .mockReturnValueOnce({
+          getResponseCode: () => 404,
+          getContentText: () => "Not Found"
+        })
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({ spreadsheetId: "recreated_export_ss_id" })
+        })
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({ id: "perm_id" })
+        });
+
+      const ssId = Database.getOrCreateExportSpreadsheet(userId, accessToken);
+
+      expect(ssId).toBe("recreated_export_ss_id");
+      expect(PropertiesService.getScriptProperties().getProperty(`EXPORT_SS_ID_${userId}`)).toBe("recreated_export_ss_id");
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock.mock.calls[0][0]).toBe("https://sheets.googleapis.com/v4/spreadsheets/deleted_ss_id");
+      expect(fetchMock.mock.calls[1][0]).toBe("https://sheets.googleapis.com/v4/spreadsheets");
+      consoleSpy.mockRestore();
+    });
+  });
 });
