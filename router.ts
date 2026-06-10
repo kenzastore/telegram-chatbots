@@ -47,6 +47,24 @@ function routeUpdate(update: TelegramUpdate, token: string) {
         sendTelegramMessage(chat_id, "👋 <b>Logged out successfully.</b> Your Google credentials and mappings have been deleted.", token);
         return;
       }
+      if (command === "/debug") {
+        const scriptProperties = PropertiesService.getScriptProperties();
+        const botToken = scriptProperties.getProperty("TELEGRAM_BOT_TOKEN");
+        const clientId = scriptProperties.getProperty("GOOGLE_CLIENT_ID");
+        const clientSecret = scriptProperties.getProperty("GOOGLE_CLIENT_SECRET");
+        const redirectUri = scriptProperties.getProperty("REDIRECT_URI");
+        const lastError = scriptProperties.getProperty("LAST_ERROR") || "None";
+
+        const debugMsg = "🔍 <b>Bot Debug Diagnostics</b>\n\n" +
+          `• <b>TELEGRAM_BOT_TOKEN</b>: ${botToken ? `Set (Length: ${botToken.length})` : "❌ Missing"}\n` +
+          `• <b>GOOGLE_CLIENT_ID</b>: ${clientId ? `Set (${clientId.substring(0, 15)}...)` : "❌ Missing"}\n` +
+          `• <b>GOOGLE_CLIENT_SECRET</b>: ${clientSecret ? "Set (Hidden)" : "❌ Missing"}\n` +
+          `• <b>REDIRECT_URI</b>: ${redirectUri ? `<code>${redirectUri}</code>` : "❌ Missing"}\n\n` +
+          `⚠️ <b>Last Recorded Error:</b>\n<pre>${lastError}</pre>`;
+
+        sendTelegramMessage(chat_id, debugMsg, token);
+        return;
+      }
 
       // Check Authentication Gate for other commands
       if (!OAuth.isUserAuthenticated(user_id)) {
@@ -118,7 +136,12 @@ function sendTelegramMessage(chatId: number, text: string, token: string, replyM
     muteHttpExceptions: true
   };
 
-  UrlFetchApp.fetch(url, options);
+  const response = UrlFetchApp.fetch(url, options);
+  const responseCode = response.getResponseCode();
+  const content = response.getContentText();
+  if (responseCode !== 200) {
+    throw new Error(`Telegram API sendMessage failed (${responseCode}): ${content}`);
+  }
 }
 
 function answerCallbackQuery(callbackQueryId: string, text: string, token: string) {
@@ -133,5 +156,10 @@ function answerCallbackQuery(callbackQueryId: string, text: string, token: strin
     payload: JSON.stringify(payload),
     muteHttpExceptions: true
   };
-  UrlFetchApp.fetch(url, options);
+  const response = UrlFetchApp.fetch(url, options);
+  const responseCode = response.getResponseCode();
+  const content = response.getContentText();
+  if (responseCode !== 200) {
+    throw new Error(`Telegram API answerCallbackQuery failed (${responseCode}): ${content}`);
+  }
 }

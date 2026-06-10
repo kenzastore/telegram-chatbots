@@ -45,6 +45,12 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
     console.error("Error handling doPost:", error);
     logErrorToSheet(error);
 
+    try {
+      PropertiesService.getScriptProperties().setProperty("LAST_ERROR", `${new Date().toISOString()}: ${error.message}\n${error.stack}`);
+    } catch (e) {
+      console.error("Failed to save LAST_ERROR property:", e);
+    }
+
     if (chatId && token) {
       try {
         sendTelegramMessage(
