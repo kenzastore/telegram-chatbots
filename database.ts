@@ -549,6 +549,109 @@ const Database = {
     this.setSpreadsheetPublicReader(ssId, accessToken);
     PropertiesService.getScriptProperties().setProperty(key, ssId);
     return ssId;
+  },
+
+  /**
+   * Returns all transactions for the user from the database.
+   */
+  getAllUserTransactions(userId: number, accessToken: string): Transaction[] {
+    const ssId = this.getSpreadsheetId(userId, accessToken);
+    const sheets = this.getSheetsList(ssId, accessToken);
+    const txSheets = sheets.filter(s => s.endsWith(" Transactions")).sort(); // ascending chronologically
+    const allTxs: Transaction[] = [];
+
+    for (const sheetName of txSheets) {
+      const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssId}/values/'${sheetName}'!A:G`;
+      const data = this.apiCall(url, 'get', null, accessToken);
+      if (data.values && data.values.length > 1) {
+        for (let i = 1; i < data.values.length; i++) {
+          const row = data.values[i];
+          if (Number(row[0]) === userId) {
+            allTxs.push({
+              userId: Number(row[0]),
+              id: Number(row[1]),
+              date: row[2],
+              amount: Number(row[3]),
+              description: row[4],
+              type: row[5] as 'debit' | 'credit',
+              balanceAfter: Number(row[6])
+            });
+          }
+        }
+      }
+    }
+    return allTxs;
+  },
+
+  /**
+   * Main export runner: fetches all user transactions, groups summaries, writes to export sheet, and returns URL.
+   */
+  exportDataToSpreadsheet(userId: number, accessToken: string): string {
+    const exportSsId = this.getOrCreateExportSpreadsheet(userId, accessToken);
+    const allTxs = this.getAllUserTransactions(userId, accessToken);
+
+    const weeklySums: { [key: string]: number } = {};
+    const monthlySums: { [key: string]: number } = {};
+
+    const now = new Date();
+    const thresholdDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const thresholdStr = Utilities.formatDate(thresholdDate, "Asia/Jakarta", "yyyy-MM-dd");
+    const currentMonthPrefix = Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM");
+
+    for (const tx of allTxs) {
+      const key = `${tx.description}|||${tx.type}`;
+      if (tx.date >= thresholdStr) {
+        weeklySums[key] = (weeklySums[key] || 0) + tx.amount;
+      }
+      if (tx.date.startsWith(currentMonthPrefix)) {
+        monthlySums[key] = (monthlySums[key] || 0) + tx.amount;
+      }
+    }
+
+    const transactionRows: any[][] = [
+      ["ID", "Date", "Amount", "Description", "Type", "Balance After"]
+    ];
+    for (const tx of allTxs) {
+      transactionRows.push([
+        tx.id,
+        tx.date,
+        tx.amount,
+        tx.description,
+        tx.type,
+        tx.balanceAfter
+      ]);
+    }
+
+    const summaryRows: any[][] = [];
+
+    summaryRows.push(["Weekly Financial Summary (Last 7 Days)"]);
+    summaryRows.push(["Description", "Type", "Total"]);
+    for (const key of Object.keys(weeklySums)) {
+      const [desc, type] = key.split("|||");
+      summaryRows.push([desc, type, weeklySums[key]]);
+    }
+
+    summaryRows.push([""]);
+    summaryRows.push([`Monthly Financial Summary (Current Month: ${currentMonthPrefix})`]);
+    summaryRows.push(["Description", "Type", "Total"]);
+    for (const key of Object.keys(monthlySums)) {
+      const [desc, type] = key.split("|||");
+      summaryRows.push([desc, type, monthlySums[key]]);
+    }
+
+    const clearTxUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}/values/Transactions!A:G:clear`;
+    this.apiCall(clearTxUrl, 'post', null, accessToken);
+
+    const writeTxUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}/values/Transactions!A1?valueInputOption=USER_ENTERED`;
+    this.apiCall(writeTxUrl, 'put', { values: transactionRows }, accessToken);
+
+    const clearSumUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}/values/Summaries!A:C:clear`;
+    this.apiCall(clearSumUrl, 'post', null, accessToken);
+
+    const writeSumUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}/values/Summaries!A1?valueInputOption=USER_ENTERED`;
+    this.apiCall(writeSumUrl, 'put', { values: summaryRows }, accessToken);
+
+    return `https://docs.google.com/spreadsheets/d/${exportSsId}`;
   }
 };
 

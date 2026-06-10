@@ -595,4 +595,62 @@ describe("Database Module Tests", () => {
       consoleSpy.mockRestore();
     });
   });
+
+  describe("exportDataToSpreadsheet full flow", () => {
+    it("should fetch all user transactions, format them, write to export spreadsheet and return URL", () => {
+      PropertiesService.getScriptProperties().setProperty(`EXPORT_SS_ID_${userId}`, "export_ss_id");
+      PropertiesService.getScriptProperties().setProperty(`SPREADSHEET_ID_${userId}`, "db_ss_id");
+
+      fetchMock
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({ spreadsheetId: "export_ss_id" })
+        })
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({ sheets: [{ properties: { title: "2026-06 Transactions" } }] })
+        })
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({
+            values: [
+              ["user_id", "id", "date", "amount", "description", "type", "balance_after"],
+              [String(userId), "1", "2026-06-10", "15000", "Snack", "debit", "85000"]
+            ]
+          })
+        })
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => "{}"
+        })
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => "{}"
+        })
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => "{}"
+        })
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => "{}"
+        });
+
+      const url = Database.exportDataToSpreadsheet(userId, accessToken);
+
+      expect(url).toBe("https://docs.google.com/spreadsheets/d/export_ss_id");
+      expect(fetchMock).toHaveBeenCalledTimes(7);
+
+      expect(fetchMock.mock.calls[3][0]).toContain("Transactions!A:G:clear");
+      expect(fetchMock.mock.calls[5][0]).toContain("Summaries!A:C:clear");
+
+      const txWritePayload = JSON.parse(fetchMock.mock.calls[4][1].payload);
+      expect(txWritePayload.values[0]).toEqual(["ID", "Date", "Amount", "Description", "Type", "Balance After"]);
+      expect(txWritePayload.values[1]).toEqual([1, "2026-06-10", 15000, "Snack", "debit", 85000]);
+
+      const sumWritePayload = JSON.parse(fetchMock.mock.calls[6][1].payload);
+      expect(sumWritePayload.values[0][0]).toContain("Weekly Financial Summary");
+      expect(sumWritePayload.values[4][0]).toContain("Monthly Financial Summary");
+    });
+  });
 });

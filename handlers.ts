@@ -384,8 +384,19 @@ function handleCallbackQuery(callbackQuery: any, token: string) {
 
     // 6. EXPORT FLOW CALLBACK
     if (data === "export_sheets") {
-      answerCallbackQuery(callbackQuery.id, "Exporting data to Google Sheets...", token);
-      updateTelegramMessage(chatId, callbackQuery.message.message_id, "⌛ <b>Exporting data to Google Sheets...</b>\n\nThis may take a moment. Please wait.", token);
+      try {
+        answerCallbackQuery(callbackQuery.id, "Exporting data to Google Sheets...", token);
+        updateTelegramMessage(chatId, callbackQuery.message.message_id, "⌛ <b>Exporting data to Google Sheets...</b>\n\nThis may take a moment. Please wait.", token);
+
+        const accessToken = OAuth.getAccessTokenForUser(userId);
+        const url = Database.exportDataToSpreadsheet(userId, accessToken);
+
+        const successText = `📊 <b>Export Complete!</b>\n\nYour data has been successfully exported. You can view it here: <a href="${url}">Google Sheets Export</a>`;
+        updateTelegramMessage(chatId, callbackQuery.message.message_id, successText, token);
+      } catch (err) {
+        console.error("Error exporting to Google Sheets:", err);
+        updateTelegramMessage(chatId, callbackQuery.message.message_id, `❌ <b>Export Failed</b>\n\nError: ${err.message}`, token);
+      }
       return;
     }
 

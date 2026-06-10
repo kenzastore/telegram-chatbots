@@ -1,0 +1,10 @@
+tests/**
+coverage/**
+node_modules/**
+conductor/**
+telegram-chatbots/**
+jest.config.js
+package.json
+package-lock.json
+tsconfig.json
+.git/**

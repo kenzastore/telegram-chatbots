@@ -8,6 +8,7 @@ const MockDatabase = {
   apiCall: jest.fn(),
   addTransaction: jest.fn(),
   getMonthSheetName: jest.fn(),
+  exportDataToSpreadsheet: jest.fn(),
 };
 (global as any).Database = MockDatabase;
 
@@ -75,6 +76,7 @@ describe("Chatbot Command Handlers & Router Tests", () => {
     MockDatabase.apiCall.mockReset();
     MockDatabase.addTransaction.mockReset();
     MockDatabase.getMonthSheetName.mockReset();
+    MockDatabase.exportDataToSpreadsheet.mockReset();
 
     MockDatabase.getSheetsList.mockReturnValue(["2026-06 Transactions"]);
     MockDatabase.getSpreadsheetId.mockReturnValue("ss_id");
@@ -318,7 +320,7 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       expect(keyboardObj.inline_keyboard[0][0].callback_data).toBe("export_sheets");
     });
 
-    it("should handle export_sheets callback query", () => {
+    it("should handle export_sheets callback query successfully", () => {
       const callbackQuery = {
         id: "cb_id_export",
         from: { id: userId },
@@ -326,19 +328,57 @@ describe("Chatbot Command Handlers & Router Tests", () => {
         data: "export_sheets"
       };
 
+      MockDatabase.exportDataToSpreadsheet.mockReturnValue("https://docs.google.com/spreadsheets/d/export_ss_id");
+
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
       const answerCallbackSpy = (global as any).answerCallbackQuery;
 
       handleCallbackQuery(callbackQuery, token);
 
       expect(answerCallbackSpy).toHaveBeenCalledWith("cb_id_export", "Exporting data to Google Sheets...", token);
-      
+      expect(MockDatabase.exportDataToSpreadsheet).toHaveBeenCalledWith(userId, "mock_access_token");
+
       expect(fetchMock).toHaveBeenCalled();
       const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
       expect(lastCall[0]).toContain("editMessageText");
       const payloadObj = JSON.parse(lastCall[1].payload);
       expect(payloadObj.chat_id).toBe(chatId);
       expect(payloadObj.message_id).toBe(300);
-      expect(payloadObj.text).toContain("Exporting data to Google Sheets");
+      expect(payloadObj.text).toContain("Export Complete!");
+      expect(payloadObj.text).toContain("https://docs.google.com/spreadsheets/d/export_ss_id");
+    });
+
+    it("should handle export_sheets callback query error gracefully", () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const callbackQuery = {
+        id: "cb_id_export_fail",
+        from: { id: userId },
+        message: { message_id: 300, chat: { id: chatId }, text: "Prompt" },
+        data: "export_sheets"
+      };
+
+      MockDatabase.exportDataToSpreadsheet.mockImplementation(() => {
+        throw new Error("Google API quota exceeded");
+      });
+
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
+      handleCallbackQuery(callbackQuery, token);
+
+      expect(fetchMock).toHaveBeenCalled();
+      const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
+      expect(lastCall[0]).toContain("editMessageText");
+      const payloadObj = JSON.parse(lastCall[1].payload);
+      expect(payloadObj.text).toContain("Export Failed");
+      expect(payloadObj.text).toContain("Google API quota exceeded");
+      consoleSpy.mockRestore();
     });
   });
 
