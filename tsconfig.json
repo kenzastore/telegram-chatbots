@@ -6,6 +6,7 @@
     "noImplicitAny": false,
     "useUnknownInCatchVariables": false,
     "strictNullChecks": false,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "esModuleInterop": true
   }
 }
