@@ -1,0 +1,6 @@
+Task: Refactor DB/Handler Monthly Summary Logic
+Summary of changes:
+- Added a new test 'should only include transactions from the 1st of the current month up to today in the monthly summary' to tests/handlers.test.ts.
+- Refactored handleSummaryCommand in handlers.ts to only include transactions in the monthly summary starting from the 1st of the current calendar month up to today's date.
+- Restressed the weekly summary to only include transactions up to today's date.
+- All 52 Jest tests passed successfully.
