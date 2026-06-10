@@ -9,7 +9,7 @@
     - [x] Commit implementation code changes with a clean commit message.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Calendar Month Summary Refactoring' (Protocol in workflow.md) (6052a2f)
 
-## Phase 2: Google Sheets Monthly Tabs Export
+## Phase 2: Google Sheets Monthly Tabs Export [checkpoint: 6a32361]
 
 - [x] Task: Refactor Sheets Export to Group by Month and Update Specific Tabs (88bca18)
     - [x] Write failing unit tests in `tests/database.test.ts` for `Database.exportDataToSpreadsheet` that verify grouping by month, dynamic tab creation via batch update, tab clearing, and writing transaction/summary records to the corresponding `YYYY-MM Transactions` and `YYYY-MM Summaries` tabs.
@@ -21,4 +21,4 @@
         - [x] Batch update or update each target worksheet with formatted transaction rows and month-aggregated summary rows.
     - [x] Run the test suite and confirm that all tests pass with coverage >80%.
     - [x] Commit implementation code changes with a clean commit message.
-- [~] Task: Conductor - User Manual Verification 'Phase 2: Google Sheets Monthly Tabs Export' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Google Sheets Monthly Tabs Export' (Protocol in workflow.md) (6a32361)
