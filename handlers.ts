@@ -382,6 +382,13 @@ function handleCallbackQuery(callbackQuery: any, token: string) {
       return;
     }
 
+    // 6. EXPORT FLOW CALLBACK
+    if (data === "export_sheets") {
+      answerCallbackQuery(callbackQuery.id, "Exporting data to Google Sheets...", token);
+      updateTelegramMessage(chatId, callbackQuery.message.message_id, "⌛ <b>Exporting data to Google Sheets...</b>\n\nThis may take a moment. Please wait.", token);
+      return;
+    }
+
     answerCallbackQuery(callbackQuery.id, "Processing...", token);
   } catch (error) {
     console.error("Error in handleCallbackQuery:", error);
@@ -780,7 +787,13 @@ function handleSummaryCommand(userId: number, chatId: number, token: string) {
       `🔴 Expenses: <code>${formatCurrency(weekExpense)}</code>\n` +
       `⚖️ Net: <b>${formatCurrency(weekNet)}</b>`;
 
-    sendTelegramMessage(chatId, summaryText, token);
+    const keyboard = {
+      inline_keyboard: [[
+        { text: "Export to Google Sheets 📊", callback_data: "export_sheets" }
+      ]]
+    };
+
+    sendTelegramMessage(chatId, summaryText, token, keyboard);
   } catch (error) {
     console.error("Error in handleSummaryCommand:", error);
     sendTelegramMessage(chatId, `❌ Summary Error: ${error.message}`, token);

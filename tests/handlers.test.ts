@@ -29,7 +29,19 @@ const handlers = require('../handlers.ts');
 
 const routerObj = require('../router.ts');
 (global as any).sendTelegramMessage = routerObj.sendTelegramMessage;
-(global as any).answerCallbackQuery = routerObj.answerCallbackQuery;
+(global as any).answerCallbackQuery = jest.fn((callbackQueryId, text, token) => {
+  const url = `https://api.telegram.org/bot${token}/answerCallbackQuery`;
+  const payload = {
+    callback_query_id: callbackQueryId,
+    text: text
+  };
+  return (global as any).UrlFetchApp.fetch(url, {
+    method: 'post',
+    payload: JSON.stringify(payload),
+    contentType: 'application/json',
+    muteHttpExceptions: true
+  });
+});
 (global as any).routeUpdate = routerObj.routeUpdate;
 (global as any).updateTelegramMessage = jest.fn();
 
@@ -56,6 +68,7 @@ describe("Chatbot Command Handlers & Router Tests", () => {
   beforeEach(() => {
     fetchMock = (global as any).UrlFetchApp.fetch;
     fetchMock.mockClear();
+    (global as any).answerCallbackQuery.mockClear();
     MockDatabase.getUserBalance.mockReset();
     MockDatabase.getSpreadsheetId.mockReset();
     MockDatabase.getSheetsList.mockReset();
@@ -267,6 +280,65 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const fetchCallArgs = JSON.parse(fetchMock.mock.calls[0][1].payload);
       expect(fetchCallArgs.text).toContain("You don't have any logged transactions yet");
+    });
+  });
+
+  describe("Command /summary and export_sheets callback", () => {
+    it("should display weekly and monthly summary with an export inline button", () => {
+      MockDatabase.getSpreadsheetId.mockReturnValue("ss_id");
+      MockDatabase.getSheetsList.mockReturnValue(["2026-06 Transactions"]);
+      MockDatabase.getMonthSheetName.mockReturnValue("2026-06 Transactions");
+      
+      MockDatabase.apiCall.mockReturnValue({
+        values: [
+          ["user_id", "id", "date", "amount", "description", "type", "balance_after"],
+          [String(userId), "1", "2026-06-05", "50000", "Food", "debit", "50000"],
+          [String(userId), "2", "2026-06-06", "120000", "Salary", "credit", "70000"]
+        ]
+      });
+
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
+      handleSummaryCommand(userId, chatId, token);
+
+      expect(MockDatabase.getSpreadsheetId).toHaveBeenCalled();
+      expect(MockDatabase.getSheetsList).toHaveBeenCalled();
+      expect(fetchMock).toHaveBeenCalled();
+
+      const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
+      const payload = JSON.parse(lastCall[1].payload);
+      expect(payload.text).toContain("Financial Summary Report");
+      expect(payload.reply_markup).toBeDefined();
+      
+      const keyboardObj = JSON.parse(payload.reply_markup);
+      expect(keyboardObj.inline_keyboard[0][0].text).toBe("Export to Google Sheets 📊");
+      expect(keyboardObj.inline_keyboard[0][0].callback_data).toBe("export_sheets");
+    });
+
+    it("should handle export_sheets callback query", () => {
+      const callbackQuery = {
+        id: "cb_id_export",
+        from: { id: userId },
+        message: { message_id: 300, chat: { id: chatId }, text: "Prompt" },
+        data: "export_sheets"
+      };
+
+      const answerCallbackSpy = (global as any).answerCallbackQuery;
+
+      handleCallbackQuery(callbackQuery, token);
+
+      expect(answerCallbackSpy).toHaveBeenCalledWith("cb_id_export", "Exporting data to Google Sheets...", token);
+      
+      expect(fetchMock).toHaveBeenCalled();
+      const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
+      expect(lastCall[0]).toContain("editMessageText");
+      const payloadObj = JSON.parse(lastCall[1].payload);
+      expect(payloadObj.chat_id).toBe(chatId);
+      expect(payloadObj.message_id).toBe(300);
+      expect(payloadObj.text).toContain("Exporting data to Google Sheets");
     });
   });
 
