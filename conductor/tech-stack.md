@@ -14,3 +14,8 @@
 *   **@google/clasp**: Command Line Apps Script Projects tool to manage, pull, push, and deploy Apps Script code locally.
 *   **Google Sheets**: Serving both as the backend database and the user-facing financial dashboard.
 *   **Google Cloud Logging**: Integrated execution logs (`console.log`, `console.error`) accessible via the Apps Script dashboard.
+
+## Local Testing Stack
+*   **Jest**: JavaScript/TypeScript testing framework used for local unit testing.
+*   **ts-jest**: TypeScript preprocessor with source map support for Jest, enabling seamless testing of `.ts` files.
+*   **GAS Mocks**: Custom local mocks of global Google Apps Script services (`UrlFetchApp`, `PropertiesService`, `LockService`, `SpreadsheetApp`, `Utilities`, `Logger`) to facilitate running unit tests locally in Node.js.
