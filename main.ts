@@ -18,13 +18,21 @@ interface TelegramUpdate {
  * Handles incoming Telegram Webhook updates.
  */
 function doPost(e: GoogleAppsScript.Events.DoPost) {
+  let chatId: number | undefined;
+  let token: string | null = null;
   try {
     const contents = JSON.parse(e.postData.contents) as TelegramUpdate;
     console.log("Received Update:", JSON.stringify(contents));
 
-    const token = PropertiesService.getScriptProperties().getProperty("TELEGRAM_BOT_TOKEN");
+    token = PropertiesService.getScriptProperties().getProperty("TELEGRAM_BOT_TOKEN");
     if (!token) {
       throw new Error("Missing TELEGRAM_BOT_TOKEN Script Property.");
+    }
+
+    if (contents.message) {
+      chatId = contents.message.chat.id;
+    } else if (contents.callback_query && contents.callback_query.message) {
+      chatId = contents.callback_query.message.chat.id;
     }
 
     // Process update stateless
@@ -36,6 +44,19 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
   } catch (error) {
     console.error("Error handling doPost:", error);
     logErrorToSheet(error);
+
+    if (chatId && token) {
+      try {
+        sendTelegramMessage(
+          chatId,
+          `❌ <b>System Error</b>\n\nAn error occurred while processing your request:\n<code>${error.message}</code>\n\nPlease check your Google Apps Script settings.`,
+          token
+        );
+      } catch (sendErr) {
+        console.error("Failed to send error message to Telegram:", sendErr);
+      }
+    }
+
     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: error.message }))
                          .setMimeType(ContentService.MimeType.JSON);
   }
