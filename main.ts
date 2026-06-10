@@ -131,3 +131,29 @@ function logErrorToSheet(error: any) {
     console.error("Failed to write to ErrorLogs sheet:", e);
   }
 }
+
+function debugScriptProperties() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const token = scriptProperties.getProperty("TELEGRAM_BOT_TOKEN");
+  const clientId = scriptProperties.getProperty("GOOGLE_CLIENT_ID");
+  const clientSecret = scriptProperties.getProperty("GOOGLE_CLIENT_SECRET");
+  const redirectUri = scriptProperties.getProperty("REDIRECT_URI");
+
+  console.log("=== Bot Debug Diagnostics ===");
+  console.log("TELEGRAM_BOT_TOKEN:", token ? `Set (Length: ${token.length})` : "Missing");
+  console.log("GOOGLE_CLIENT_ID:", clientId ? `Set (${clientId.substring(0, 15)}...)` : "Missing");
+  console.log("GOOGLE_CLIENT_SECRET:", clientSecret ? "Set" : "Missing");
+  console.log("REDIRECT_URI:", redirectUri ? redirectUri : "Missing");
+
+  if (token) {
+    try {
+      const url = `https://api.telegram.org/bot${token}/getWebhookInfo`;
+      const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+      console.log("Telegram Webhook Info:", response.getContentText());
+    } catch (e) {
+      console.error("Failed to fetch webhook info:", e.message);
+    }
+  } else {
+    console.log("No token, skipping webhook info check.");
+  }
+}
