@@ -1,0 +1,8 @@
+Verification Report - Phase 2: Google Sheets Monthly Tabs Export
+Automated Test Command: npm test
+Manual Verification Steps:
+1. Log in to the Telegram bot and type /summary.
+2. Click the 'Export to Google Sheets 📊' inline keyboard button.
+3. Open the link returned by the bot.
+4. Verify that the worksheets (tabs) are organized by calendar month (e.g. YYYY-MM Transactions and YYYY-MM Summaries).
+User Confirmation: Yes, this meets my expectations.
