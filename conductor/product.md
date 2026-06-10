@@ -27,7 +27,7 @@ Every user accessing the bot must first log in to Google via OAuth2. Unauthentic
 3. **Viewing History (`/view`)**:
    - Lists the last N transactions (defaulting to 10) in a cleanly formatted table.
 4. **Summaries (`/summary`)**:
-   - Offers weekly summaries (last 7 days) and monthly financial summaries aggregated by calendar month (current month from day 1).
+   - Offers weekly summaries (last 7 days) and monthly financial summaries aggregated by calendar month (current month from day 1). Includes an inline keyboard button "Export to Google Sheets 📊" to export the user's transaction data.
 5. **Editing a Transaction (`/edit`)**:
    - Initiates an interactive conversation flow to update Date, Type, Amount, and Description of a transaction by ID, recalculating balances chronologically.
 6. **Clearing Transactions (`/clear`)**:
@@ -38,6 +38,11 @@ Every user accessing the bot must first log in to Google via OAuth2. Unauthentic
    - **Trigger**: User types `/quick <sentence>`.
    - **Inputs**: A single natural language sentence (supports both English and Indonesian) containing transaction type, amount (with multipliers), date (today, yesterday, etc.), and description.
    - **Confirmation**: The bot parses the sentence, prompts the user to confirm via inline buttons, saves the transaction on confirmation, and displays the updated running balance.
+9. **Manual Export to Google Sheets**:
+   - **Trigger**: User clicks "Export to Google Sheets 📊" button.
+   - **Workflow**: If the user has not exported before, the bot automatically creates a new spreadsheet in the user's Google Drive titled `Finance Bot Export - <UserId>` and updates permissions to "anyone with the link can view". On subsequent requests, the existing spreadsheet is updated.
+   - **Output Sheets**: Export consists of a "Transactions" sheet containing all transactions sorted by date ascending, and a "Summaries" sheet containing month-by-month financial summary aggregations.
+   - **Confirmation**: A Telegram message is sent back to the user with the direct link to the exported spreadsheet.
 
 ## Data Structure
 The chatbot stores records in a relational database with the following fields:

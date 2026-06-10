@@ -9,6 +9,9 @@
     *   **SpreadsheetApp**: Used to interact with Google Sheets as the relational database storage.
     *   **PropertiesService**: Used for storing persistent script configurations (e.g., bot tokens) and user state machine records.
     *   **LockService**: Used to manage concurrent write operations and prevent database race conditions.
+*   **External Google REST APIs (via UrlFetchApp)**:
+    *   **Google Sheets API v4**: Used to create, clear, and write data to the user's exported spreadsheet.
+    *   **Google Drive API v3**: Used to set sharing permissions on the created spreadsheet to "anyone with the link can view".
 
 ## Tools & DevOps
 *   **@google/clasp**: Command Line Apps Script Projects tool to manage, pull, push, and deploy Apps Script code locally.
