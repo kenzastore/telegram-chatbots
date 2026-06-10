@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "es2019",
+    "lib": ["esnext"],
+    "types": ["google-apps-script"],
+    "noImplicitAny": false,
+    "useUnknownInCatchVariables": false,
+    "strictNullChecks": false,
+    "experimentalDecorators": true
+  }
+}
