@@ -21,4 +21,4 @@
         - [x] Batch update or update each target worksheet with formatted transaction rows and month-aggregated summary rows.
     - [x] Run the test suite and confirm that all tests pass with coverage >80%.
     - [x] Commit implementation code changes with a clean commit message.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Google Sheets Monthly Tabs Export' (Protocol in workflow.md)
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Google Sheets Monthly Tabs Export' (Protocol in workflow.md)
