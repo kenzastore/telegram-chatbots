@@ -1,0 +1,11 @@
+Task: Configure Jest and GAS Mocks
+
+Summary: Installed jest, ts-jest, and @types/jest, set up jest.config.js, and created tests/setup.ts to mock all Google Apps Script globals (PropertiesService, LockService, UrlFetchApp, HtmlService, SpreadsheetApp) to run unit tests in Node.js.
+
+Created Files:
+- jest.config.js
+- tests/setup.ts
+
+Modified Files:
+- package.json
+- package-lock.json
