@@ -20,9 +20,9 @@
 
 ## Phase 3: Data Export Format & Response Handler [checkpoint: pending]
 
-- [ ] Task: Transform and Write Data to Export Tabs
-    - [ ] Implement the transformation logic to output all database transactions to the "Transactions" tab.
-    - [ ] Implement the aggregation and layout formatting for weekly/monthly summaries to the "Summaries" tab.
-    - [ ] Add final handler that wipes existing data in the sheets, writes fresh content, and replies to the user with the clickable sheet URL.
-    - [ ] Complete Jest unit tests, verify that overall code coverage is >80%, and execute tests cleanly.
+- [x] Task: Transform and Write Data to Export Tabs (fbc1e56)
+    - [x] Implement the transformation logic to output all database transactions to the "Transactions" tab.
+    - [x] Implement the aggregation and layout formatting for weekly/monthly summaries to the "Summaries" tab.
+    - [x] Add final handler that wipes existing data in the sheets, writes fresh content, and replies to the user with the clickable sheet URL.
+    - [x] Complete Jest unit tests, verify that overall code coverage is >80%, and execute tests cleanly.
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Data Export Format & Response Handler' (Protocol in workflow.md)
