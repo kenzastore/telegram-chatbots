@@ -62,5 +62,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: adapt/refactor the logic from the google_sheets_export_20260604 track by translating the existing Python code into Google Apps Script. Ensure that all Python-specific libraries, syntax, and data structures are properly adapted to the Google Apps Script environment while maintaining the original functionality and intended logic.**
   *Link: [./tracks/google_sheets_export_gas_20260610/](./tracks/google_sheets_export_gas_20260610/)*
 
+---
 
-
+- [ ] **Track: adapt/refactor the logic from the monthly_cutoff_sheets_20260604 track by translating the existing Python code into Google Apps Script. Ensure that all Python-specific libraries, syntax, and data structures are properly adapted to the Google Apps Script environment while maintaining the original functionality and intended logic.**
+  *Link: [./tracks/monthly_cutoff_sheets_gas_20260610/](./tracks/monthly_cutoff_sheets_gas_20260610/)*
