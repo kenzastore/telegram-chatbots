@@ -495,6 +495,36 @@ const Database = {
     } finally {
       lock.releaseLock();
     }
+  },
+
+  /**
+   * Creates a new Google Spreadsheet for export.
+   */
+  createExportSpreadsheet(title: string, accessToken: string): string {
+    const url = "https://sheets.googleapis.com/v4/spreadsheets";
+    const payload = {
+      properties: {
+        title: title
+      },
+      sheets: [
+        { properties: { title: "Transactions" } },
+        { properties: { title: "Summaries" } }
+      ]
+    };
+    const result = this.apiCall(url, 'post', payload, accessToken);
+    return result.spreadsheetId;
+  },
+
+  /**
+   * Sets sharing permissions of a spreadsheet to reader for anyone.
+   */
+  setSpreadsheetPublicReader(fileId: string, accessToken: string): void {
+    const url = `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`;
+    const payload = {
+      role: "reader",
+      type: "anyone"
+    };
+    this.apiCall(url, 'post', payload, accessToken);
   }
 };
 

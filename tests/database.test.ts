@@ -491,4 +491,43 @@ describe("Database Module Tests", () => {
       expect(result.date).toBe("2026-05-15");
     });
   });
+
+  describe("Export Spreadsheet Helpers", () => {
+    it("should create a new export spreadsheet with Transactions and Summaries sheets", () => {
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ spreadsheetId: "export_ss_id" })
+      });
+
+      const ssId = Database.createExportSpreadsheet("Finance Bot Export - 12345", accessToken);
+
+      expect(ssId).toBe("export_ss_id");
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const callArgs = fetchMock.mock.calls[0];
+      expect(callArgs[0]).toBe("https://sheets.googleapis.com/v4/spreadsheets");
+      const payload = JSON.parse(callArgs[1].payload);
+      expect(payload.properties.title).toBe("Finance Bot Export - 12345");
+      expect(payload.sheets).toEqual([
+        { properties: { title: "Transactions" } },
+        { properties: { title: "Summaries" } }
+      ]);
+    });
+
+    it("should set spreadsheet permissions to public reader", () => {
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ id: "perm_id" })
+      });
+
+      Database.setSpreadsheetPublicReader("export_ss_id", accessToken);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const callArgs = fetchMock.mock.calls[0];
+      expect(callArgs[0]).toBe("https://www.googleapis.com/drive/v3/files/export_ss_id/permissions");
+      expect(callArgs[1].method).toBe("post");
+      const payload = JSON.parse(callArgs[1].payload);
+      expect(payload.role).toBe("reader");
+      expect(payload.type).toBe("anyone");
+    });
+  });
 });
