@@ -619,19 +619,18 @@ describe("Database Module Tests", () => {
             ]
           })
         })
+        // 4. Get current worksheets in the export spreadsheet (contains nothing)
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({ sheets: [] })
+        })
+        // 5. batchUpdate request response
         .mockReturnValueOnce({
           getResponseCode: () => 200,
           getContentText: () => "{}"
         })
-        .mockReturnValueOnce({
-          getResponseCode: () => 200,
-          getContentText: () => "{}"
-        })
-        .mockReturnValueOnce({
-          getResponseCode: () => 200,
-          getContentText: () => "{}"
-        })
-        .mockReturnValueOnce({
+        // 6-9. Clear and write mock responses
+        .mockReturnValue({
           getResponseCode: () => 200,
           getContentText: () => "{}"
         });
@@ -639,18 +638,118 @@ describe("Database Module Tests", () => {
       const url = Database.exportDataToSpreadsheet(userId, accessToken);
 
       expect(url).toBe("https://docs.google.com/spreadsheets/d/export_ss_id");
-      expect(fetchMock).toHaveBeenCalledTimes(7);
 
-      expect(fetchMock.mock.calls[3][0]).toContain("Transactions!A:G:clear");
-      expect(fetchMock.mock.calls[5][0]).toContain("Summaries!A:C:clear");
+      // Verify batchUpdate
+      const batchCall = fetchMock.mock.calls.find(call => call[0].endsWith("export_ss_id:batchUpdate"));
+      expect(batchCall).toBeDefined();
+      const batchPayload = JSON.parse(batchCall[1].payload);
+      const addedSheetTitles = batchPayload.requests.map(req => req.addSheet.properties.title);
+      expect(addedSheetTitles).toContain("2026-06 Transactions");
+      expect(addedSheetTitles).toContain("2026-06 Summaries");
 
-      const txWritePayload = JSON.parse(fetchMock.mock.calls[4][1].payload);
+      // Verify clear operations
+      const clearCalls = fetchMock.mock.calls.filter(call => call[0].includes("/values/") && call[0].endsWith(":clear"));
+      expect(clearCalls.length).toBe(2);
+      expect(clearCalls[0][0]).toContain("'2026-06 Transactions'!A:G:clear");
+      expect(clearCalls[1][0]).toContain("'2026-06 Summaries'!A:C:clear");
+
+      // Verify write payloads
+      const writeCalls = fetchMock.mock.calls.filter(call => call[0].includes("/values/") && call[1] && call[1].method === "put");
+      expect(writeCalls.length).toBe(2);
+
+      const txWritePayload = JSON.parse(writeCalls[0][1].payload);
       expect(txWritePayload.values[0]).toEqual(["ID", "Date", "Amount", "Description", "Type", "Balance After"]);
       expect(txWritePayload.values[1]).toEqual([1, "2026-06-10", 15000, "Snack", "debit", 85000]);
 
-      const sumWritePayload = JSON.parse(fetchMock.mock.calls[6][1].payload);
-      expect(sumWritePayload.values[0][0]).toContain("Weekly Financial Summary");
-      expect(sumWritePayload.values[4][0]).toContain("Monthly Financial Summary");
+      const sumWritePayload = JSON.parse(writeCalls[1][1].payload);
+      expect(sumWritePayload.values[0][0]).toContain("Monthly Summary (2026-06)");
+      expect(sumWritePayload.values[2]).toEqual(["Snack", "debit", 15000]);
+    });
+
+    it("should dynamically group transactions by month, verify worksheets, create missing ones, clear and write to them", () => {
+      PropertiesService.getScriptProperties().setProperty(`EXPORT_SS_ID_${userId}`, "export_ss_id");
+      PropertiesService.getScriptProperties().setProperty(`SPREADSHEET_ID_${userId}`, "db_ss_id");
+
+      fetchMock
+        // 1. Database spreadsheet ID retrieval or mock check
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({ spreadsheetId: "export_ss_id" })
+        })
+        // 2. Database sheets list (we have two month sheets in database)
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({
+            sheets: [
+              { properties: { title: "2026-05 Transactions" } },
+              { properties: { title: "2026-06 Transactions" } }
+            ]
+          })
+        })
+        // 3. Values from 2026-05 Transactions
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({
+            values: [
+              ["user_id", "id", "date", "amount", "description", "type", "balance_after"],
+              [String(userId), "1", "2026-05-25", "50000", "Salary", "credit", "50000"]
+            ]
+          })
+        })
+        // 4. Values from 2026-06 Transactions
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({
+            values: [
+              ["user_id", "id", "date", "amount", "description", "type", "balance_after"],
+              [String(userId), "2", "2026-06-10", "15000", "Snack", "debit", "35000"]
+            ]
+          })
+        })
+        // 5. Get current worksheets in the export spreadsheet (contains only '2026-06 Transactions')
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => JSON.stringify({
+            sheets: [
+              { properties: { title: "2026-06 Transactions" } }
+            ]
+          })
+        })
+        // 6. batchUpdate worksheets response (create missing: 2026-05 Transactions, 2026-05 Summaries, 2026-06 Summaries)
+        .mockReturnValueOnce({
+          getResponseCode: () => 200,
+          getContentText: () => "{}"
+        })
+        // Clear and Write mock returns (8 calls: 4 sheets * (clear + write))
+        .mockReturnValue({
+          getResponseCode: () => 200,
+          getContentText: () => "{}"
+        });
+
+      const url = Database.exportDataToSpreadsheet(userId, accessToken);
+      expect(url).toBe("https://docs.google.com/spreadsheets/d/export_ss_id");
+
+      // Let's verify batchUpdate was called with the missing worksheets
+      const batchUpdateCall = fetchMock.mock.calls.find(call => call[0].endsWith("export_ss_id:batchUpdate"));
+      expect(batchUpdateCall).toBeDefined();
+      const batchPayload = JSON.parse(batchUpdateCall[1].payload);
+      const addedSheetTitles = batchPayload.requests.map(req => req.addSheet.properties.title);
+      expect(addedSheetTitles).toContain("2026-05 Transactions");
+      expect(addedSheetTitles).toContain("2026-05 Summaries");
+      expect(addedSheetTitles).toContain("2026-06 Summaries");
+      expect(addedSheetTitles).not.toContain("2026-06 Transactions"); // Already exists
+
+      // Let's verify clear and update operations for 2026-05 and 2026-06
+      const clearedRanges = fetchMock.mock.calls
+        .filter(call => call[0].includes("/values/") && call[0].endsWith(":clear"))
+        .map(call => {
+          const match = call[0].match(/\/values\/(.+?)\!/);
+          return match ? decodeURIComponent(match[1]).replace(/'/g, "") : "";
+        });
+      expect(clearedRanges).toContain("2026-05 Transactions");
+      expect(clearedRanges).toContain("2026-05 Summaries");
+      expect(clearedRanges).toContain("2026-06 Transactions");
+      expect(clearedRanges).toContain("2026-06 Summaries");
     });
   });
 });

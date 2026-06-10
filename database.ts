@@ -590,66 +590,101 @@ const Database = {
     const exportSsId = this.getOrCreateExportSpreadsheet(userId, accessToken);
     const allTxs = this.getAllUserTransactions(userId, accessToken);
 
-    const weeklySums: { [key: string]: number } = {};
-    const monthlySums: { [key: string]: number } = {};
-
     const now = new Date();
-    const thresholdDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const thresholdStr = Utilities.formatDate(thresholdDate, "Asia/Jakarta", "yyyy-MM-dd");
-    const currentMonthPrefix = Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM");
+    const todayStr = Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM-dd");
+    const currentMonthPrefix = todayStr.substring(0, 7); // YYYY-MM
 
+    // 1. Group transactions by calendar month
+    const monthlyGroups: { [month: string]: Transaction[] } = {};
     for (const tx of allTxs) {
-      const key = `${tx.description}|||${tx.type}`;
-      if (tx.date >= thresholdStr) {
-        weeklySums[key] = (weeklySums[key] || 0) + tx.amount;
+      const monthKey = tx.date.substring(0, 7); // YYYY-MM
+      if (!monthlyGroups[monthKey]) {
+        monthlyGroups[monthKey] = [];
       }
-      if (tx.date.startsWith(currentMonthPrefix)) {
-        monthlySums[key] = (monthlySums[key] || 0) + tx.amount;
+      monthlyGroups[monthKey].push(tx);
+    }
+
+    // Default to current month if no transactions exist
+    if (Object.keys(monthlyGroups).length === 0) {
+      monthlyGroups[currentMonthPrefix] = [];
+    }
+
+    // 2. Fetch existing worksheets in the export spreadsheet
+    const ssUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}`;
+    const ssData = this.apiCall(ssUrl, 'get', null, accessToken);
+    const existingTitles: string[] = (ssData.sheets || []).map((s: any) => s.properties.title);
+
+    // 3. Form requests to add missing sheets
+    const requests: any[] = [];
+    for (const monthKey of Object.keys(monthlyGroups)) {
+      const txTab = `${monthKey} Transactions`;
+      const sumTab = `${monthKey} Summaries`;
+      if (existingTitles.indexOf(txTab) === -1) {
+        requests.push({ addSheet: { properties: { title: txTab } } });
+      }
+      if (existingTitles.indexOf(sumTab) === -1) {
+        requests.push({ addSheet: { properties: { title: sumTab } } });
       }
     }
 
-    const transactionRows: any[][] = [
-      ["ID", "Date", "Amount", "Description", "Type", "Balance After"]
-    ];
-    for (const tx of allTxs) {
-      transactionRows.push([
-        tx.id,
-        tx.date,
-        tx.amount,
-        tx.description,
-        tx.type,
-        tx.balanceAfter
-      ]);
+    if (requests.length > 0) {
+      const batchUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}:batchUpdate`;
+      this.apiCall(batchUrl, 'post', { requests }, accessToken);
     }
 
-    const summaryRows: any[][] = [];
+    // 4. Clear and write transactions and monthly summaries for each month
+    for (const monthKey of Object.keys(monthlyGroups)) {
+      const txList = monthlyGroups[monthKey];
+      const txTab = `${monthKey} Transactions`;
+      const sumTab = `${monthKey} Summaries`;
 
-    summaryRows.push(["Weekly Financial Summary (Last 7 Days)"]);
-    summaryRows.push(["Description", "Type", "Total"]);
-    for (const key of Object.keys(weeklySums)) {
-      const [desc, type] = key.split("|||");
-      summaryRows.push([desc, type, weeklySums[key]]);
+      // 4.1 Format transaction data
+      const transactionRows: any[][] = [
+        ["ID", "Date", "Amount", "Description", "Type", "Balance After"]
+      ];
+      for (const tx of txList) {
+        transactionRows.push([
+          tx.id,
+          tx.date,
+          tx.amount,
+          tx.description,
+          tx.type,
+          tx.balanceAfter
+        ]);
+      }
+
+      // 4.2 Format summary data
+      const summaryRows: any[][] = [
+        [`Monthly Summary (${monthKey})`],
+        ["Description", "Type", "Total"]
+      ];
+
+      const sums: { [key: string]: number } = {};
+      for (const tx of txList) {
+        const key = `${tx.description}|||${tx.type}`;
+        sums[key] = (sums[key] || 0) + tx.amount;
+      }
+
+      const sortedKeys = Object.keys(sums).sort();
+      for (const key of sortedKeys) {
+        const [desc, type] = key.split("|||");
+        summaryRows.push([desc, type, sums[key]]);
+      }
+
+      // 4.3 Clear existing content in both target worksheets
+      const clearTxUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}/values/'${txTab}'!A:G:clear`;
+      this.apiCall(clearTxUrl, 'post', null, accessToken);
+
+      const clearSumUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}/values/'${sumTab}'!A:C:clear`;
+      this.apiCall(clearSumUrl, 'post', null, accessToken);
+
+      // 4.4 Write values to worksheets
+      const writeTxUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}/values/'${txTab}'!A1?valueInputOption=USER_ENTERED`;
+      this.apiCall(writeTxUrl, 'put', { values: transactionRows }, accessToken);
+
+      const writeSumUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}/values/'${sumTab}'!A1?valueInputOption=USER_ENTERED`;
+      this.apiCall(writeSumUrl, 'put', { values: summaryRows }, accessToken);
     }
-
-    summaryRows.push([""]);
-    summaryRows.push([`Monthly Financial Summary (Current Month: ${currentMonthPrefix})`]);
-    summaryRows.push(["Description", "Type", "Total"]);
-    for (const key of Object.keys(monthlySums)) {
-      const [desc, type] = key.split("|||");
-      summaryRows.push([desc, type, monthlySums[key]]);
-    }
-
-    const clearTxUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}/values/Transactions!A:G:clear`;
-    this.apiCall(clearTxUrl, 'post', null, accessToken);
-
-    const writeTxUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}/values/Transactions!A1?valueInputOption=USER_ENTERED`;
-    this.apiCall(writeTxUrl, 'put', { values: transactionRows }, accessToken);
-
-    const clearSumUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}/values/Summaries!A:C:clear`;
-    this.apiCall(clearSumUrl, 'post', null, accessToken);
-
-    const writeSumUrl = `https://sheets.googleapis.com/v4/spreadsheets/${exportSsId}/values/Summaries!A1?valueInputOption=USER_ENTERED`;
-    this.apiCall(writeSumUrl, 'put', { values: summaryRows }, accessToken);
 
     return `https://docs.google.com/spreadsheets/d/${exportSsId}`;
   }
