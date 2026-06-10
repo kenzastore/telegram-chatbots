@@ -2,11 +2,11 @@
 
 ## Phase 1: Calendar Month Summary Refactoring
 
-- [ ] Task: Refactor DB/Handler Monthly Summary Logic
-    - [ ] Write failing unit tests in `tests/handlers.test.ts` (and/or `tests/database.test.ts`) that verify monthly summary calculations only include transactions starting from the 1st of the current calendar month.
-    - [ ] Update `handlers.ts` and monthly summary calculations to aggregate transactions from the 1st day of the current calendar month instead of a rolling 30-day window.
-    - [ ] Run the test suite and confirm that the new and existing tests pass with coverage >80%.
-    - [ ] Commit implementation code changes with a clean commit message.
+- [x] Task: Refactor DB/Handler Monthly Summary Logic (5b9cc69)
+    - [x] Write failing unit tests in `tests/handlers.test.ts` (and/or `tests/database.test.ts`) that verify monthly summary calculations only include transactions starting from the 1st of the current calendar month.
+    - [x] Update `handlers.ts` and monthly summary calculations to aggregate transactions from the 1st day of the current calendar month instead of a rolling 30-day window.
+    - [x] Run the test suite and confirm that the new and existing tests pass with coverage >80%.
+    - [x] Commit implementation code changes with a clean commit message.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Calendar Month Summary Refactoring' (Protocol in workflow.md)
 
 ## Phase 2: Google Sheets Monthly Tabs Export
