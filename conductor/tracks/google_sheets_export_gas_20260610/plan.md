@@ -2,9 +2,9 @@
 
 ## Phase 1: Inline Trigger & Google Sheets/Drive API Client Setup [checkpoint: pending]
 
-- [ ] Task: Update the /summary command to include the "Export to Google Sheets 📊" inline button
-    - [ ] Add the "Export to Google Sheets 📊" inline button with callback data `export_sheets` under the `/summary` command response.
-    - [ ] Implement callback router interceptor for `export_sheets` callback data to acknowledge the query and reply with a temporary status.
+- [x] Task: Update the /summary command to include the "Export to Google Sheets 📊" inline button (a12d62d)
+    - [x] Add the "Export to Google Sheets 📊" inline button with callback data `export_sheets` under the `/summary` command response.
+    - [x] Implement callback router interceptor for `export_sheets` callback data to acknowledge the query and reply with a temporary status.
 - [ ] Task: Implement Google API Client Helpers for Sheets and Drive
     - [ ] Create helper methods in `database.ts` (or an `export.ts` module) to create a new spreadsheet and set its permissions to public reader via the Google Drive API.
     - [ ] Write Jest unit tests to mock and verify these raw HTTP Sheets & Drive API calls.
