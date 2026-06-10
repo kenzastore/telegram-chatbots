@@ -1,0 +1,8 @@
+{
+  "track_id": "refactor_core_chatbot_gas_20260610",
+  "type": "refactor",
+  "status": "new",
+  "created_at": "2026-06-10T09:35:21Z",
+  "updated_at": "2026-06-10T09:35:21Z",
+  "description": "adapt/refactor the logic from the core_chatbot_20260603 track by translating the existing Python code into Google Apps Script. Ensure that all Python-specific libraries, syntax, and data structures are properly adapted to the Google Apps Script environment while maintaining the original functionality and intended logic."
+}
