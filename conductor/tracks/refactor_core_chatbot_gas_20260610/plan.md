@@ -9,10 +9,10 @@
 
 ## Phase 2: Database Module & Test Refactoring [checkpoint: pending]
 
-- [ ] Task: Refactor and Test Database Functions
-    - [ ] Write Jest unit tests in `tests/database.test.ts` mirroring the tests from `telegram-chatbots/tests/test_db.py` (e.g., adding transactions, balance calculations, get history, error conditions).
-    - [ ] Refactor and verify the implementation of Sheets REST DB wrapper methods in `database.ts` to pass the tests.
-    - [ ] Run test suite, verify code coverage is >80%, and commit changes.
+- [x] Task: Refactor and Test Database Functions (3cf8900)
+    - [x] Write Jest unit tests in `tests/database.test.ts` mirroring the tests from `telegram-chatbots/tests/test_db.py` (e.g., adding transactions, balance calculations, get history, error conditions).
+    - [x] Refactor and verify the implementation of Sheets REST DB wrapper methods in `database.ts` to pass the tests.
+    - [x] Run test suite, verify code coverage is >80%, and commit changes.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Database Module & Test Refactoring' (Protocol in workflow.md)
 
 ## Phase 3: Core Handlers & Test Refactoring [checkpoint: pending]
