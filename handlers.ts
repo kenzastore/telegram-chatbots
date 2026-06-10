@@ -786,3 +786,19 @@ function handleSummaryCommand(userId: number, chatId: number, token: string) {
     sendTelegramMessage(chatId, `❌ Summary Error: ${error.message}`, token);
   }
 }
+
+if (typeof module !== 'undefined') {
+  module.exports = {
+    handleBalanceCommand,
+    handleViewCommand,
+    formatCurrency,
+    handleQuickCommand,
+    startAddFlow,
+    handleStatefulMessage,
+    handleCallbackQuery,
+    startClearFlow,
+    startEditFlow,
+    handleSummaryCommand
+  };
+}
+

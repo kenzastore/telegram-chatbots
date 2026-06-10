@@ -163,3 +163,7 @@ function answerCallbackQuery(callbackQueryId: string, text: string, token: strin
     throw new Error(`Telegram API answerCallbackQuery failed (${responseCode}): ${content}`);
   }
 }
+
+if (typeof module !== 'undefined') {
+  module.exports = { routeUpdate, sendTelegramMessage, answerCallbackQuery };
+}

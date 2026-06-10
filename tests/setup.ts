@@ -87,3 +87,16 @@ const MockSpreadsheetApp = {
   log: jest.fn((...args: any[]) => console.log(args.join(' '))),
 };
 
+(global as any).OAuth = {
+  isUserAuthenticated: jest.fn().mockReturnValue(true),
+  getAccessTokenForUser: jest.fn().mockReturnValue("mock_access_token"),
+  logoutUser: jest.fn(),
+  getAuthUrl: jest.fn().mockReturnValue("https://mock.auth.url"),
+};
+
+(global as any).Config = {
+  getGoogleClientId: jest.fn().mockReturnValue("mock_client_id"),
+  getRedirectUri: jest.fn().mockReturnValue("https://mock.redirect.uri"),
+};
+
+
