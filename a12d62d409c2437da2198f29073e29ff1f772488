@@ -1,0 +1,9 @@
+Task: Update the /summary command to include the 'Export to Google Sheets 📊' inline button
+Summary of changes:
+- Added 'Export to Google Sheets 📊' inline keyboard button with callback data 'export_sheets' to the /summary command message response.
+- Added callback router handler for 'export_sheets' callback query to answer the callback query and update the message with a temporary status.
+- Added Jest unit tests to handlers.test.ts asserting on /summary inline markup and export_sheets callback payload.
+- Cleaned up mock configurations for answerCallbackQuery in tests.
+Files created/modified:
+- handlers.ts
+- tests/handlers.test.ts
