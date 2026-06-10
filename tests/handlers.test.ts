@@ -193,6 +193,7 @@ describe("Chatbot Command Handlers & Router Tests", () => {
     });
 
     it("should report error if database fails to retrieve balance", () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       MockDatabase.getUserBalance.mockImplementation(() => {
         throw new Error("Sheets offline");
       });
@@ -206,6 +207,7 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const fetchCallArgs = JSON.parse(fetchMock.mock.calls[0][1].payload);
       expect(fetchCallArgs.text).toContain("Error retrieving balance: Sheets offline");
+      consoleSpy.mockRestore();
     });
   });
 
