@@ -2,9 +2,9 @@
 
 ## Phase 1: Test Suite Setup & GAS Mocking [checkpoint: pending]
 
-- [ ] Task: Configure Jest and GAS Mocks
-    - [ ] Install `jest`, `ts-jest`, `@types/jest` as devDependencies.
-    - [ ] Create a `jest.config.js` and a testing setup file (`tests/setup.ts`) to mock the global Google Apps Script API (e.g. `UrlFetchApp`, `PropertiesService`, `LockService`, `SpreadsheetApp`).
+- [x] Task: Configure Jest and GAS Mocks (0d5a32c)
+    - [x] Install `jest`, `ts-jest`, `@types/jest` as devDependencies.
+    - [x] Create a `jest.config.js` and a testing setup file (`tests/setup.ts`) to mock the global Google Apps Script API (e.g. `UrlFetchApp`, `PropertiesService`, `LockService`, `SpreadsheetApp`).
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Test Suite Setup & GAS Mocking' (Protocol in workflow.md)
 
 ## Phase 2: Database Module & Test Refactoring [checkpoint: pending]
