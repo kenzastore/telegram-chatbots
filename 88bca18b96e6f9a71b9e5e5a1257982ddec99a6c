@@ -1,0 +1,8 @@
+Task: Refactor Sheets Export to Group by Month and Update Specific Tabs
+Summary of changes:
+- Refactored Database.exportDataToSpreadsheet in database.ts to group all user transactions by YYYY-MM.
+- Queried worksheets in export spreadsheet via Sheets API v4.
+- Created missing worksheets (YYYY-MM Transactions and YYYY-MM Summaries) via batchUpdate.
+- Cleared and updated each worksheet with transactions and monthly summary.
+- Added comprehensive unit tests in tests/database.test.ts for multi-month dynamic creation, clearing, and writing.
+- All 53 Jest tests passed successfully.
