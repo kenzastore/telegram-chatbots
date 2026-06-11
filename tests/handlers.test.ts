@@ -11,6 +11,7 @@ const MockDatabase = {
   deleteTransaction: jest.fn(),
   getMonthSheetName: jest.fn(),
   exportDataToSpreadsheet: jest.fn(),
+  clearTransactionsRange: jest.fn(),
 };
 (global as any).Database = MockDatabase;
 
@@ -79,6 +80,7 @@ describe("Chatbot Command Handlers & Router Tests", () => {
     MockDatabase.addTransaction.mockReset();
     MockDatabase.getMonthSheetName.mockReset();
     MockDatabase.exportDataToSpreadsheet.mockReset();
+    MockDatabase.clearTransactionsRange.mockReset();
 
     MockDatabase.getSheetsList.mockReturnValue(["2026-06 Transactions"]);
     MockDatabase.getSpreadsheetId.mockReturnValue("ss_id");
@@ -525,6 +527,76 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       const args = JSON.parse(fetchMock.mock.calls[0][1].payload);
       expect(args.text).toContain("Usage:");
     });
+
+    it("should handle successful parse in handleQuickCommand", () => {
+      (global as any).OAuth.isUserAuthenticated.mockReturnValue(true);
+      (global as any).parseTransactionSentence.mockReturnValue({
+        date: "2026-06-11",
+        amount: 50000,
+        description: "lunch",
+        type: "debit"
+      });
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
+      handleQuickCommand(userId, chatId, "spent 50k", token);
+      expect(PropertiesService.getScriptProperties().getProperty(`TEMP_QUICK_${userId}`)).not.toBeNull();
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    it("should handle quick_confirm_yes callback", () => {
+      PropertiesService.getScriptProperties().setProperty(`TEMP_QUICK_${userId}`, JSON.stringify({
+        date: "2026-06-11",
+        amount: 50000,
+        description: "lunch",
+        type: "debit"
+      }));
+      MockDatabase.addTransaction.mockReturnValue({
+        date: "2026-06-11",
+        amount: 50000,
+        description: "lunch",
+        type: "debit",
+        balanceAfter: 100000
+      });
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
+      handleCallbackQuery({
+        id: "cb_quick_yes",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "quick_confirm_yes"
+      }, token);
+
+      expect(MockDatabase.addTransaction).toHaveBeenCalled();
+      expect(PropertiesService.getScriptProperties().getProperty(`TEMP_QUICK_${userId}`)).toBeNull();
+    });
+
+    it("should handle quick_confirm_yes when temp data is missing", () => {
+      PropertiesService.getScriptProperties().deleteProperty(`TEMP_QUICK_${userId}`);
+      handleCallbackQuery({
+        id: "cb_quick_yes_missing",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "quick_confirm_yes"
+      }, token);
+      expect((global as any).answerCallbackQuery).toHaveBeenCalledWith("cb_quick_yes_missing", "❌ Error: Details not found.", token);
+    });
+
+    it("should handle quick_confirm_no callback", () => {
+      PropertiesService.getScriptProperties().setProperty(`TEMP_QUICK_${userId}`, JSON.stringify({}));
+      handleCallbackQuery({
+        id: "cb_quick_no",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "quick_confirm_no"
+      }, token);
+      expect(PropertiesService.getScriptProperties().getProperty(`TEMP_QUICK_${userId}`)).toBeNull();
+    });
   });
 
   describe("Additional Router Routing Tests", () => {
@@ -833,6 +905,142 @@ describe("Chatbot Command Handlers & Router Tests", () => {
         data: "edit_field_cancel"
       }, token);
       expect(PropertiesService.getScriptProperties().getProperty(`TEMP_EDIT_${userId}`)).toBeNull();
+    });
+  });
+
+  describe("Interactive Clear Flow", () => {
+    beforeEach(() => {
+      fetchMock.mockReset();
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+      (PropertiesService.getUserProperties() as any).clear();
+    });
+
+    it("should start clear flow and show choice menu", () => {
+      startClearFlow(userId, chatId, token);
+      expect(fetchMock).toHaveBeenCalled();
+      const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+      expect(payload.text).toContain("Clear Transactions Option Menu");
+    });
+
+    it("should support cancel option callback", () => {
+      handleCallbackQuery({
+        id: "cb_clear_cancel",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "clear_opt_cancel"
+      }, token);
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    it("should prompt confirm for recent delete option callback", () => {
+      handleCallbackQuery({
+        id: "cb_clear_recent",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "clear_opt_recent"
+      }, token);
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    it("should prompt confirm for week clear option callback", () => {
+      handleCallbackQuery({
+        id: "cb_clear_week",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "clear_opt_week"
+      }, token);
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    it("should prompt confirm for month clear option callback", () => {
+      handleCallbackQuery({
+        id: "cb_clear_month",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "clear_opt_month"
+      }, token);
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    it("should handle clear_opt_id and transition state", () => {
+      handleCallbackQuery({
+        id: "cb_clear_id",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "clear_opt_id"
+      }, token);
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBe("CLEAR_AWAITING_ID");
+    });
+
+    it("should prompt confirmation on sending numeric ID", () => {
+      handleStatefulMessage(userId, chatId, "15", "CLEAR_AWAITING_ID", token);
+      expect(fetchMock).toHaveBeenCalled();
+      const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+      expect(payload.text).toContain("Are you sure you want to permanently delete transaction ID 15?");
+    });
+
+    it("should execute recent clear confirm callback", () => {
+      MockDatabase.clearTransactionsRange.mockReturnValue("Recalculation complete. 1 transaction deleted.");
+      handleCallbackQuery({
+        id: "cb_confirm_recent",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "clear_confirm_recent"
+      }, token);
+      expect(MockDatabase.clearTransactionsRange).toHaveBeenCalledWith(userId, "recent", "mock_access_token");
+    });
+
+    it("should execute week clear confirm callback", () => {
+      MockDatabase.clearTransactionsRange.mockReturnValue("Recalculation complete. 3 transactions deleted.");
+      handleCallbackQuery({
+        id: "cb_confirm_week",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "clear_confirm_week"
+      }, token);
+      expect(MockDatabase.clearTransactionsRange).toHaveBeenCalledWith(userId, "week", "mock_access_token");
+    });
+
+    it("should execute month clear confirm callback", () => {
+      MockDatabase.clearTransactionsRange.mockReturnValue("Recalculation complete. 5 transactions deleted.");
+      handleCallbackQuery({
+        id: "cb_confirm_month",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "clear_confirm_month"
+      }, token);
+      expect(MockDatabase.clearTransactionsRange).toHaveBeenCalledWith(userId, "month", "mock_access_token");
+    });
+
+    it("should execute id clear confirm callback", () => {
+      MockDatabase.deleteTransaction.mockReturnValue(true);
+      handleCallbackQuery({
+        id: "cb_confirm_id",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "clear_confirm_id_15"
+      }, token);
+      expect(MockDatabase.deleteTransaction).toHaveBeenCalledWith(userId, 15, "mock_access_token");
+    });
+
+    it("should support cancel confirmation callback", () => {
+      handleCallbackQuery({
+        id: "cb_confirm_cancel",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1002, chat: { id: chatId } },
+        data: "clear_confirm_no"
+      }, token);
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    it("should reject non-numeric ID for CLEAR_AWAITING_ID state", () => {
+      handleStatefulMessage(userId, chatId, "abc", "CLEAR_AWAITING_ID", token);
+      expect(fetchMock).toHaveBeenCalled();
+      const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+      expect(payload.text).toContain("Invalid ID.");
     });
   });
 });
