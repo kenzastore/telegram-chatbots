@@ -17,7 +17,7 @@
     - [x] Write failing unit tests in `tests/handlers.test.ts` verifying the `/clear` command, showing choice options (Recent, By ID, Week, Month).
     - [x] Write failing unit tests in `tests/handlers.test.ts` verifying double confirmation dialog details and cancel callback query handling.
     - [x] Write failing unit tests in `tests/handlers.test.ts` verifying clear execution, deletion of transactions, and balance recalculations.
-- [x] Task: Align Clear Flow Implementation (28ae724)
+- [x] Task: Align Clear Flow Implementation (b4cb60e)
     - [x] Refactor or verify `/clear` callbacks and handlers in `handlers.ts` to pass the tests.
     - [x] Run the full Jest test suite with coverage enabled and check that the coverage is >80%.
     - [x] Run typescript type checker and linter/formatter on modified files.
