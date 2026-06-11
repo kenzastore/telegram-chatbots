@@ -1,0 +1,6 @@
+Phase: Phase 1: Quick Add Date Parser & Sentence Cleanup Testing & Alignment
+Automated Tests Command: CI=true npm test
+Manual Verification Steps:
+1. Check that the Jest test suite executed successfully and all 13 parser test cases in tests/quick.test.ts passed.
+2. Review quick.ts to verify that the regex patterns align with the Python parser codebase and that absolute/relative dates are processed using the Asia/Jakarta (GMT+7) timezone.
+User Confirmation: yes
