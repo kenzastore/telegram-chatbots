@@ -234,6 +234,8 @@ const Database = {
                 }]
               };
               this.apiCall(deleteUrl, 'post', deletePayload, accessToken);
+
+              this.recalculateBalances(ssId, sheetName, i, accessToken);
               return true;
             }
           }
@@ -396,6 +398,7 @@ const Database = {
                   }]
                 };
                 this.apiCall(deleteUrl, 'post', deletePayload, accessToken);
+                this.recalculateBalances(ssId, sheetName, i, accessToken);
 
                 return `✅ <b>Recent transaction deleted successfully!</b>\nID: <code>${txId}</code>\nDescription: <code>${data.values[i][4]}</code>`;
               }
@@ -420,8 +423,16 @@ const Database = {
 
         if (deletedCount === 0) return "No transactions found for your user ID this month.";
 
-        // Write back remaining rows without balance recalculation
-        const newValues = [header, ...remainingRows];
+        // Recalculate balances for remaining rows
+        const newValues = [header];
+        for (let j = 0; j < remainingRows.length; j++) {
+          const prevBalance = j === 0 ? 0 : Number(newValues[j][6]);
+          const amount = Number(remainingRows[j][3]);
+          const type = remainingRows[j][5];
+          const delta = type === 'credit' ? amount : -amount;
+          remainingRows[j][6] = prevBalance + delta;
+          newValues.push(remainingRows[j]);
+        }
 
         // Clear the sheet
         const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${ssId}/values/'${currentMonthSheet}'!A:G:clear`;
@@ -459,8 +470,16 @@ const Database = {
 
           if (deletedCount > 0) {
             totalDeleted += deletedCount;
-            // Write back remaining rows without balance recalculation
-            const newValues = [header, ...remainingRows];
+            // Write back remaining rows with balance recalculation
+            const newValues = [header];
+            for (let j = 0; j < remainingRows.length; j++) {
+              const prevBalance = j === 0 ? 0 : Number(newValues[j][6]);
+              const amount = Number(remainingRows[j][3]);
+              const type = remainingRows[j][5];
+              const delta = type === 'credit' ? amount : -amount;
+              remainingRows[j][6] = prevBalance + delta;
+              newValues.push(remainingRows[j]);
+            }
 
             const clearUrl = `https://sheets.googleapis.com/v4/spreadsheets/${ssId}/values/'${sheetName}'!A:G:clear`;
             this.apiCall(clearUrl, 'post', null, accessToken);

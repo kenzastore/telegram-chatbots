@@ -916,6 +916,7 @@ describe("Chatbot Command Handlers & Router Tests", () => {
         getContentText: () => JSON.stringify({ ok: true })
       });
       (PropertiesService.getUserProperties() as any).clear();
+      MockDatabase.getUserBalance.mockReturnValue(75000);
     });
 
     it("should start clear flow and show choice menu", () => {
