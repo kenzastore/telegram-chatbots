@@ -1,0 +1,4 @@
+Task: Create tests for Stateful Clear Bot Flow
+Summary of changes: Added Jest unit test cases covering the chatbot's interactive /clear command flow, choice option menus, cancellation callbacks, recent/week/month clear flows, delete by ID state transitions and confirmation dialogs, and invalid input validation.
+Created/modified files: tests/handlers.test.ts
+Why: Ensure parity of the interactive transaction clearing/deletion flows between the GAS implementation and Python codebase, maintaining proper balance recalculations and user feedback mechanisms.
