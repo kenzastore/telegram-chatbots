@@ -7,6 +7,8 @@ const MockDatabase = {
   getSheetsList: jest.fn(),
   apiCall: jest.fn(),
   addTransaction: jest.fn(),
+  editTransaction: jest.fn(),
+  deleteTransaction: jest.fn(),
   getMonthSheetName: jest.fn(),
   exportDataToSpreadsheet: jest.fn(),
 };
@@ -653,6 +655,184 @@ describe("Chatbot Command Handlers & Router Tests", () => {
         }
       }, token);
       expect(fetchMock).toHaveBeenCalled();
+    });
+  });
+
+  describe("Interactive Edit Flow", () => {
+    beforeEach(() => {
+      MockDatabase.getSpreadsheetId.mockReturnValue("ss_id");
+      MockDatabase.getSheetsList.mockReturnValue(["2026-06 Transactions"]);
+      MockDatabase.apiCall.mockReturnValue({
+        values: [
+          ["user_id", "id", "date", "amount", "description", "type", "balance_after"],
+          [String(userId), "1", "2026-06-01", "100000", "Salary", "credit", "100000"]
+        ]
+      });
+      fetchMock.mockReset();
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+      (PropertiesService.getUserProperties() as any).clear();
+      (PropertiesService.getScriptProperties() as any).clear();
+    });
+
+    it("should handle /edit command usage when args is empty", () => {
+      startEditFlow(userId, chatId, "", token);
+      expect(fetchMock).toHaveBeenCalled();
+      const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+      expect(payload.text).toContain("Usage:");
+    });
+
+    it("should handle /edit command with non-numeric ID", () => {
+      startEditFlow(userId, chatId, "abc", token);
+      expect(fetchMock).toHaveBeenCalled();
+      const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+      expect(payload.text).toContain("Usage:");
+    });
+
+    it("should handle /edit command when ID is not found", () => {
+      MockDatabase.apiCall.mockReturnValue({ values: [] });
+      startEditFlow(userId, chatId, "1", token);
+      expect(fetchMock).toHaveBeenCalled();
+      const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+      expect(payload.text).toContain("not found");
+    });
+
+    it("should start edit flow when ID is found and prompt fields", () => {
+      startEditFlow(userId, chatId, "1", token);
+      expect(fetchMock).toHaveBeenCalled();
+      const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+      expect(payload.text).toContain("Edit Transaction ID 1:");
+      expect(PropertiesService.getScriptProperties().getProperty(`TEMP_EDIT_${userId}`)).toBeDefined();
+    });
+
+    it("should handle date edit callback and message", () => {
+      PropertiesService.getScriptProperties().setProperty(`TEMP_EDIT_${userId}`, JSON.stringify({ targetId: 1, sheetName: "2026-06 Transactions" }));
+      
+      handleCallbackQuery({
+        id: "cb_edit_date",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1001, chat: { id: chatId }, text: "Prompt" },
+        data: "edit_field_date"
+      }, token);
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBe("EDIT_AWAITING_DATE");
+
+      const updatedTx = {
+        userId: userId,
+        id: 1,
+        date: "2026-06-02",
+        amount: 100000,
+        description: "Salary",
+        type: "credit",
+        balanceAfter: 100000
+      };
+      MockDatabase.editTransaction = jest.fn().mockReturnValue(updatedTx);
+      handleStatefulMessage(userId, chatId, "2026-06-02", "EDIT_AWAITING_DATE", token);
+      
+      expect(MockDatabase.editTransaction).toHaveBeenCalledWith(userId, 1, { date: "2026-06-02" }, "mock_access_token");
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBeNull();
+      expect(PropertiesService.getScriptProperties().getProperty(`TEMP_EDIT_${userId}`)).toBeNull();
+    });
+
+    it("should handle amount edit callback and message", () => {
+      PropertiesService.getScriptProperties().setProperty(`TEMP_EDIT_${userId}`, JSON.stringify({ targetId: 1, sheetName: "2026-06 Transactions" }));
+      
+      handleCallbackQuery({
+        id: "cb_edit_amount",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1001, chat: { id: chatId }, text: "Prompt" },
+        data: "edit_field_amount"
+      }, token);
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBe("EDIT_AWAITING_AMOUNT");
+
+      const updatedTx = {
+        userId: userId,
+        id: 1,
+        date: "2026-06-01",
+        amount: 120000,
+        description: "Salary",
+        type: "credit",
+        balanceAfter: 120000
+      };
+      MockDatabase.editTransaction = jest.fn().mockReturnValue(updatedTx);
+      handleStatefulMessage(userId, chatId, "120.000", "EDIT_AWAITING_AMOUNT", token);
+      
+      expect(MockDatabase.editTransaction).toHaveBeenCalledWith(userId, 1, { amount: 120000 }, "mock_access_token");
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBeNull();
+      expect(PropertiesService.getScriptProperties().getProperty(`TEMP_EDIT_${userId}`)).toBeNull();
+    });
+
+    it("should handle description edit callback and message", () => {
+      PropertiesService.getScriptProperties().setProperty(`TEMP_EDIT_${userId}`, JSON.stringify({ targetId: 1, sheetName: "2026-06 Transactions" }));
+      
+      handleCallbackQuery({
+        id: "cb_edit_desc",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1001, chat: { id: chatId }, text: "Prompt" },
+        data: "edit_field_desc"
+      }, token);
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBe("EDIT_AWAITING_DESC");
+
+      const updatedTx = {
+        userId: userId,
+        id: 1,
+        date: "2026-06-01",
+        amount: 100000,
+        description: "Salary Bonus",
+        type: "credit",
+        balanceAfter: 100000
+      };
+      MockDatabase.editTransaction = jest.fn().mockReturnValue(updatedTx);
+      handleStatefulMessage(userId, chatId, "Salary Bonus", "EDIT_AWAITING_DESC", token);
+      
+      expect(MockDatabase.editTransaction).toHaveBeenCalledWith(userId, 1, { description: "Salary Bonus" }, "mock_access_token");
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBeNull();
+      expect(PropertiesService.getScriptProperties().getProperty(`TEMP_EDIT_${userId}`)).toBeNull();
+    });
+
+    it("should handle type edit callback and type confirm callback", () => {
+      PropertiesService.getScriptProperties().setProperty(`TEMP_EDIT_${userId}`, JSON.stringify({ targetId: 1, sheetName: "2026-06 Transactions" }));
+      
+      handleCallbackQuery({
+        id: "cb_edit_type",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1001, chat: { id: chatId }, text: "Prompt" },
+        data: "edit_field_type"
+      }, token);
+
+      const updatedTx = {
+        userId: userId,
+        id: 1,
+        date: "2026-06-01",
+        amount: 100000,
+        description: "Salary",
+        type: "debit",
+        balanceAfter: -100000
+      };
+      MockDatabase.editTransaction = jest.fn().mockReturnValue(updatedTx);
+
+      handleCallbackQuery({
+        id: "cb_edit_confirm_type",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1001, chat: { id: chatId }, text: "Prompt" },
+        data: "edit_confirm_type_debit"
+      }, token);
+
+      expect(MockDatabase.editTransaction).toHaveBeenCalledWith(userId, 1, { type: "debit" }, "mock_access_token");
+      expect(PropertiesService.getScriptProperties().getProperty(`TEMP_EDIT_${userId}`)).toBeNull();
+    });
+
+    it("should support cancel callback query during edit flow", () => {
+      PropertiesService.getScriptProperties().setProperty(`TEMP_EDIT_${userId}`, JSON.stringify({ targetId: 1, sheetName: "2026-06 Transactions" }));
+      
+      handleCallbackQuery({
+        id: "cb_edit_cancel",
+        from: { id: userId, first_name: "K" },
+        message: { message_id: 1001, chat: { id: chatId }, text: "Prompt" },
+        data: "edit_field_cancel"
+      }, token);
+      expect(PropertiesService.getScriptProperties().getProperty(`TEMP_EDIT_${userId}`)).toBeNull();
     });
   });
 });
