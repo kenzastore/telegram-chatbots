@@ -1,6 +1,6 @@
 # Implementation Plan - Edit, Remove, and Clear Transactions (GAS Refactor)
 
-## Phase 1: Interactive /edit Flow Testing & Refinement [checkpoint: TBD]
+## Phase 1: Interactive /edit Flow Testing & Refinement [checkpoint: 0082a56]
 
 - [x] Task: Create tests for Stateful Edit Bot Flow (d269cd3)
     - [x] Write failing unit tests in `tests/handlers.test.ts` verifying the `/edit` command initialization (e.g. triggering `/edit <id>`, handling missing args, id not found, and setting state).
@@ -9,7 +9,7 @@
 - [x] Task: Align Edit Flow Implementation (d269cd3)
     - [x] Refactor or verify `/edit` stateful handlers and callbacks in `handlers.ts` to pass the tests.
     - [x] Run edit-related test suite and verify that all test cases pass.
-- [~] Task: Conductor - User Manual Verification 'Phase 1: Interactive /edit Flow Testing & Refinement' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Interactive /edit Flow Testing & Refinement' (Protocol in workflow.md)
 
 ## Phase 2: Interactive /clear Flow Testing & Refinement [checkpoint: TBD]
 
