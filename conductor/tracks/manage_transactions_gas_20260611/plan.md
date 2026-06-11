@@ -13,12 +13,12 @@
 
 ## Phase 2: Interactive /clear Flow Testing & Refinement [checkpoint: TBD]
 
-- [ ] Task: Create tests for Stateful Clear Bot Flow
-    - [ ] Write failing unit tests in `tests/handlers.test.ts` verifying the `/clear` command, showing choice options (Recent, By ID, Week, Month).
-    - [ ] Write failing unit tests in `tests/handlers.test.ts` verifying double confirmation dialog details and cancel callback query handling.
-    - [ ] Write failing unit tests in `tests/handlers.test.ts` verifying clear execution, deletion of transactions, and balance recalculations.
-- [ ] Task: Align Clear Flow Implementation
-    - [ ] Refactor or verify `/clear` callbacks and handlers in `handlers.ts` to pass the tests.
-    - [ ] Run the full Jest test suite with coverage enabled and check that the coverage is >80%.
-    - [ ] Run typescript type checker and linter/formatter on modified files.
+- [x] Task: Create tests for Stateful Clear Bot Flow (28ae724)
+    - [x] Write failing unit tests in `tests/handlers.test.ts` verifying the `/clear` command, showing choice options (Recent, By ID, Week, Month).
+    - [x] Write failing unit tests in `tests/handlers.test.ts` verifying double confirmation dialog details and cancel callback query handling.
+    - [x] Write failing unit tests in `tests/handlers.test.ts` verifying clear execution, deletion of transactions, and balance recalculations.
+- [x] Task: Align Clear Flow Implementation (28ae724)
+    - [x] Refactor or verify `/clear` callbacks and handlers in `handlers.ts` to pass the tests.
+    - [x] Run the full Jest test suite with coverage enabled and check that the coverage is >80%.
+    - [x] Run typescript type checker and linter/formatter on modified files.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Interactive /clear Flow Testing & Refinement' (Protocol in workflow.md)
