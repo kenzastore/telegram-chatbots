@@ -1,0 +1,9 @@
+Task: Create tests for Natural Language Date Parser & Align Parser Implementation
+Summary of changes:
+- Wrote 9 new unit test cases in tests/quick.test.ts covering relative dates, numeric dates (YYYY-MM-DD, DD-MM-YYYY, DD-MM), English and Indonesian textual dates, and recursive preposition stripping.
+- Refactored quick.ts to implement a robust, regex-based parsing engine (parseTransactionSentence) that supports all these formats.
+- Verified that all unit tests pass, TypeScript compiles, and coverage remains high (>97% for quick.ts).
+Created/modified files:
+- quick.ts (modified)
+- tests/quick.test.ts (modified)
+Core why: To enable natural language sentence parsing in the GAS bot, providing users with the ability to add transactions using flexible, multi-format typed sentences.
