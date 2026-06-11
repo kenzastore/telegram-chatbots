@@ -1,0 +1,7 @@
+Task: Verify and Align Currency Formatting and Parser Tests
+Summary of changes:
+- Created Jest tests in tests/quick.test.ts testing the quick transaction sentence parser with various Indonesian multiplier suffixes and raw number formats.
+- Updated Jest tests in tests/handlers.test.ts to assert formatting of positive, negative, zero, and decimal values in Indonesian Rupiah format.
+- Modified formatCurrency in handlers.ts to position the minus sign after the Rp prefix.
+- Refactored amount extraction in quick.ts to support thousands separator formats and multiplier suffixes identically to the Python code.
+Why: Ensures that Rupiah formatting and amount parsing in GAS behave with 100% parity compared to the original Python codebase.
