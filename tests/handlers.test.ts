@@ -574,6 +574,11 @@ describe("Chatbot Command Handlers & Router Tests", () => {
 
       expect(MockDatabase.addTransaction).toHaveBeenCalled();
       expect(PropertiesService.getScriptProperties().getProperty(`TEMP_QUICK_${userId}`)).toBeNull();
+      expect(fetchMock).toHaveBeenCalled();
+      const lastCall = fetchMock.mock.calls[fetchMock.mock.calls.length - 1];
+      const payload = JSON.parse(lastCall[1].payload);
+      expect(payload.text).toContain("Quick Transaction Saved!");
+      expect(payload.text).toContain("Current Balance:");
     });
 
     it("should handle quick_confirm_yes when temp data is missing", () => {
