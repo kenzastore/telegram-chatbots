@@ -512,25 +512,19 @@ function handleClearCallback(userId: number, chatId: number, messageId: number, 
     // CONFIRM ACTIONS
     if (data === "clear_confirm_recent") {
       const resultText = Database.clearTransactionsRange(userId, 'recent', accessToken);
-      const newBalance = Database.getUserBalance(userId, accessToken);
-      const balanceText = `\n\n📈 Current Net Balance: <b>${formatCurrency(newBalance)}</b>`;
-      updateTelegramMessage(chatId, messageId, resultText + balanceText, token);
+      updateTelegramMessage(chatId, messageId, resultText, token);
       return;
     }
 
     if (data === "clear_confirm_week") {
       const resultText = Database.clearTransactionsRange(userId, 'week', accessToken);
-      const newBalance = Database.getUserBalance(userId, accessToken);
-      const balanceText = `\n\n📈 Current Net Balance: <b>${formatCurrency(newBalance)}</b>`;
-      updateTelegramMessage(chatId, messageId, resultText + balanceText, token);
+      updateTelegramMessage(chatId, messageId, resultText, token);
       return;
     }
 
     if (data === "clear_confirm_month") {
       const resultText = Database.clearTransactionsRange(userId, 'month', accessToken);
-      const newBalance = Database.getUserBalance(userId, accessToken);
-      const balanceText = `\n\n📈 Current Net Balance: <b>${formatCurrency(newBalance)}</b>`;
-      updateTelegramMessage(chatId, messageId, resultText + balanceText, token);
+      updateTelegramMessage(chatId, messageId, resultText, token);
       return;
     }
 
@@ -538,8 +532,7 @@ function handleClearCallback(userId: number, chatId: number, messageId: number, 
       const txId = Number(data.replace("clear_confirm_id_", ""));
       const deleted = Database.deleteTransaction(userId, txId, accessToken);
       if (deleted) {
-        const newBalance = Database.getUserBalance(userId, accessToken);
-        updateTelegramMessage(chatId, messageId, `✅ <b>Transaction ID ${txId} deleted successfully!</b>\nBalances recalculated chronologically.\n\n📈 Current Net Balance: <b>${formatCurrency(newBalance)}</b>`, token);
+        updateTelegramMessage(chatId, messageId, `✅ <b>Transaction ID ${txId} deleted successfully!</b>`, token);
       } else {
         updateTelegramMessage(chatId, messageId, `❌ Error: Transaction ID ${txId} not found in database.`, token);
       }

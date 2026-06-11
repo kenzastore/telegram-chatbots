@@ -13,7 +13,7 @@ This track refactors/adapts the interactive bot conversation handlers and tests 
    - Offers an inline keyboard with choices: Recent, By ID, This Week, This Month.
    - Displays confirmation screen with detailed summary of target deletion (number of transactions affected, ID).
    - Handles confirm ("Confirm Delete ⚠️") and cancel ("Cancel ❌") callbacks.
-   - Once deleted, updates the database, triggers balance recalculation, and outputs the updated balance.
+   - Once deleted, updates the database by deleting targeted records, and returns a success confirmation message without balance recalculation or balance display.
 3. **Parity in Bot Responses**:
    - Ensure all success/error bot messages, buttons, and state properties match Python's functional requirements.
 
@@ -24,5 +24,5 @@ This track refactors/adapts the interactive bot conversation handlers and tests 
 ## Acceptance Criteria
 - `/edit` state transitions work correctly, updating transaction date, type, amount, or description, and showing edit summaries.
 - `/clear` allows selection of different ranges, asks for double confirmation, and deletes records successfully.
-- Balance recalculation is triggered upon edit or deletion, and updated balances are correctly displayed in the bot replies.
+- Balance recalculation is triggered upon edit (updating balances correctly in bot replies), but no balance recalculation or display is performed upon transaction deletion.
 - All unit tests in Jest pass successfully.

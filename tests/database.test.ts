@@ -240,17 +240,7 @@ describe("Database Module Tests", () => {
         })
         .mockReturnValueOnce({
           getResponseCode: () => 200,
-          getContentText: () => JSON.stringify({ ok: true }) // delete API call
-        })
-        // Recalculation API calls: read first, then write range
-        .mockReturnValueOnce({
-          getResponseCode: () => 200,
-          getContentText: () => JSON.stringify({
-            values: [
-              ["user_id", "id", "date", "amount", "description", "type", "balance_after"],
-              [String(userId), "1", "2026-06-01", "100", "Salary", "credit", "100"] // row 2 was deleted
-            ]
-          })
+          getContentText: () => JSON.stringify({ ok: true })
         });
 
       const deleted = Database.deleteTransaction(userId, 2, accessToken);
@@ -350,11 +340,7 @@ describe("Database Module Tests", () => {
         })
         .mockReturnValueOnce({
           getResponseCode: () => 200,
-          getContentText: () => JSON.stringify({ ok: true }) // delete API call
-        })
-        .mockReturnValueOnce({
-          getResponseCode: () => 200,
-          getContentText: () => JSON.stringify({ values: [["user_id", "id"]] }) // recalculateBalances read
+          getContentText: () => JSON.stringify({ ok: true })
         });
 
       const result = Database.clearTransactionsRange(userId, "recent", accessToken);
