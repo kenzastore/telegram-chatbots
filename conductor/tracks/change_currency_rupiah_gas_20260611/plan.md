@@ -2,14 +2,14 @@
 
 ## Phase 1: Rupiah Formatting & Parsing Alignment [checkpoint: TBD]
 
-- [ ] Task: Verify and Align Currency Formatting and Parser Tests
-    - [ ] Add failing unit tests in `tests/handlers.test.ts` (or equivalent helper test file) validating formatCurrency under positive, negative, zero, and fractional amounts to match Python's output.
-    - [ ] Add failing unit tests in `tests/quick.test.ts` (or equivalent test file) checking parsing compatibility for all Indonesian multiplier suffixes like `rp`, `k`, `rb`, `jt`, `juta`, `m`, `miliar` with various spacing/cases.
-- [ ] Task: Align Implementation of formatCurrency and Quick Parser
-    - [ ] Refactor or verify `formatCurrency` in `handlers.ts` (or helper modules) to implement the exact format mapping.
-    - [ ] Refactor or verify regex and parser logic in `quick.ts` to support all Indonesian currency terms and multipliers correctly.
-    - [ ] Run the test suite and verify that the tests for formatting and parsing pass.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Rupiah Formatting & Parsing Alignment' (Protocol in workflow.md)
+- [x] Task: Verify and Align Currency Formatting and Parser Tests (87653a4)
+    - [x] Add failing unit tests in `tests/handlers.test.ts` (or equivalent helper test file) validating formatCurrency under positive, negative, zero, and fractional amounts to match Python's output.
+    - [x] Add failing unit tests in `tests/quick.test.ts` (or equivalent test file) checking parsing compatibility for all Indonesian multiplier suffixes like `rp`, `k`, `rb`, `jt`, `juta`, `m`, `miliar` with various spacing/cases.
+- [x] Task: Align Implementation of formatCurrency and Quick Parser (87653a4)
+    - [x] Refactor or verify `formatCurrency` in `handlers.ts` (or helper modules) to implement the exact format mapping.
+    - [x] Refactor or verify regex and parser logic in `quick.ts` to support all Indonesian currency terms and multipliers correctly.
+    - [x] Run the test suite and verify that the tests for formatting and parsing pass.
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Rupiah Formatting & Parsing Alignment' (Protocol in workflow.md)
 
 ## Phase 2: Bot Output Verification & Full Alignment [checkpoint: TBD]
 
