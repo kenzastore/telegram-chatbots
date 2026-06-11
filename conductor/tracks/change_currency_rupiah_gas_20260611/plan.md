@@ -13,9 +13,9 @@
 
 ## Phase 2: Bot Output Verification & Full Alignment [checkpoint: TBD]
 
-- [ ] Task: Integrate formatting across Bot Output Handlers and Verify Sheets
-    - [ ] Verify that bot output handlers for `/add`, `/balance`, `/view`, and `/summary` in `handlers.ts` format transaction values and balances correctly using the refactored formatCurrency helper.
-    - [ ] Verify that spreadsheet exports (in `database.ts`) continue to write raw numbers instead of pre-formatted currency strings.
-    - [ ] Run the full Jest test suite with coverage enabled and check that the coverage is >80%.
-    - [ ] Run typescript type checker and linter/formatter on modified files.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Bot Output Verification & Full Alignment' (Protocol in workflow.md)
+- [x] Task: Integrate formatting across Bot Output Handlers and Verify Sheets (87653a4)
+    - [x] Verify that bot output handlers for `/add`, `/balance`, `/view`, and `/summary` in `handlers.ts` format transaction values and balances correctly using the refactored formatCurrency helper.
+    - [x] Verify that spreadsheet exports (in `database.ts`) continue to write raw numbers instead of pre-formatted currency strings.
+    - [x] Run the full Jest test suite with coverage enabled and check that the coverage is >80%.
+    - [x] Run typescript type checker and linter/formatter on modified files.
+- [~] Task: Conductor - User Manual Verification 'Phase 2: Bot Output Verification & Full Alignment' (Protocol in workflow.md)
