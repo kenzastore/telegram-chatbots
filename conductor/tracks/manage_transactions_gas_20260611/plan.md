@@ -2,14 +2,14 @@
 
 ## Phase 1: Interactive /edit Flow Testing & Refinement [checkpoint: TBD]
 
-- [ ] Task: Create tests for Stateful Edit Bot Flow
-    - [ ] Write failing unit tests in `tests/handlers.test.ts` verifying the `/edit` command initialization (e.g. triggering `/edit <id>`, handling missing args, id not found, and setting state).
-    - [ ] Write failing unit tests in `tests/handlers.test.ts` verifying edit field transitions (Date, Type, Amount, Description) and "Keep current" button callbacks.
-    - [ ] Write failing unit tests in `tests/handlers.test.ts` verifying saving edit updates, showing summaries, and checking balance recalculations are triggered and formatted correctly in Rupiah.
-- [ ] Task: Align Edit Flow Implementation
-    - [ ] Refactor or verify `/edit` stateful handlers and callbacks in `handlers.ts` to pass the tests.
-    - [ ] Run edit-related test suite and verify that all test cases pass.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Interactive /edit Flow Testing & Refinement' (Protocol in workflow.md)
+- [x] Task: Create tests for Stateful Edit Bot Flow (d269cd3)
+    - [x] Write failing unit tests in `tests/handlers.test.ts` verifying the `/edit` command initialization (e.g. triggering `/edit <id>`, handling missing args, id not found, and setting state).
+    - [x] Write failing unit tests in `tests/handlers.test.ts` verifying edit field transitions (Date, Type, Amount, Description) and "Keep current" button callbacks.
+    - [x] Write failing unit tests in `tests/handlers.test.ts` verifying saving edit updates, showing summaries, and checking balance recalculations are triggered and formatted correctly in Rupiah.
+- [x] Task: Align Edit Flow Implementation (d269cd3)
+    - [x] Refactor or verify `/edit` stateful handlers and callbacks in `handlers.ts` to pass the tests.
+    - [x] Run edit-related test suite and verify that all test cases pass.
+- [~] Task: Conductor - User Manual Verification 'Phase 1: Interactive /edit Flow Testing & Refinement' (Protocol in workflow.md)
 
 ## Phase 2: Interactive /clear Flow Testing & Refinement [checkpoint: TBD]
 
