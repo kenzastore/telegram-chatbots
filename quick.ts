@@ -17,14 +17,25 @@ function parseTransactionSentence(sentence: string, refDate: Date = new Date()):
   const amountMatch = amountPattern.exec(sClean);
   if (!amountMatch) return null;
 
-  const amountRaw = amountMatch[1].replace(/,/g, ".");
+  const amountRaw = amountMatch[1].replace(/\s+/g, "");
   const suffix = amountMatch[2]?.toLowerCase();
-  let amountVal = parseFloat(amountRaw);
+  let amountVal = 0;
 
   if (suffix) {
-    if (suffix === "k" || suffix === "rb") amountVal *= 1000;
-    else if (suffix === "jt" || suffix === "juta") amountVal *= 1000000;
-    else if (suffix === "m" || suffix === "miliar") amountVal *= 1000000000;
+    const s = amountRaw.replace(/,/g, ".");
+    const val = parseFloat(s);
+    if (suffix === "k" || suffix === "rb") amountVal = val * 1000;
+    else if (suffix === "jt" || suffix === "juta") amountVal = val * 1000000;
+    else if (suffix === "m" || suffix === "miliar") amountVal = val * 1000000000;
+    else amountVal = val;
+  } else {
+    if (amountRaw.length >= 4 && (amountRaw[amountRaw.length - 4] === "." || amountRaw[amountRaw.length - 4] === ",") && /^\d+$/.test(amountRaw.slice(-3))) {
+      const s = amountRaw.slice(0, -4) + amountRaw.slice(-3);
+      amountVal = parseFloat(s);
+    } else {
+      const s = amountRaw.replace(/,/g, ".");
+      amountVal = parseFloat(s);
+    }
   }
 
   // 2. Extract Type
@@ -77,5 +88,11 @@ function parseTransactionSentence(sentence: string, refDate: Date = new Date()):
     type: txType,
     date: txDate,
     description: descClean
+  };
+}
+
+if (typeof module !== 'undefined') {
+  module.exports = {
+    parseTransactionSentence
   };
 }

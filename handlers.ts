@@ -95,7 +95,7 @@ function formatCurrency(amount: number): string {
     }
   }
   
-  return (isNegative ? "-" : "") + "Rp " + formattedInteger + "," + decimalPart;
+  return "Rp " + (isNegative ? "-" : "") + formattedInteger + "," + decimalPart;
 }
 
 /**

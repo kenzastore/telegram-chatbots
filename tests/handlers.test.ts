@@ -93,10 +93,12 @@ describe("Chatbot Command Handlers & Router Tests", () => {
     it("should format positive amount to Indonesian Rupiah", () => {
       expect(formatCurrency(50000)).toBe("Rp 50.000,00");
       expect(formatCurrency(1500000)).toBe("Rp 1.500.000,00");
+      expect(formatCurrency(1250.5)).toBe("Rp 1.250,50");
     });
 
     it("should format negative amount correctly", () => {
-      expect(formatCurrency(-25000)).toBe("-Rp 25.000,00");
+      expect(formatCurrency(-25000)).toBe("Rp -25.000,00");
+      expect(formatCurrency(-500.25)).toBe("Rp -500,25");
     });
 
     it("should format zero correctly", () => {
