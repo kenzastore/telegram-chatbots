@@ -1,0 +1,8 @@
+{
+  "track_id": "user_oauth_mandatory_start_gas_20260612",
+  "type": "refactor",
+  "status": "new",
+  "created_at": "2026-06-12T03:47:10Z",
+  "updated_at": "2026-06-12T03:47:10Z",
+  "description": "adapt/refactor the logic from the @telegram-chatbots/conductor/tracks/user_oauth_mandatory_start_20260605/ track by translating the existing Python code into Google Apps Script. Ensure that all Python-specific libraries, syntax, and data structures are properly adapted to the Google Apps Script environment while maintaining the original functionality and intended logic."
+}
