@@ -17,7 +17,7 @@
 
 ## Phase 2: Verify Login Gate and Multi-User Separation [checkpoint: TBD]
 
-- [ ] Task: Create tests for unauthenticated command blocking and multi-user isolation
+- [~] Task: Create tests for unauthenticated command blocking and multi-user isolation
     - [ ] Write/verify unit tests in `tests/handlers.test.ts` checking that unauthenticated messages, callback queries, and transactional commands are intercepted and blocked.
     - [ ] Write unit tests verifying multi-user separation (User A's operations do not alter User B's spreadsheet ID, credentials, or state).
     - [ ] Run tests and verify they pass (Green Phase).
