@@ -1,0 +1,5 @@
+Task: Create tests for unauthenticated command blocking and multi-user isolation
+Summary of changes:
+- Created integration unit tests in tests/handlers.test.ts verifying multi-user isolation (separate properties/states for User A and User B) and correct routing check scoping.
+Files:
+- tests/handlers.test.ts
