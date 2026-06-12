@@ -1,0 +1,9 @@
+Task: Create OAuth2 Unit Tests & Align/Implement Helpers
+Summary of changes:
+- Created tests/oauth.test.ts testing getAuthUrl, handleAuthRedirect, getAccessTokenForUser, isUserAuthenticated, and logoutUser.
+- Mocked CacheService and Config.getGoogleClientSecret locally in the unit test suite.
+- Updated oauth.ts to export the OAuth object for Node/Jest runtime environment.
+- Verified all unit tests pass with 100% statement and line coverage.
+Files:
+- oauth.ts
+- tests/oauth.test.ts
