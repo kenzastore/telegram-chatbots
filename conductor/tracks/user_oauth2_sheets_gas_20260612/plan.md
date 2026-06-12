@@ -15,7 +15,7 @@
 
 ## Phase 2: Redirect HTTP GET Handler Verification & Integration [checkpoint: TBD]
 
-- [ ] Task: Create tests for doGet Redirect Handler
+- [~] Task: Create tests for doGet Redirect Handler
     - [ ] Write tests in `tests/main.test.ts` (or `tests/oauth.test.ts`) for `doGet(e)` redirect callback.
     - [ ] Test successful query parameter extraction, invocation of `OAuth.handleAuthRedirect`, and returning of a successful HTML page response.
     - [ ] Test error scenarios (e.g., missing code/state, throw during authentication exchange) and verify appropriate HTML error responses.
