@@ -211,4 +211,94 @@ describe("OAuth Module Tests", () => {
       expect(CacheService.getScriptCache().get(`ACCESS_TOKEN_${userId}`)).toBeNull();
     });
   });
+
+  describe("doGet Redirect Handler Tests", () => {
+    let sendTelegramMessageMock: jest.Mock;
+
+    beforeEach(() => {
+      sendTelegramMessageMock = jest.fn();
+      (global as any).sendTelegramMessage = sendTelegramMessageMock;
+      (global as any).OAuth = OAuth; // ensure the real OAuth is used
+    });
+
+    it("should successfully handle Google redirect and send success message to Telegram", () => {
+      // Mock bot token in properties
+      PropertiesService.getScriptProperties().setProperty("TELEGRAM_BOT_TOKEN", "my_bot_token");
+
+      // Mock token exchange call
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({
+          refresh_token: "ref_tok",
+          access_token: "acc_tok",
+          expires_in: 3600
+        })
+      });
+
+      const e = {
+        parameter: {
+          code: "test_auth_code",
+          state: String(userId)
+        }
+      } as any;
+
+      const { doGet } = require('../main.ts');
+      const output = doGet(e);
+
+      // Verify OAuth redirect handler was called and tokens saved
+      expect(PropertiesService.getScriptProperties().getProperty(`REFRESH_TOKEN_${userId}`)).toBe("ref_tok");
+
+      // Verify Telegram message was sent
+      expect(sendTelegramMessageMock).toHaveBeenCalledTimes(1);
+      expect(sendTelegramMessageMock).toHaveBeenCalledWith(
+        userId,
+        expect.stringContaining("connected successfully"),
+        "my_bot_token"
+      );
+
+      // Verify HTML output returned
+      expect(output.getContent()).toContain("Authentication Successful!");
+    });
+
+    it("should return failure HTML if code or state parameter is missing", () => {
+      const e = {
+        parameter: {}
+      } as any;
+
+      const { doGet } = require('../main.ts');
+      const output = doGet(e);
+
+      expect(output.getContent()).toContain("Authentication Failed");
+      expect(output.getContent()).toContain("Missing code or state parameters");
+      expect(sendTelegramMessageMock).not.toHaveBeenCalled();
+    });
+
+    it("should return failure HTML if handleAuthRedirect throws an error", () => {
+      PropertiesService.getScriptProperties().setProperty("TELEGRAM_BOT_TOKEN", "my_bot_token");
+
+      // Mock token exchange failure
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 400,
+        getContentText: () => JSON.stringify({
+          error: "invalid_grant",
+          error_description: "Expired code"
+        })
+      });
+
+      const e = {
+        parameter: {
+          code: "expired_code",
+          state: String(userId)
+        }
+      } as any;
+
+      const { doGet } = require('../main.ts');
+      const output = doGet(e);
+
+      expect(output.getContent()).toContain("Authentication Failed");
+      expect(output.getContent()).toContain("Expired code");
+      expect(sendTelegramMessageMock).not.toHaveBeenCalled();
+    });
+  });
 });
+

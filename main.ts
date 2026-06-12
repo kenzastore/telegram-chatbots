@@ -155,3 +155,7 @@ function debugScriptProperties() {
     console.log("No token, skipping webhook info check.");
   }
 }
+
+if (typeof module !== 'undefined') {
+  module.exports = { doPost, doGet, logErrorToSheet };
+}
