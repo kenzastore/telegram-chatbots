@@ -774,6 +774,70 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       }, token);
       expect(fetchMock).toHaveBeenCalled();
     });
+
+    it("should enforce strict multi-user separation of state and authentication", () => {
+      const userA = 11111;
+      const userB = 22222;
+
+      // Mock isUserAuthenticated to check specific user IDs
+      (global as any).OAuth.isUserAuthenticated.mockImplementation((id: number) => {
+        if (id === userA) return true;
+        if (id === userB) return false;
+        return false;
+      });
+
+      // Set user properties for User A and User B
+      PropertiesService.getUserProperties().setProperty(`STATE_${userA}`, "STATE_ADD_AMOUNT");
+      PropertiesService.getUserProperties().setProperty(`STATE_${userB}`, "STATE_ADD_DESC");
+
+      // Verify User B is blocked (unauthenticated gate)
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
+      routeUpdate({
+        update_id: 101,
+        message: {
+          message_id: 1001,
+          from: { id: userB, is_bot: false, first_name: "UserB" },
+          chat: { id: chatId, type: "private" },
+          text: "/balance"
+        }
+      }, token);
+
+      // Verify User B gets "Google Login Required"
+      let fetchCallArgs = JSON.parse(fetchMock.mock.calls[fetchMock.mock.calls.length - 1][1].payload);
+      expect(fetchCallArgs.text).toContain("Google Login Required");
+
+      // Verify User A can execute /balance successfully
+      routeUpdate({
+        update_id: 102,
+        message: {
+          message_id: 1002,
+          from: { id: userA, is_bot: false, first_name: "UserA" },
+          chat: { id: chatId, type: "private" },
+          text: "/balance"
+        }
+      }, token);
+
+      fetchCallArgs = JSON.parse(fetchMock.mock.calls[fetchMock.mock.calls.length - 1][1].payload);
+      expect(fetchCallArgs.text).not.toContain("Google Login Required");
+
+      // Verify /google_logout for User A does not delete User B's state
+      routeUpdate({
+        update_id: 103,
+        message: {
+          message_id: 1003,
+          from: { id: userA, is_bot: false, first_name: "UserA" },
+          chat: { id: chatId, type: "private" },
+          text: "/google_logout"
+        }
+      }, token);
+
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userA}`)).toBeNull();
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userB}`)).toBe("STATE_ADD_DESC");
+    });
   });
 
   describe("Interactive Edit Flow", () => {
