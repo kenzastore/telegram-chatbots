@@ -1,0 +1,8 @@
+Task: Create tests for doGet Redirect Handler & Implement and Align doGet callback
+Summary of changes:
+- Created redirect handler unit tests in tests/oauth.test.ts testing parameter validation, handleAuthRedirect invocation, Telegram notifications, and HtmlOutput responses.
+- Exported doPost, doGet, and logErrorToSheet in main.ts.
+- Verified all tests pass.
+Files:
+- main.ts
+- tests/oauth.test.ts
