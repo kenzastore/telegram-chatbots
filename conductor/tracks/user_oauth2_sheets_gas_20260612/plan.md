@@ -2,15 +2,15 @@
 
 ## Phase 1: OAuth2 Unit Tests & Helper Methods Alignment [checkpoint: TBD]
 
-- [ ] Task: Create OAuth2 Unit Tests
-    - [ ] Create `tests/oauth.test.ts` with unit tests for `OAuth.getAuthUrl`.
-    - [ ] Add unit tests for `OAuth.handleAuthRedirect` (testing successful token exchange, missing credentials/properties, and API response errors by mocking `UrlFetchApp`).
-    - [ ] Add unit tests for `OAuth.getAccessTokenForUser` (testing cache hit using `CacheService`, cache miss with successful refresh, and refresh token failure).
-    - [ ] Add unit tests for `OAuth.isUserAuthenticated` and `OAuth.logoutUser`.
-    - [ ] Run the tests and confirm they fail (Red Phase).
-- [ ] Task: Align and Implement OAuth Helpers
-    - [ ] Refactor and verify the implementation of `oauth.ts` to pass all unit tests (Green Phase).
-    - [ ] Verify that all typescript compiler checks succeed.
+- [x] Task: Create OAuth2 Unit Tests (abfadaf)
+    - [x] Create `tests/oauth.test.ts` with unit tests for `OAuth.getAuthUrl`.
+    - [x] Add unit tests for `OAuth.handleAuthRedirect` (testing successful token exchange, missing credentials/properties, and API response errors by mocking `UrlFetchApp`).
+    - [x] Add unit tests for `OAuth.getAccessTokenForUser` (testing cache hit using `CacheService`, cache miss with successful refresh, and refresh token failure).
+    - [x] Add unit tests for `OAuth.isUserAuthenticated` and `OAuth.logoutUser`.
+    - [x] Run the tests and confirm they fail (Red Phase).
+- [x] Task: Align and Implement OAuth Helpers (abfadaf)
+    - [x] Refactor and verify the implementation of `oauth.ts` to pass all unit tests (Green Phase).
+    - [x] Verify that all typescript compiler checks succeed.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: OAuth2 Unit Tests & Helper Methods Alignment' (Protocol in workflow.md)
 
 ## Phase 2: Redirect HTTP GET Handler Verification & Integration [checkpoint: TBD]
