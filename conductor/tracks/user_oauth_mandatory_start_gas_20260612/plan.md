@@ -2,7 +2,7 @@
 
 ## Phase 1: Implement /cancel Command and Logout State Cleanup [checkpoint: TBD]
 
-- [ ] Task: Create unit tests for /cancel and logout state cleanup
+- [~] Task: Create unit tests for /cancel and logout state cleanup
     - [ ] Add unit tests in `tests/handlers.test.ts` verifying that the `/cancel` command is accessible for unauthenticated users.
     - [ ] Add unit tests verifying `/cancel` deletes `STATE_<userId>` from user properties and responds with a cancellation message.
     - [ ] Add unit tests verifying `/google_logout` cleans up the `STATE_<userId>` property in addition to credentials.
