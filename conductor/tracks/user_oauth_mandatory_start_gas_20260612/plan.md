@@ -1,6 +1,6 @@
 # Implementation Plan - Mandatory Google OAuth & State Cleanup (GAS Refactor)
 
-## Phase 1: Implement /cancel Command and Logout State Cleanup [checkpoint: TBD]
+## Phase 1: Implement /cancel Command and Logout State Cleanup [checkpoint: 4b50a17]
 
 - [x] Task: Create unit tests for /cancel and logout state cleanup (e1789d8)
     - [x] Add unit tests in `tests/handlers.test.ts` verifying that the `/cancel` command is accessible for unauthenticated users.
@@ -13,7 +13,7 @@
     - [x] Update the `/google_logout` command logic in `router.ts` / `handlers.ts` to also clear `STATE_<userId>`.
     - [x] Run tests and verify they pass (Green Phase).
     - [x] Verify typescript compilation succeeds.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Implement /cancel Command and Logout State Cleanup' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Implement /cancel Command and Logout State Cleanup' (Protocol in workflow.md) (4b50a17)
 
 ## Phase 2: Verify Login Gate and Multi-User Separation [checkpoint: TBD]
 
