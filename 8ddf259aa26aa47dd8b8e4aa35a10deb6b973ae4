@@ -1,0 +1,6 @@
+Automated Test Command: npm test
+Manual Verification Steps:
+1. Run local CLI Node check on getAuthUrl:
+   node -e "global.Config = { getGoogleClientId: () => 'mock_client_id', getRedirectUri: () => 'https://mock.redirect.uri' }; const { OAuth } = require('./oauth.ts'); console.log('OAuth Auth URL:', OAuth.getAuthUrl(99999));"
+2. Output verified correct Google accounts auth URL with scope and state params.
+User Confirmation: yes
