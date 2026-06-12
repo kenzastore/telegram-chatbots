@@ -1,0 +1,6 @@
+Automated Test Command: npm test
+Manual Verification Steps:
+1. Run local CLI Node check on /cancel state clearance:
+   node -e "const store = { STATE_99999: 'STATE_ADD_AMOUNT' }; global.PropertiesService = { getUserProperties: () => ({ getProperty: (k) => store[k] || null, deleteProperty: (k) => { delete store[k]; } }) }; global.OAuth = { isUserAuthenticated: () => false }; global.UrlFetchApp = { fetch: () => ({ getResponseCode: () => 200, getContentText: () => '{}' }) }; const { routeUpdate } = require('./router.ts'); const update = { message: { chat: { id: 99999 }, from: { id: 99999 }, text: '/cancel' } }; console.log('State Before Cancel:', store.STATE_99999); routeUpdate(update, 'token'); console.log('State After Cancel:', store.STATE_99999);"
+2. Verified output: State Before Cancel is STATE_ADD_AMOUNT, State After Cancel is undefined.
+User Confirmation: yes
