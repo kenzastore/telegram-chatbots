@@ -15,13 +15,13 @@
 
 ## Phase 2: Redirect HTTP GET Handler Verification & Integration [checkpoint: TBD]
 
-- [~] Task: Create tests for doGet Redirect Handler
-    - [ ] Write tests in `tests/main.test.ts` (or `tests/oauth.test.ts`) for `doGet(e)` redirect callback.
-    - [ ] Test successful query parameter extraction, invocation of `OAuth.handleAuthRedirect`, and returning of a successful HTML page response.
-    - [ ] Test error scenarios (e.g., missing code/state, throw during authentication exchange) and verify appropriate HTML error responses.
-    - [ ] Run tests and verify they fail (Red Phase).
-- [ ] Task: Implement and Align doGet callback
-    - [ ] Implement/update the `doGet` handler in `main.ts` to process Google redirects and return HTML outputs.
-    - [ ] Run tests and verify they pass (Green Phase).
-    - [ ] Run coverage checks and confirm Jest coverage of `oauth.ts` and related code is >80%.
+- [x] Task: Create tests for doGet Redirect Handler (37f2071)
+    - [x] Write tests in `tests/main.test.ts` (or `tests/oauth.test.ts`) for `doGet(e)` redirect callback.
+    - [x] Test successful query parameter extraction, invocation of `OAuth.handleAuthRedirect`, and returning of a successful HTML page response.
+    - [x] Test error scenarios (e.g., missing code/state, throw during authentication exchange) and verify appropriate HTML error responses.
+    - [x] Run tests and verify they fail (Red Phase).
+- [x] Task: Implement and Align doGet callback (37f2071)
+    - [x] Implement/update the `doGet` handler in `main.ts` to process Google redirects and return HTML outputs.
+    - [x] Run tests and verify they pass (Green Phase).
+    - [x] Run coverage checks and confirm Jest coverage of `oauth.ts` and related code is >80%.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Redirect HTTP GET Handler' (Protocol in workflow.md)
