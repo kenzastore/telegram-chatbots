@@ -1,0 +1,8 @@
+Task: Create unit tests for /cancel and logout state cleanup & Implement /cancel command and update /google_logout handler
+Summary of changes:
+- Created unit tests in tests/handlers.test.ts verifying unauthenticated access to /cancel command, state deletion, and state deletion during /google_logout.
+- Implemented the /cancel command as a public command in router.ts.
+- Updated /google_logout command handling in router.ts to also delete the user's active conversation state.
+Files:
+- router.ts
+- tests/handlers.test.ts
