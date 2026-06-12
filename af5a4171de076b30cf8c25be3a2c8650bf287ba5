@@ -1,0 +1,6 @@
+Automated Test Command: npm test
+Manual Verification Steps:
+1. Run local CLI Node check on routing gate:
+   node -e "global.PropertiesService = { getUserProperties: () => ({ getProperty: () => null }) }; global.OAuth = { isUserAuthenticated: () => false }; global.UrlFetchApp = { fetch: (url, options) => { const payload = JSON.parse(options.payload); console.log('Message text:', payload.text.replace(/\n/g, ' ')); return { getResponseCode: () => 200, getContentText: () => '{}' }; } }; const { routeUpdate } = require('./router.ts'); routeUpdate({ message: { chat: { id: 99999 }, from: { id: 99999 }, text: '/balance' } }, 'token'); routeUpdate({ message: { chat: { id: 99999 }, from: { id: 99999 }, text: '/start' } }, 'token');"
+2. Verified output: balance command blocked with login prompt, start command welcome guide allowed.
+User Confirmation: yes
