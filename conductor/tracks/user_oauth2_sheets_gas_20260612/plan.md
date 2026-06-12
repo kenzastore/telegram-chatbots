@@ -1,6 +1,6 @@
 # Implementation Plan - Google OAuth2 Authentication (GAS Refactor)
 
-## Phase 1: OAuth2 Unit Tests & Helper Methods Alignment [checkpoint: TBD]
+## Phase 1: OAuth2 Unit Tests & Helper Methods Alignment [checkpoint: 8ddf259]
 
 - [x] Task: Create OAuth2 Unit Tests (abfadaf)
     - [x] Create `tests/oauth.test.ts` with unit tests for `OAuth.getAuthUrl`.
@@ -11,7 +11,7 @@
 - [x] Task: Align and Implement OAuth Helpers (abfadaf)
     - [x] Refactor and verify the implementation of `oauth.ts` to pass all unit tests (Green Phase).
     - [x] Verify that all typescript compiler checks succeed.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: OAuth2 Unit Tests & Helper Methods Alignment' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: OAuth2 Unit Tests & Helper Methods Alignment' (Protocol in workflow.md) (8ddf259)
 
 ## Phase 2: Redirect HTTP GET Handler Verification & Integration [checkpoint: TBD]
 
