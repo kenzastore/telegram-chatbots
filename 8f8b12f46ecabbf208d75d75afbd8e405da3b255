@@ -1,0 +1,6 @@
+Automated Test Command: npm test
+Manual Verification Steps:
+1. Run local CLI Node check on doGet redirect handler simulating failure:
+   node -e "global.Config = { getGoogleClientId: () => 'mock_client_id', getRedirectUri: () => 'https://mock.redirect.uri' }; global.OAuth = { handleAuthRedirect: () => { throw new Error('Mock exchange failure'); } }; global.HtmlService = { createHtmlOutput: (html) => ({ getContent: () => html }) }; const { doGet } = require('./main.ts'); console.log(doGet({ parameter: { code: 'my_code', state: '12345' } }).getContent());"
+2. Verified output: Authentication Failed with Mock exchange failure.
+User Confirmation: yes
