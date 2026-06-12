@@ -159,6 +159,32 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       expect(fetchCallArgs.chat_id).toBe(chatId);
       expect(fetchCallArgs.text).toContain("Savings Tracker Bot Help Guide");
     });
+
+    it("should handle /cancel command successfully even if unauthenticated", () => {
+      (global as any).OAuth.isUserAuthenticated.mockReturnValue(false);
+      PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "STATE_ADD_AMOUNT");
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
+      const update = {
+        update_id: 1,
+        message: {
+          message_id: 101,
+          from: { id: userId, is_bot: false, first_name: "Karel" },
+          chat: { id: chatId, type: "private" },
+          text: "/cancel"
+        }
+      };
+
+      routeUpdate(update, token);
+
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const fetchCallArgs = JSON.parse(fetchMock.mock.calls[0][1].payload);
+      expect(fetchCallArgs.text).toContain("Operation cancelled");
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBeNull();
+    });
   });
 
   describe("Authentication Gate", () => {
@@ -636,6 +662,21 @@ describe("Chatbot Command Handlers & Router Tests", () => {
         }
       }, token);
       expect(fetchMock).toHaveBeenCalled();
+    });
+
+    it("should clear user state upon /google_logout", () => {
+      (global as any).OAuth.isUserAuthenticated.mockReturnValue(true);
+      PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "STATE_ADD_AMOUNT");
+      routeUpdate({
+        update_id: 11,
+        message: {
+          message_id: 202,
+          from: { id: userId, is_bot: false, first_name: "K" },
+          chat: { id: chatId, type: "private" },
+          text: "/google_logout"
+        }
+      }, token);
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBeNull();
     });
 
     it("should route /debug command", () => {

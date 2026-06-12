@@ -44,7 +44,13 @@ function routeUpdate(update: TelegramUpdate, token: string) {
       }
       if (command === "/google_logout") {
         OAuth.logoutUser(user_id);
+        PropertiesService.getUserProperties().deleteProperty(`STATE_${user_id}`);
         sendTelegramMessage(chat_id, "👋 <b>Logged out successfully.</b> Your Google credentials and mappings have been deleted.", token);
+        return;
+      }
+      if (command === "/cancel") {
+        PropertiesService.getUserProperties().deleteProperty(`STATE_${user_id}`);
+        sendTelegramMessage(chat_id, "❌ <b>Operation cancelled.</b>", token);
         return;
       }
       if (command === "/debug") {
