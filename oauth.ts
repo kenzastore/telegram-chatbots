@@ -146,3 +146,8 @@ const OAuth = {
     cache.remove(`ACCESS_TOKEN_${userId}`);
   }
 };
+
+if (typeof module !== 'undefined') {
+  module.exports = { OAuth };
+}
+
