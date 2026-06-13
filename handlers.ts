@@ -199,15 +199,11 @@ function handleStatefulMessage(userId: number, chatId: number, text: string, act
       userProperties.setProperty(stateKey, "ADD_DATE");
 
       const todayStr = Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd");
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = Utilities.formatDate(yesterday, "Asia/Jakarta", "yyyy-MM-dd");
 
       const keyboard = {
         inline_keyboard: [
           [
-            { text: `📅 Today (${todayStr})`, callback_data: "add_date_today" },
-            { text: `📅 Yesterday (${yesterdayStr})`, callback_data: "add_date_yesterday" }
+            { text: `📅 Today (${todayStr})`, callback_data: "add_date_today" }
           ],
           [
             { text: "✏️ Custom Date (YYYY-MM-DD)", callback_data: "add_date_custom" }
@@ -406,21 +402,6 @@ function handleCallbackQuery(callbackQuery: any, token: string) {
       return;
     }
 
-    if (data === "add_date_yesterday") {
-      const tempTxStr = scriptProperties.getProperty(tempTxKey);
-      if (!tempTxStr) {
-        answerCallbackQuery(callbackQuery.id, "❌ Error: Transaction details not found.", token);
-        return;
-      }
-      const tempTx = JSON.parse(tempTxStr);
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      tempTx.date = Utilities.formatDate(yesterday, "Asia/Jakarta", "yyyy-MM-dd");
-
-      answerCallbackQuery(callbackQuery.id, "Yesterday selected", token);
-      saveAndConfirmAddTransaction(userId, chatId, tempTx, token, stateKey, tempTxKey, callbackQuery.message.message_id);
-      return;
-    }
 
     if (data === "add_date_custom") {
       answerCallbackQuery(callbackQuery.id, "Custom date", token);

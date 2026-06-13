@@ -550,37 +550,6 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBeNull();
     });
 
-    it("should handle callback query add_date_yesterday and save transaction", () => {
-      PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "ADD_DATE");
-      PropertiesService.getScriptProperties().setProperty(`TEMP_TX_${userId}`, JSON.stringify({ type: "credit", amount: 100000, description: "Bonus" }));
-
-      MockDatabase.addTransaction.mockReturnValue({
-        userId: userId,
-        id: 5,
-        date: "2026-06-13",
-        amount: 100000,
-        description: "Bonus",
-        type: "credit",
-        balanceAfter: 170000
-      });
-
-      fetchMock.mockReturnValue({
-        getResponseCode: () => 200,
-        getContentText: () => JSON.stringify({ ok: true })
-      });
-
-      const callbackQuery = {
-        id: "cb_id",
-        from: { id: userId },
-        message: { message_id: 200, chat: { id: chatId }, text: "Prompt" },
-        data: "add_date_yesterday"
-      };
-
-      handleCallbackQuery(callbackQuery, token);
-
-      expect(MockDatabase.addTransaction).toHaveBeenCalled();
-      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBeNull();
-    });
 
     it("should handle callback query add_date_custom and prompt for manual entry", () => {
       PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "ADD_DATE");
