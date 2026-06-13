@@ -1,0 +1,12 @@
+Task: Implement Date Prompt Flow in /add Handler
+Summary of changes:
+- Updated /add description input step to prompt for transaction date with an inline keyboard containing options for Today, Yesterday, and Custom Date.
+- Handled callback queries add_date_today and add_date_yesterday to save the transaction with the computed date.
+- Handled callback query add_date_custom to prompt for custom date input in YYYY-MM-DD format.
+- Added stateful text handling for custom date inputs under states ADD_DATE and ADD_AWAITING_DATE with format validation.
+- Extracted transaction saving and confirmation printing into a helper function saveAndConfirmAddTransaction.
+- Added comprehensive unit tests in tests/handlers.test.ts for date prompts, callbacks, manual overrides, date format validations, and database savings.
+
+Created/modified files:
+- handlers.ts
+- tests/handlers.test.ts
