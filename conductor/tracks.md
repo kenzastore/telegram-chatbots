@@ -54,7 +54,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: adapt/refactor the logic from the core_chatbot_20260603 track by translating the existing Python code into Google Apps Script. Ensure that all Python-specific libraries, syntax, and data structures are properly adapted to the Google Apps Script environment while maintaining the original functionality and intended logic.**
+- [ ] **Track: adapt/refactor the logic from the core_chatbot_20260603 track by translating the existing Python code into Google Apps Script. Ensure that all Python-specific libraries, syntax, and data structures are properly adapted to the Google Apps Script environment while maintaining the original functionality and intended logic.**
   *Link: [./tracks/refactor_core_chatbot_gas_20260610/](./tracks/refactor_core_chatbot_gas_20260610/)*
 
 ---

@@ -10,17 +10,19 @@ This track refactors and adapts the core chatbot commands (`/start`, `/help`, `/
 2. **Command Handlers (`handlers.ts` & `router.ts`):**
    - Translate the basic commands `/start`, `/help`, `/balance`, and `/view` from Python to TypeScript.
    - Ensure these commands respect the stateless webhook architecture and user-level authorization gate.
+   - **Interactive `/add` Command Date Prompts:** Update the interactive `/add` command conversation flow to prompt for the transaction date. The prompt must default to today, with inline buttons for manual override (asking for custom date input in `YYYY-MM-DD` format) or confirmation.
 3. **Jest Testing Setup:**
    - Install and configure `jest`, `ts-jest`, and `@types/jest` locally.
    - Implement mock definitions for global GAS objects (`UrlFetchApp`, `PropertiesService`, `LockService`) to allow tests to run locally in Node.js.
-   - Write Jest test suites for `database.ts` and basic handlers (`/start`, `/help`, `/balance`, `/view`) that mirror the test coverage from `test_db.py` and `test_bot.py`.
+   - Write Jest test suites for `database.ts` and basic handlers (`/start`, `/help`, `/balance`, `/view`, `/add`) that mirror the test coverage from `test_db.py` and `test_bot.py`.
 
 ## Acceptance Criteria
 - Basic commands and database helper functions are fully translated and functional in TypeScript/GAS.
+- The interactive `/add` command prompts for a date, default to today, offers manual override or confirmation buttons, and successfully saves with the chosen date.
 - A local Jest testing suite is fully configured, and running `npm test` runs all tests successfully.
 - Test coverage for the translated database functions and basic handlers meets or exceeds 80%.
 - Compilation of TypeScript files via `tsc` succeeds without warnings or errors.
 
 ## Out of Scope
-- Porting other commands (`/add`, `/edit`, `/clear`, `/quick`, `/summary`) or OAuth token exchange logic, which are covered by separate tracks.
+- Porting other commands (`/edit`, `/clear`, `/quick`, `/summary`) or OAuth token exchange logic, which are covered by separate tracks.
 - Modifying clasp deployment configurations.
