@@ -25,8 +25,8 @@
 
 ## Phase 4: Conversational /add Date Prompts & Verification
 
-- [ ] Task: Implement Date Prompt Flow in /add Handler
-    - [ ] Write failing unit tests in `tests/handlers.test.ts` verifying `/add` prompts for date, supports confirming today's date, and handles custom manual override date entry.
-    - [ ] Implement date prompt states (e.g., `ADD_DATE` and `ADD_AWAITING_DATE`) in `handlers.ts` and callback query handlers.
-    - [ ] Verify all tests pass, code coverage remains >80%, and code compiles.
+- [x] Task: Implement Date Prompt Flow in /add Handler (2172fa5)
+    - [x] Write failing unit tests in `tests/handlers.test.ts` verifying `/add` prompts for date, supports confirming today's date, and handles custom manual override date entry.
+    - [x] Implement date prompt states (e.g., `ADD_DATE` and `ADD_AWAITING_DATE`) in `handlers.ts` and callback query handlers.
+    - [x] Verify all tests pass, code coverage remains >80%, and code compiles.
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Conversational /add Date Prompts & Verification' (Protocol in workflow.md)
