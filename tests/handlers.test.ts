@@ -501,14 +501,31 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       expect(tempTx.amount).toBe(100000);
     });
 
-    it("should handle state ADD_DESC message and save transaction", () => {
+    it("should handle state ADD_DESC message by prompting for date", () => {
       PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "ADD_DESC");
       PropertiesService.getScriptProperties().setProperty(`TEMP_TX_${userId}`, JSON.stringify({ type: "credit", amount: 100000 }));
+
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
+      handleStatefulMessage(userId, chatId, "Bonus", "ADD_DESC", token);
+
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBe("ADD_DATE");
+      const tempTx = JSON.parse(PropertiesService.getScriptProperties().getProperty(`TEMP_TX_${userId}`) || "{}");
+      expect(tempTx.description).toBe("Bonus");
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    it("should handle callback query add_date_today and save transaction", () => {
+      PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "ADD_DATE");
+      PropertiesService.getScriptProperties().setProperty(`TEMP_TX_${userId}`, JSON.stringify({ type: "credit", amount: 100000, description: "Bonus" }));
 
       MockDatabase.addTransaction.mockReturnValue({
         userId: userId,
         id: 5,
-        date: "2026-06-10",
+        date: "2026-06-14",
         amount: 100000,
         description: "Bonus",
         type: "credit",
@@ -520,11 +537,111 @@ describe("Chatbot Command Handlers & Router Tests", () => {
         getContentText: () => JSON.stringify({ ok: true })
       });
 
-      handleStatefulMessage(userId, chatId, "Bonus", "ADD_DESC", token);
+      const callbackQuery = {
+        id: "cb_id",
+        from: { id: userId },
+        message: { message_id: 200, chat: { id: chatId }, text: "Prompt" },
+        data: "add_date_today"
+      };
+
+      handleCallbackQuery(callbackQuery, token);
 
       expect(MockDatabase.addTransaction).toHaveBeenCalled();
       expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBeNull();
-      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("should handle callback query add_date_yesterday and save transaction", () => {
+      PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "ADD_DATE");
+      PropertiesService.getScriptProperties().setProperty(`TEMP_TX_${userId}`, JSON.stringify({ type: "credit", amount: 100000, description: "Bonus" }));
+
+      MockDatabase.addTransaction.mockReturnValue({
+        userId: userId,
+        id: 5,
+        date: "2026-06-13",
+        amount: 100000,
+        description: "Bonus",
+        type: "credit",
+        balanceAfter: 170000
+      });
+
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
+      const callbackQuery = {
+        id: "cb_id",
+        from: { id: userId },
+        message: { message_id: 200, chat: { id: chatId }, text: "Prompt" },
+        data: "add_date_yesterday"
+      };
+
+      handleCallbackQuery(callbackQuery, token);
+
+      expect(MockDatabase.addTransaction).toHaveBeenCalled();
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBeNull();
+    });
+
+    it("should handle callback query add_date_custom and prompt for manual entry", () => {
+      PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "ADD_DATE");
+      PropertiesService.getScriptProperties().setProperty(`TEMP_TX_${userId}`, JSON.stringify({ type: "credit", amount: 100000, description: "Bonus" }));
+
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
+      const callbackQuery = {
+        id: "cb_id",
+        from: { id: userId },
+        message: { message_id: 200, chat: { id: chatId }, text: "Prompt" },
+        data: "add_date_custom"
+      };
+
+      handleCallbackQuery(callbackQuery, token);
+
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBe("ADD_AWAITING_DATE");
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    it("should handle state ADD_AWAITING_DATE with invalid date", () => {
+      PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "ADD_AWAITING_DATE");
+      PropertiesService.getScriptProperties().setProperty(`TEMP_TX_${userId}`, JSON.stringify({ type: "credit", amount: 100000, description: "Bonus" }));
+
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
+      handleStatefulMessage(userId, chatId, "invalid-date", "ADD_AWAITING_DATE", token);
+
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBe("ADD_AWAITING_DATE");
+      expect(fetchMock).toHaveBeenCalled();
+    });
+
+    it("should handle state ADD_AWAITING_DATE with valid date and save transaction", () => {
+      PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "ADD_AWAITING_DATE");
+      PropertiesService.getScriptProperties().setProperty(`TEMP_TX_${userId}`, JSON.stringify({ type: "credit", amount: 100000, description: "Bonus" }));
+
+      MockDatabase.addTransaction.mockReturnValue({
+        userId: userId,
+        id: 5,
+        date: "2026-06-12",
+        amount: 100000,
+        description: "Bonus",
+        type: "credit",
+        balanceAfter: 170000
+      });
+
+      fetchMock.mockReturnValue({
+        getResponseCode: () => 200,
+        getContentText: () => JSON.stringify({ ok: true })
+      });
+
+      handleStatefulMessage(userId, chatId, "2026-06-12", "ADD_AWAITING_DATE", token);
+
+      expect(MockDatabase.addTransaction).toHaveBeenCalledWith(userId, expect.objectContaining({ date: "2026-06-12" }), expect.any(String));
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBeNull();
     });
   });
 

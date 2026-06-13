@@ -194,25 +194,57 @@ function handleStatefulMessage(userId: number, chatId: number, text: string, act
       }
 
       tempTx.description = text;
-      tempTx.date = Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd");
+      scriptProperties.setProperty(tempTxKey, JSON.stringify(tempTx));
 
-      const accessToken = OAuth.getAccessTokenForUser(userId);
-      const savedTx = Database.addTransaction(userId, tempTx, accessToken);
+      userProperties.setProperty(stateKey, "ADD_DATE");
 
-      userProperties.deleteProperty(stateKey);
-      scriptProperties.deleteProperty(tempTxKey);
+      const todayStr = Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd");
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = Utilities.formatDate(yesterday, "Asia/Jakarta", "yyyy-MM-dd");
 
-      const typeSign = savedTx.type === 'credit' ? '🟢' : '🔴';
-      const typeLabel = savedTx.type === 'credit' ? 'Income' : 'Expense';
-      
-      const successText = `✅ <b>Transaction Saved Successfully!</b>\n\n` +
-        `📅 <b>Date:</b> ${savedTx.date}\n` +
-        `➕ <b>Type:</b> ${typeSign} ${typeLabel}\n` +
-        `💰 <b>Amount:</b> ${formatCurrency(savedTx.amount)}\n` +
-        `📝 <b>Description:</b> ${savedTx.description}\n\n` +
-        `💰 <b>Current Balance:</b> <code>${formatCurrency(savedTx.balanceAfter)}</code>`;
+      const keyboard = {
+        inline_keyboard: [
+          [
+            { text: `📅 Today (${todayStr})`, callback_data: "add_date_today" },
+            { text: `📅 Yesterday (${yesterdayStr})`, callback_data: "add_date_yesterday" }
+          ],
+          [
+            { text: "✏️ Custom Date (YYYY-MM-DD)", callback_data: "add_date_custom" }
+          ]
+        ]
+      };
 
-      sendTelegramMessage(chatId, successText, token);
+      sendTelegramMessage(
+        chatId,
+        "📅 <b>Select Transaction Date:</b>\n\nChoose an option below or type/send a custom date in <code>YYYY-MM-DD</code> format:",
+        token,
+        keyboard
+      );
+      return;
+    }
+
+    if (activeState === "ADD_DATE") {
+      const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+      if (!datePattern.test(text.trim())) {
+        sendTelegramMessage(chatId, "⚠️ <b>Invalid date format.</b> Please send the date in <code>YYYY-MM-DD</code> format (e.g. <code>2026-06-14</code>) or choose one of the options:", token);
+        return;
+      }
+
+      tempTx.date = text.trim();
+      saveAndConfirmAddTransaction(userId, chatId, tempTx, token, stateKey, tempTxKey);
+      return;
+    }
+
+    if (activeState === "ADD_AWAITING_DATE") {
+      const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+      if (!datePattern.test(text.trim())) {
+        sendTelegramMessage(chatId, "⚠️ <b>Invalid date format.</b> Please send the date in <code>YYYY-MM-DD</code> format (e.g. <code>2026-06-14</code>):", token);
+        return;
+      }
+
+      tempTx.date = text.trim();
+      saveAndConfirmAddTransaction(userId, chatId, tempTx, token, stateKey, tempTxKey);
       return;
     }
 
@@ -307,6 +339,33 @@ function handleStatefulMessage(userId: number, chatId: number, text: string, act
   }
 }
 
+function saveAndConfirmAddTransaction(userId: number, chatId: number, tempTx: any, token: string, stateKey: string, tempTxKey: string, messageId?: number) {
+  const userProperties = PropertiesService.getUserProperties();
+  const scriptProperties = PropertiesService.getScriptProperties();
+
+  const accessToken = OAuth.getAccessTokenForUser(userId);
+  const savedTx = Database.addTransaction(userId, tempTx, accessToken);
+
+  userProperties.deleteProperty(stateKey);
+  scriptProperties.deleteProperty(tempTxKey);
+
+  const typeSign = savedTx.type === 'credit' ? '🟢' : '🔴';
+  const typeLabel = savedTx.type === 'credit' ? 'Income' : 'Expense';
+  
+  const successText = `✅ <b>Transaction Saved Successfully!</b>\n\n` +
+    `📅 <b>Date:</b> ${savedTx.date}\n` +
+    `➕ <b>Type:</b> ${typeSign} ${typeLabel}\n` +
+    `💰 <b>Amount:</b> ${formatCurrency(savedTx.amount)}\n` +
+    `📝 <b>Description:</b> ${savedTx.description}\n\n` +
+    `💰 <b>Current Balance:</b> <code>${formatCurrency(savedTx.balanceAfter)}</code>`;
+
+  if (messageId) {
+    updateTelegramMessage(chatId, messageId, successText, token);
+  } else {
+    sendTelegramMessage(chatId, successText, token);
+  }
+}
+
 function handleCallbackQuery(callbackQuery: any, token: string) {
   const chatId = callbackQuery.message.chat.id;
   const userId = callbackQuery.from.id;
@@ -330,6 +389,43 @@ function handleCallbackQuery(callbackQuery: any, token: string) {
       
       answerCallbackQuery(callbackQuery.id, "Type selected", token);
       updateTelegramMessage(chatId, callbackQuery.message.message_id, text, token);
+      return;
+    }
+
+    if (data === "add_date_today") {
+      const tempTxStr = scriptProperties.getProperty(tempTxKey);
+      if (!tempTxStr) {
+        answerCallbackQuery(callbackQuery.id, "❌ Error: Transaction details not found.", token);
+        return;
+      }
+      const tempTx = JSON.parse(tempTxStr);
+      tempTx.date = Utilities.formatDate(new Date(), "Asia/Jakarta", "yyyy-MM-dd");
+
+      answerCallbackQuery(callbackQuery.id, "Today selected", token);
+      saveAndConfirmAddTransaction(userId, chatId, tempTx, token, stateKey, tempTxKey, callbackQuery.message.message_id);
+      return;
+    }
+
+    if (data === "add_date_yesterday") {
+      const tempTxStr = scriptProperties.getProperty(tempTxKey);
+      if (!tempTxStr) {
+        answerCallbackQuery(callbackQuery.id, "❌ Error: Transaction details not found.", token);
+        return;
+      }
+      const tempTx = JSON.parse(tempTxStr);
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      tempTx.date = Utilities.formatDate(yesterday, "Asia/Jakarta", "yyyy-MM-dd");
+
+      answerCallbackQuery(callbackQuery.id, "Yesterday selected", token);
+      saveAndConfirmAddTransaction(userId, chatId, tempTx, token, stateKey, tempTxKey, callbackQuery.message.message_id);
+      return;
+    }
+
+    if (data === "add_date_custom") {
+      answerCallbackQuery(callbackQuery.id, "Custom date", token);
+      userProperties.setProperty(stateKey, "ADD_AWAITING_DATE");
+      updateTelegramMessage(chatId, callbackQuery.message.message_id, "👉 Please send the transaction date in <code>YYYY-MM-DD</code> format (e.g. <code>2026-06-14</code>):", token);
       return;
     }
 
