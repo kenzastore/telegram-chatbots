@@ -1,0 +1,18 @@
+Verification Report for Phase 4: Conversational /add Date Prompts & Verification
+
+Automated Test Command:
+CI=true npm test
+
+Manual Verification Steps:
+1. Run the interactive simulation script: node /home/karel/.gemini/antigravity-cli/brain/5d38c3cf-61a4-4473-a170-00be2c7b9047/scratch/verify_interactive_add.js
+2. Confirm that the flow logs show:
+   - /add starts and prompts for transaction type (Income/Expense).
+   - Choosing "Expense" transitions state to ADD_AMOUNT.
+   - Entering amount Rp 50.000 transitions state to ADD_DESC.
+   - Entering description Lunch transitions state to ADD_DATE and prompts with only Today and Custom Date options.
+   - Choosing "Custom Date" transitions state to ADD_AWAITING_DATE.
+   - Entering 2026/06/14 (invalid format) triggers format error help.
+   - Entering 2026-06-12 (valid format) saves the transaction successfully to Google Sheets database with the chosen date.
+
+User Confirmation:
+Confirmed with "yes" by the user.
