@@ -1,11 +1,23 @@
 # Specification - Quick Add Transaction via Typed Sentences - GAS Refactor
 
 ## Overview
+
 This track refactors and adapts the natural language parsing logic of the `/quick` command from the Python chatbot codebase to Google Apps Script. It introduces a robust, regex-based parsing engine in TypeScript that handles relative dates, numeric date formats, and textual dates in both English and Indonesian, formats transaction descriptions correctly, and utilizes the existing GAS chatbot inline confirmation keyboard for final database commits.
 
 ## Functional Requirements
+
 1. **Natural Language Parsing Engine (`parseTransactionSentence`)**:
    - Parses the input sentence into `amount`, `type`, `date`, and `description`.
+   - **Type Extraction**:
+     - Debit (Expense) indicators: `spent`, `pay`, `bayar`, `beli`, `debit`, `keluar`, `makan`, `shopping`.
+     - Credit (Income) indicators: `receive`, `income`, `terima`, `dapat`, `gaji`, `credit`, `masuk`.
+   - **Amount Extraction**:
+     - Extract digits, optionally supporting comma/dot separators.
+     - Support suffixes:
+       - `k` or `rb` (thousand, multiplier: 1,000)
+       - `jt` or `juta` (million, multiplier: 1,000,000)
+       - `m` or `miliar` (billion, multiplier: 1,000,000,000)
+       - E.g., `50k` -> 50,000; `1.5jt` -> 1,500,000.
    - **Timezone**: Relative dates (today, yesterday, etc.) must be calculated relative to `Asia/Jakarta` (GMT+7) timezone.
    - **Date Formats Supported**:
      - *Relative*: `today` / `hari ini`, `yesterday` / `kemarin`.
@@ -35,10 +47,12 @@ This track refactors and adapts the natural language parsing logic of the `/quic
    - Upon receiving the next text message from the user in this state, the bot clears the state and parses/processes the input sentence.
 
 ## Non-Functional Requirements
+
 - **Local & Deterministic**: The parsing engine must use pure regex-based logic and date manipulation, running entirely locally in Google Apps Script without external service/LLM dependencies.
 - **Unit Testing**: Deliver comprehensive Jest test cases in `tests/quick.test.ts` covering all date formats, amount prefixes/suffixes, and description cleanups. Keep test coverage of `quick.ts` >80%.
 
 ## Acceptance Criteria
+
 - `/quick` command without arguments sets the user state to `QUICK_AWAITING_SENTENCE` and prompts the user to send their transaction sentence.
 - Sending a valid sentence in `QUICK_AWAITING_SENTENCE` state parses successfully and triggers the confirmation keyboard prompt.
 - `/quick spent 50k on coffee today` parses successfully with amount = 50,000, type = debit, description = "coffee", date = today.
