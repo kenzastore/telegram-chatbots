@@ -191,7 +191,7 @@ describe("Custom Reply Keyboard Command Menu Tests", () => {
     expect(keyboard.keyboard).toBeDefined();
   });
 
-  it("should include reply keyboard in /quick empty args usage warning", () => {
+  it("should set user state and prompt for sentence when /quick is run without arguments", () => {
     const update = {
       update_id: 5,
       message: {
@@ -206,10 +206,42 @@ describe("Custom Reply Keyboard Command Menu Tests", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
-    expect(payload.text).toContain("Usage:");
+    expect(payload.text).toContain("Please send the transaction sentence");
     expect(payload.reply_markup).toBeDefined();
-    const keyboard = JSON.parse(payload.reply_markup);
-    expect(keyboard.keyboard).toBeDefined();
+    
+    const userProperties = PropertiesService.getUserProperties();
+    expect(userProperties.getProperty(`STATE_${userId}`)).toBe("QUICK_AWAITING_SENTENCE");
+  });
+
+  it("should parse sentence and clear state when user sends a sentence in QUICK_AWAITING_SENTENCE state", () => {
+    const userProperties = PropertiesService.getUserProperties();
+    userProperties.setProperty(`STATE_${userId}`, "QUICK_AWAITING_SENTENCE");
+
+    // Mock parseTransactionSentence result
+    (global as any).parseTransactionSentence.mockReturnValue({
+      date: "2026-06-14",
+      amount: 50000,
+      description: "lunch",
+      type: "debit"
+    });
+
+    const update = {
+      update_id: 51,
+      message: {
+        message_id: 1045,
+        from: { id: userId, is_bot: false },
+        chat: { id: chatId },
+        text: "spent 50k on lunch today"
+      }
+    };
+
+    routeUpdate(update, token);
+
+    expect(userProperties.getProperty(`STATE_${userId}`)).toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+    expect(payload.text).toContain("Confirm Transaction Details:");
+    expect(payload.reply_markup).toBeDefined(); // inline keyboard
   });
 
   it("should include reply keyboard in /add final confirmation message when date is entered manually", () => {

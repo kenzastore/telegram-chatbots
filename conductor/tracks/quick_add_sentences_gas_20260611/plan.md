@@ -17,3 +17,16 @@
     - [x] Write unit tests in `tests/handlers.test.ts` verifying `/quick` command error usage message, successful parsed confirmation flow, `quick_confirm_yes` / `quick_confirm_no` callbacks, and correct balance display.
     - [x] Run Jest coverage checks and verify `quick.ts` has >80% coverage and overall tests pass.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Quick Add Stateful Bot Flow Verification & Checkpointing' (Protocol in workflow.md) (eaf9644)
+
+## Phase 3: Stateful Sentence Input for Empty /quick Command
+
+- [x] Task: Write failing unit tests for stateful /quick flow
+    - [x] Add tests in `tests/command_menu.test.ts` verifying that `/quick` without args sets state to `QUICK_AWAITING_SENTENCE` and prompts for input.
+    - [x] Add tests verifying that sending a text message in `QUICK_AWAITING_SENTENCE` state invokes the parser, clears the state, and presents confirmation.
+- [x] Task: Implement stateful /quick flow
+    - [x] Update `handleQuickCommand` in `handlers.ts` to set state to `QUICK_AWAITING_SENTENCE` when `args` is empty.
+    - [x] Update `handleStatefulMessage` in `handlers.ts` to capture `QUICK_AWAITING_SENTENCE` state, clear the state, and call `handleQuickCommand` with the user text.
+- [x] Task: Run unit tests and verify they pass
+    - [x] Ensure all test cases pass.
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Stateful Sentence Input for Empty /quick Command' (Protocol in workflow.md)
+

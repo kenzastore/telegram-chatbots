@@ -105,7 +105,8 @@ function formatCurrency(amount: number): string {
 function handleQuickCommand(userId: number, chatId: number, args: string, token: string) {
   try {
     if (!args) {
-      sendTelegramMessage(chatId, "💡 <b>Usage:</b> <code>/quick &lt;spent/got&gt; &lt;amount&gt; &lt;description&gt; [yesterday/today]</code>\n\nExample:\n• <code>/quick spent 50k for lunch yesterday</code>\n• <code>/quick got 1.5jt from salary</code>", token, getCommandMenuReplyMarkup());
+      PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "QUICK_AWAITING_SENTENCE");
+      sendTelegramMessage(chatId, "👉 Please send the transaction sentence (e.g. <code>spent 50k for lunch yesterday</code>):", token, getCommandMenuReplyMarkup());
       return;
     }
 
@@ -170,6 +171,12 @@ function handleStatefulMessage(userId: number, chatId: number, text: string, act
 
     const tempTxStr = scriptProperties.getProperty(tempTxKey);
     const tempTx = tempTxStr ? JSON.parse(tempTxStr) : {};
+
+    if (activeState === "QUICK_AWAITING_SENTENCE") {
+      userProperties.deleteProperty(stateKey);
+      handleQuickCommand(userId, chatId, text, token);
+      return;
+    }
 
     if (activeState === "ADD_AMOUNT") {
       const cleanedText = text.replace(/rp\.?/gi, "").replace(/\./g, "").replace(/,/g, "").replace(/\s+/g, "").trim();

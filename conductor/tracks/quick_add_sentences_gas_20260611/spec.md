@@ -30,12 +30,17 @@ This track refactors and adapts the natural language parsing logic of the `/quic
    - On confirmation, commits to the spreadsheet database, recalculates balances, and shows the updated balance.
    - On cancellation, deletes temporary properties and cancels the operation.
 
+3. **Stateful Sentence Input**:
+   - If `/quick` is invoked without arguments, the bot sets the user's state to `QUICK_AWAITING_SENTENCE` and prompts the user to send the transaction sentence.
+   - Upon receiving the next text message from the user in this state, the bot clears the state and parses/processes the input sentence.
+
 ## Non-Functional Requirements
 - **Local & Deterministic**: The parsing engine must use pure regex-based logic and date manipulation, running entirely locally in Google Apps Script without external service/LLM dependencies.
 - **Unit Testing**: Deliver comprehensive Jest test cases in `tests/quick.test.ts` covering all date formats, amount prefixes/suffixes, and description cleanups. Keep test coverage of `quick.ts` >80%.
 
 ## Acceptance Criteria
-- `/quick` command displays correct usage text when invoked with empty arguments.
+- `/quick` command without arguments sets the user state to `QUICK_AWAITING_SENTENCE` and prompts the user to send their transaction sentence.
+- Sending a valid sentence in `QUICK_AWAITING_SENTENCE` state parses successfully and triggers the confirmation keyboard prompt.
 - `/quick spent 50k on coffee today` parses successfully with amount = 50,000, type = debit, description = "coffee", date = today.
 - Textual and numeric dates listed in functional requirements are correctly parsed into `YYYY-MM-DD` ISO strings.
 - All unit tests pass, and linter/type checking succeed.

@@ -628,7 +628,7 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     });
 
-    it("should display usage for empty arguments", () => {
+    it("should set state to QUICK_AWAITING_SENTENCE and prompt for input on empty arguments", () => {
       fetchMock.mockReturnValue({
         getResponseCode: () => 200,
         getContentText: () => JSON.stringify({ ok: true })
@@ -638,7 +638,8 @@ describe("Chatbot Command Handlers & Router Tests", () => {
 
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const args = JSON.parse(fetchMock.mock.calls[0][1].payload);
-      expect(args.text).toContain("Usage:");
+      expect(args.text).toContain("Please send the transaction sentence");
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBe("QUICK_AWAITING_SENTENCE");
     });
 
     it("should handle successful parse in handleQuickCommand", () => {
