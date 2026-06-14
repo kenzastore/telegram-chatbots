@@ -30,3 +30,11 @@
     - [x] Implement prompt state `EDIT_AWAITING_ID` handling in `handlers.ts` to parse the ID input and launch the edit field selection menu.
     - [x] Verify all tests pass, code coverage remains >80%, and code compiles.
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Conversational /edit ID prompts & Verification' (Protocol in workflow.md) (d989f82)
+
+## Phase 4: Conversational /clear ID Verification & Properties
+
+- [ ] Task: Verify and view transaction properties before clear
+    - [ ] Write failing unit tests in `tests/handlers.test.ts` verifying that clearing a transaction by ID retrieves the transaction, displays its details (Date, Type, Amount, Description), and prompts for deletion. If not found, handles it gracefully.
+    - [ ] Refactor `handleStatefulMessage` under state `CLEAR_AWAITING_ID` to lookup the transaction details from Sheets DB, show the details, and prompt for deletion.
+    - [ ] Verify all tests pass, code coverage remains >80%, and code compiles.
+- [ ] Task: Conductor - User Manual Verification 'Phase 4: Conversational /clear ID Verification & Properties' (Protocol in workflow.md)

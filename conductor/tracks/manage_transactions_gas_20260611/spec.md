@@ -12,7 +12,9 @@ This track refactors/adapts the interactive bot conversation handlers and tests 
    - Once edits are confirmed, updates the database, triggers chronological balance recalculation, and formats outputs using the Rupiah currency helper.
 2. **Interactive Clearing/Deletion (`/clear`)**:
    - Offers an inline keyboard with choices: Recent, By ID, This Week, This Month.
-   - Displays confirmation screen with detailed summary of target deletion (number of transactions affected, ID).
+   - When clearing "By ID", the bot prompts the user to enter/send the transaction ID.
+   - Before prompting for confirmation to delete, the bot must retrieve and display the transaction details/properties (Date, Type, Amount, Description) of that specific transaction ID so the user can verify what they are deleting.
+   - Displays confirmation screen with detailed summary of target deletion (number of transactions affected, ID, and details of the transaction if clearing by ID).
    - Handles confirm ("Confirm Delete ⚠️") and cancel ("Cancel ❌") callbacks.
    - Once deleted, updates the database, triggers chronological balance recalculation/repair for remaining transactions, and displays the updated current net balance in the success message.
 3. **Parity in Bot Responses**:
