@@ -511,7 +511,7 @@ Follow these manual steps to successfully deploy the refactored chatbot to Googl
    ```
 2. Open the Apps Script web editor:
    ```bash
-   clasp open
+   clasp open-script
    ```
 3. In the web editor:
    *   Click **Deploy** (top right) > **New Deployment**.
