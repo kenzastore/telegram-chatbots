@@ -254,6 +254,51 @@ function handleStatefulMessage(userId: number, chatId: number, text: string, act
 
       userProperties.deleteProperty(stateKey);
 
+      const accessToken = OAuth.getAccessTokenForUser(userId);
+      const ssId = Database.getSpreadsheetId(userId, accessToken);
+      const sheets = Database.getSheetsList(ssId, accessToken);
+      const txSheets = sheets.filter(s => s.endsWith(" Transactions")).sort().reverse();
+      
+      let targetTx: any = null;
+
+      // Search for transaction
+      for (const sheetName of txSheets) {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssId}/values/'${sheetName}'!A:G`;
+        const data = Database.apiCall(url, 'get', null, accessToken);
+        if (data.values && data.values.length > 1) {
+          for (let i = 1; i < data.values.length; i++) {
+            const row = data.values[i];
+            if (Number(row[0]) === userId && Number(row[1]) === txId) {
+              targetTx = {
+                userId: Number(row[0]),
+                id: Number(row[1]),
+                date: row[2],
+                amount: Number(row[3]),
+                description: row[4],
+                type: row[5],
+                balanceAfter: Number(row[6])
+              };
+              break;
+            }
+          }
+        }
+        if (targetTx) break;
+      }
+
+      if (!targetTx) {
+        sendTelegramMessage(chatId, `❌ Transaction ID <code>${txId}</code> not found.`, token);
+        return;
+      }
+
+      const formattedAmount = formatCurrency(targetTx.amount);
+      const typeLabel = targetTx.type === 'credit' ? '🟢 Income' : '🔴 Expense';
+
+      const promptText = `⚠️ <b>Are you sure you want to permanently delete transaction ID ${txId}?</b>\n\n` +
+        `📅 <b>Date:</b> ${targetTx.date}\n` +
+        `➕ <b>Type:</b> ${typeLabel}\n` +
+        `💰 <b>Amount:</b> ${formattedAmount}\n` +
+        `📝 <b>Description:</b> ${targetTx.description}`;
+
       const keyboard = {
         inline_keyboard: [[
           { text: "✅ Yes, Delete", callback_data: `clear_confirm_id_${txId}` },
@@ -261,7 +306,7 @@ function handleStatefulMessage(userId: number, chatId: number, text: string, act
         ]]
       };
 
-      sendTelegramMessage(chatId, `⚠️ <b>Are you sure you want to permanently delete transaction ID ${txId}?</b>`, token, keyboard);
+      sendTelegramMessage(chatId, promptText, token, keyboard);
       return;
     }
 

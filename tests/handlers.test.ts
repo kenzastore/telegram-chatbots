@@ -1197,11 +1197,30 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBe("CLEAR_AWAITING_ID");
     });
 
-    it("should prompt confirmation on sending numeric ID", () => {
+    it("should prompt confirmation on sending numeric ID with transaction details when found", () => {
+      MockDatabase.apiCall.mockReturnValue({
+        values: [
+          ["user_id", "id", "date", "amount", "description", "type", "balance_after"],
+          [String(userId), "15", "2026-06-12", "125000", "Dinner", "debit", "225000"]
+        ]
+      });
+
       handleStatefulMessage(userId, chatId, "15", "CLEAR_AWAITING_ID", token);
       expect(fetchMock).toHaveBeenCalled();
       const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+      expect(payload.text).toContain("Date:</b> 2026-06-12");
+      expect(payload.text).toContain("Amount:</b> Rp 125.000,00");
+      expect(payload.text).toContain("Description:</b> Dinner");
       expect(payload.text).toContain("Are you sure you want to permanently delete transaction ID 15?");
+    });
+
+    it("should handle numeric ID not found in CLEAR_AWAITING_ID state", () => {
+      MockDatabase.apiCall.mockReturnValue({ values: [] });
+
+      handleStatefulMessage(userId, chatId, "15", "CLEAR_AWAITING_ID", token);
+      expect(fetchMock).toHaveBeenCalled();
+      const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+      expect(payload.text).toContain("not found");
     });
 
     it("should execute recent clear confirm callback", () => {
