@@ -29,6 +29,7 @@ const handlers = require('../handlers.ts');
 (global as any).startClearFlow = handlers.startClearFlow;
 (global as any).startEditFlow = handlers.startEditFlow;
 (global as any).handleSummaryCommand = handlers.handleSummaryCommand;
+(global as any).getCommandMenuReplyMarkup = handlers.getCommandMenuReplyMarkup;
 
 const routerObj = require('../router.ts');
 (global as any).sendTelegramMessage = routerObj.sendTelegramMessage;
@@ -141,4 +142,156 @@ describe("Custom Reply Keyboard Command Menu Tests", () => {
     const keyboard = JSON.parse(payload.reply_markup);
     expect(keyboard.keyboard).toBeDefined();
   });
+
+  it("should include reply keyboard in /help response", () => {
+    const update = {
+      update_id: 3,
+      message: {
+        message_id: 102,
+        from: { id: userId, is_bot: false },
+        chat: { id: chatId },
+        text: "/help"
+      }
+    };
+
+    routeUpdate(update, token);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+    expect(payload.text).toContain("Savings Tracker Bot Help Guide");
+    expect(payload.reply_markup).toBeDefined();
+    const keyboard = JSON.parse(payload.reply_markup);
+    expect(keyboard.keyboard).toBeDefined();
+  });
+
+  it("should include reply keyboard in /view response", () => {
+    MockDatabase.apiCall.mockReturnValue({
+      values: [
+        ["user_id", "id", "date", "amount", "description", "type", "balance_after"],
+        [userId.toString(), "1", "2026-06-14", "50000", "Lunch", "debit", "150000"]
+      ]
+    });
+    const update = {
+      update_id: 4,
+      message: {
+        message_id: 103,
+        from: { id: userId, is_bot: false },
+        chat: { id: chatId },
+        text: "/view"
+      }
+    };
+
+    routeUpdate(update, token);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+    expect(payload.text).toContain("Recent History");
+    expect(payload.reply_markup).toBeDefined();
+    const keyboard = JSON.parse(payload.reply_markup);
+    expect(keyboard.keyboard).toBeDefined();
+  });
+
+  it("should include reply keyboard in /quick empty args usage warning", () => {
+    const update = {
+      update_id: 5,
+      message: {
+        message_id: 104,
+        from: { id: userId, is_bot: false },
+        chat: { id: chatId },
+        text: "/quick"
+      }
+    };
+
+    routeUpdate(update, token);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+    expect(payload.text).toContain("Usage:");
+    expect(payload.reply_markup).toBeDefined();
+    const keyboard = JSON.parse(payload.reply_markup);
+    expect(keyboard.keyboard).toBeDefined();
+  });
+
+  it("should include reply keyboard in /add final confirmation message when date is entered manually", () => {
+    // Set state to ADD_DATE
+    const userProperties = PropertiesService.getUserProperties();
+    userProperties.setProperty(`STATE_${userId}`, "ADD_DATE");
+    
+    // Set mock temp transaction
+    const scriptProperties = PropertiesService.getScriptProperties();
+    scriptProperties.setProperty(`TEMP_TX_${userId}`, JSON.stringify({
+      type: "debit",
+      amount: 12000,
+      description: "Coffee"
+    }));
+
+    MockDatabase.addTransaction.mockReturnValue({
+      date: "2026-06-14",
+      amount: 12000,
+      description: "Coffee",
+      type: "debit",
+      balanceAfter: 88000
+    });
+
+    const update = {
+      update_id: 6,
+      message: {
+        message_id: 105,
+        from: { id: userId, is_bot: false },
+        chat: { id: chatId },
+        text: "2026-06-14"
+      }
+    };
+
+    routeUpdate(update, token);
+
+    expect(MockDatabase.addTransaction).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+    expect(payload.text).toContain("Transaction Saved Successfully!");
+    expect(payload.reply_markup).toBeDefined();
+    const keyboard = JSON.parse(payload.reply_markup);
+    expect(keyboard.keyboard).toBeDefined();
+  });
+
+  it("should include reply keyboard in /edit completion message when date is entered manually", () => {
+    const userProperties = PropertiesService.getUserProperties();
+    userProperties.setProperty(`STATE_${userId}`, "EDIT_AWAITING_DATE");
+    
+    const scriptProperties = PropertiesService.getScriptProperties();
+    scriptProperties.setProperty(`TEMP_EDIT_${userId}`, JSON.stringify({
+      targetId: 45,
+      sheetName: "2026-06 Transactions"
+    }));
+
+    MockDatabase.editTransaction.mockReturnValue({
+      id: 45,
+      date: "2026-06-12",
+      amount: 25000,
+      description: "Lunch",
+      type: "debit",
+      balanceAfter: 63000
+    });
+
+    const update = {
+      update_id: 7,
+      message: {
+        message_id: 106,
+        from: { id: userId, is_bot: false },
+        chat: { id: chatId },
+        text: "2026-06-12"
+      }
+    };
+
+    routeUpdate(update, token);
+
+    expect(MockDatabase.editTransaction).toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+    expect(payload.text).toContain("Transaction Updated Successfully!");
+    expect(payload.reply_markup).toBeDefined();
+    const keyboard = JSON.parse(payload.reply_markup);
+    expect(keyboard.keyboard).toBeDefined();
+  });
 });
+

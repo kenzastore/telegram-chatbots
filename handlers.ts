@@ -8,10 +8,10 @@ function handleBalanceCommand(userId: number, chatId: number, token: string) {
     const balance = Database.getUserBalance(userId, accessToken);
 
     const formattedBalance = formatCurrency(balance);
-    sendTelegramMessage(chatId, `💰 <b>Your Net Balance:</b>\n\n<code>${formattedBalance}</code>`, token);
+    sendTelegramMessage(chatId, `💰 <b>Your Net Balance:</b>\n\n<code>${formattedBalance}</code>`, token, getCommandMenuReplyMarkup());
   } catch (error) {
     console.error("Error in handleBalanceCommand:", error);
-    sendTelegramMessage(chatId, `❌ Error retrieving balance: ${error.message}`, token);
+    sendTelegramMessage(chatId, `❌ Error retrieving balance: ${error.message}`, token, getCommandMenuReplyMarkup());
   }
 }
 
@@ -23,7 +23,7 @@ function handleViewCommand(userId: number, chatId: number, token: string) {
     
     const txSheets = sheets.filter(s => s.endsWith(" Transactions")).sort().reverse();
     if (txSheets.length === 0) {
-      sendTelegramMessage(chatId, "📭 You don't have any logged transactions yet. Start with /add or /quick!", token);
+      sendTelegramMessage(chatId, "📭 You don't have any logged transactions yet. Start with /add or /quick!", token, getCommandMenuReplyMarkup());
       return;
     }
 
@@ -32,7 +32,7 @@ function handleViewCommand(userId: number, chatId: number, token: string) {
     const data = Database.apiCall(url, 'get', null, accessToken);
 
     if (!data.values || data.values.length <= 1) {
-      sendTelegramMessage(chatId, `📭 No transactions logged in the sheet: <code>${latestSheet}</code>.`, token);
+      sendTelegramMessage(chatId, `📭 No transactions logged in the sheet: <code>${latestSheet}</code>.`, token, getCommandMenuReplyMarkup());
       return;
     }
 
@@ -53,7 +53,7 @@ function handleViewCommand(userId: number, chatId: number, token: string) {
     }
 
     if (userTxs.length === 0) {
-      sendTelegramMessage(chatId, "📭 No transactions found for your user ID in the latest sheet.", token);
+      sendTelegramMessage(chatId, "📭 No transactions found for your user ID in the latest sheet.", token, getCommandMenuReplyMarkup());
       return;
     }
 
@@ -67,10 +67,10 @@ function handleViewCommand(userId: number, chatId: number, token: string) {
     const currentBalance = Database.getUserBalance(userId, accessToken, ssId);
     messageText += `💰 <b>Running Balance:</b> <code>${formatCurrency(currentBalance)}</code>`;
 
-    sendTelegramMessage(chatId, messageText, token);
+    sendTelegramMessage(chatId, messageText, token, getCommandMenuReplyMarkup());
   } catch (error) {
     console.error("Error in handleViewCommand:", error);
-    sendTelegramMessage(chatId, `❌ Error retrieving transaction history: ${error.message}`, token);
+    sendTelegramMessage(chatId, `❌ Error retrieving transaction history: ${error.message}`, token, getCommandMenuReplyMarkup());
   }
 }
 
@@ -105,13 +105,13 @@ function formatCurrency(amount: number): string {
 function handleQuickCommand(userId: number, chatId: number, args: string, token: string) {
   try {
     if (!args) {
-      sendTelegramMessage(chatId, "💡 <b>Usage:</b> <code>/quick &lt;spent/got&gt; &lt;amount&gt; &lt;description&gt; [yesterday/today]</code>\n\nExample:\n• <code>/quick spent 50k for lunch yesterday</code>\n• <code>/quick got 1.5jt from salary</code>", token);
+      sendTelegramMessage(chatId, "💡 <b>Usage:</b> <code>/quick &lt;spent/got&gt; &lt;amount&gt; &lt;description&gt; [yesterday/today]</code>\n\nExample:\n• <code>/quick spent 50k for lunch yesterday</code>\n• <code>/quick got 1.5jt from salary</code>", token, getCommandMenuReplyMarkup());
       return;
     }
 
     const parsed = parseTransactionSentence(args);
     if (!parsed) {
-      sendTelegramMessage(chatId, "⚠️ <b>Could not parse sentence.</b> Make sure to include transaction type (spent/got/bayar/etc.), amount, and description.\n\nExample:\n• <code>/quick spent 50k for lunch yesterday</code>", token);
+      sendTelegramMessage(chatId, "⚠️ <b>Could not parse sentence.</b> Make sure to include transaction type (spent/got/bayar/etc.), amount, and description.\n\nExample:\n• <code>/quick spent 50k for lunch yesterday</code>", token, getCommandMenuReplyMarkup());
       return;
     }
 
@@ -138,7 +138,7 @@ function handleQuickCommand(userId: number, chatId: number, args: string, token:
     sendTelegramMessage(chatId, confirmText, token, keyboard);
   } catch (error) {
     console.error("Error in handleQuickCommand:", error);
-    sendTelegramMessage(chatId, `❌ Error: ${error.message}`, token);
+    sendTelegramMessage(chatId, `❌ Error: ${error.message}`, token, getCommandMenuReplyMarkup());
   }
 }
 
@@ -157,7 +157,7 @@ function startAddFlow(userId: number, chatId: number, token: string) {
     sendTelegramMessage(chatId, "➕ <b>Log Transaction:</b>\n\nPlease select the transaction type:", token, keyboard);
   } catch (error) {
     console.error("Error in startAddFlow:", error);
-    sendTelegramMessage(chatId, `❌ Error initiating log flow: ${error.message}`, token);
+    sendTelegramMessage(chatId, `❌ Error initiating log flow: ${error.message}`, token, getCommandMenuReplyMarkup());
   }
 }
 
@@ -286,7 +286,7 @@ function handleStatefulMessage(userId: number, chatId: number, text: string, act
       }
 
       if (!targetTx) {
-        sendTelegramMessage(chatId, `❌ Transaction ID <code>${txId}</code> not found.`, token);
+        sendTelegramMessage(chatId, `❌ Transaction ID <code>${txId}</code> not found.`, token, getCommandMenuReplyMarkup());
         return;
       }
 
@@ -321,7 +321,7 @@ function handleStatefulMessage(userId: number, chatId: number, text: string, act
       userProperties.deleteProperty(stateKey);
       const success = showEditMenu(userId, chatId, txId, token);
       if (!success) {
-        sendTelegramMessage(chatId, `❌ Transaction ID <code>${txId}</code> not found.`, token);
+        sendTelegramMessage(chatId, `❌ Transaction ID <code>${txId}</code> not found.`, token, getCommandMenuReplyMarkup());
       }
       return;
     }
@@ -330,7 +330,7 @@ function handleStatefulMessage(userId: number, chatId: number, text: string, act
     if (activeState.startsWith("EDIT_AWAITING_")) {
       const tempEditStr = scriptProperties.getProperty(`TEMP_EDIT_${userId}`);
       if (!tempEditStr) {
-        sendTelegramMessage(chatId, "❌ Error: Temporary edit details not found. Please initiate /edit again.", token);
+        sendTelegramMessage(chatId, "❌ Error: Temporary edit details not found. Please initiate /edit again.", token, getCommandMenuReplyMarkup());
         userProperties.deleteProperty(stateKey);
         return;
       }
@@ -381,15 +381,15 @@ function handleStatefulMessage(userId: number, chatId: number, text: string, act
           `💰 <b>Amount:</b> ${formatCurrency(result.amount)}\n` +
           `📝 <b>Description:</b> ${result.description}\n\n` +
           `💰 <b>New Running Balance:</b> <code>${formatCurrency(result.balanceAfter)}</code>`;
-        sendTelegramMessage(chatId, successText, token);
+        sendTelegramMessage(chatId, successText, token, getCommandMenuReplyMarkup());
       } else {
-        sendTelegramMessage(chatId, `❌ Error: Transaction ID ${txId} was not found.`, token);
+        sendTelegramMessage(chatId, `❌ Error: Transaction ID ${txId} was not found.`, token, getCommandMenuReplyMarkup());
       }
       return;
     }
   } catch (error) {
     console.error("Error in handleStatefulMessage:", error);
-    sendTelegramMessage(chatId, `❌ Error processing input: ${error.message}`, token);
+    sendTelegramMessage(chatId, `❌ Error processing input: ${error.message}`, token, getCommandMenuReplyMarkup());
     PropertiesService.getUserProperties().deleteProperty(`STATE_${userId}`);
     PropertiesService.getScriptProperties().deleteProperty(`TEMP_TX_${userId}`);
     PropertiesService.getScriptProperties().deleteProperty(`TEMP_EDIT_${userId}`);
@@ -419,7 +419,7 @@ function saveAndConfirmAddTransaction(userId: number, chatId: number, tempTx: an
   if (messageId) {
     updateTelegramMessage(chatId, messageId, successText, token);
   } else {
-    sendTelegramMessage(chatId, successText, token);
+    sendTelegramMessage(chatId, successText, token, getCommandMenuReplyMarkup());
   }
 }
 
@@ -689,9 +689,9 @@ function handleClearCallback(userId: number, chatId: number, messageId: number, 
       return;
     }
   } catch (error) {
-    console.error("Error in handleClearCallback:", error);
-    sendTelegramMessage(chatId, `❌ Clear Error: ${error.message}`, token);
-  }
+     console.error("Error in handleClearCallback:", error);
+     sendTelegramMessage(chatId, `❌ Clear Error: ${error.message}`, token, getCommandMenuReplyMarkup());
+   }
 }
 
 /**
@@ -774,23 +774,23 @@ function startEditFlow(userId: number, chatId: number, args: string, token: stri
   try {
     if (!args || !args.trim()) {
       PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "EDIT_AWAITING_ID");
-      sendTelegramMessage(chatId, "👉 Please send the transaction ID you want to edit:", token);
+      sendTelegramMessage(chatId, "👉 Please send the transaction ID you want to edit:", token, getCommandMenuReplyMarkup());
       return;
     }
 
     const txId = Number(args.trim());
     if (isNaN(txId) || txId <= 0) {
-      sendTelegramMessage(chatId, "💡 <b>Usage:</b> <code>/edit &lt;transaction_id&gt;</code>\n\nExample: <code>/edit 5</code>", token);
+      sendTelegramMessage(chatId, "💡 <b>Usage:</b> <code>/edit &lt;transaction_id&gt;</code>\n\nExample: <code>/edit 5</code>", token, getCommandMenuReplyMarkup());
       return;
     }
 
     const success = showEditMenu(userId, chatId, txId, token);
     if (!success) {
-      sendTelegramMessage(chatId, `❌ Transaction ID <code>${txId}</code> not found.`, token);
+      sendTelegramMessage(chatId, `❌ Transaction ID <code>${txId}</code> not found.`, token, getCommandMenuReplyMarkup());
     }
   } catch (error) {
     console.error("Error in startEditFlow:", error);
-    sendTelegramMessage(chatId, `❌ Edit Error: ${error.message}`, token);
+    sendTelegramMessage(chatId, `❌ Edit Error: ${error.message}`, token, getCommandMenuReplyMarkup());
   }
 }
 
@@ -871,7 +871,7 @@ function handleEditCallback(userId: number, chatId: number, messageId: number, d
     }
   } catch (error) {
     console.error("Error in handleEditCallback:", error);
-    sendTelegramMessage(chatId, `❌ Edit Callback Error: ${error.message}`, token);
+    sendTelegramMessage(chatId, `❌ Edit Callback Error: ${error.message}`, token, getCommandMenuReplyMarkup());
   }
 }
 
@@ -978,8 +978,33 @@ function handleSummaryCommand(userId: number, chatId: number, token: string) {
     sendTelegramMessage(chatId, summaryText, token, keyboard);
   } catch (error) {
     console.error("Error in handleSummaryCommand:", error);
-    sendTelegramMessage(chatId, `❌ Summary Error: ${error.message}`, token);
+    sendTelegramMessage(chatId, `❌ Summary Error: ${error.message}`, token, getCommandMenuReplyMarkup());
   }
+}
+
+function getCommandMenuReplyMarkup() {
+  return {
+    keyboard: [
+      [
+        { text: "/quick" }
+      ],
+      [
+        { text: "/add" },
+        { text: "/balance" },
+        { text: "/view" }
+      ],
+      [
+        { text: "/clear" },
+        { text: "/edit" },
+        { text: "/summary" }
+      ],
+      [
+        { text: "/help" }
+      ]
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: false
+  };
 }
 
 if (typeof module !== 'undefined') {
@@ -993,7 +1018,8 @@ if (typeof module !== 'undefined') {
     handleCallbackQuery,
     startClearFlow,
     startEditFlow,
-    handleSummaryCommand
+    handleSummaryCommand,
+    getCommandMenuReplyMarkup
   };
 }
 

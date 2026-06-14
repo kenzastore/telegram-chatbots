@@ -30,6 +30,7 @@ const handlers = require('../handlers.ts');
 (global as any).startClearFlow = handlers.startClearFlow;
 (global as any).startEditFlow = handlers.startEditFlow;
 (global as any).handleSummaryCommand = handlers.handleSummaryCommand;
+(global as any).getCommandMenuReplyMarkup = handlers.getCommandMenuReplyMarkup;
 
 const routerObj = require('../router.ts');
 (global as any).sendTelegramMessage = routerObj.sendTelegramMessage;

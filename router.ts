@@ -14,7 +14,7 @@ function routeUpdate(update: TelegramUpdate, token: string) {
 
       // Public commands (unauthenticated)
       if (command === "/start") {
-        sendTelegramMessage(chat_id, "Welcome to Savings Tracker Bot! Connect your Google account first with /google_login. Use /add or /quick to log transactions.", token);
+        sendTelegramMessage(chat_id, "Welcome to Savings Tracker Bot! Connect your Google account first with /google_login. Use /add or /quick to log transactions.", token, getCommandMenuReplyMarkup());
         return;
       }
       if (command === "/help") {
@@ -30,7 +30,7 @@ function routeUpdate(update: TelegramUpdate, token: string) {
           "/clear - Delete transaction records\n" +
           "/edit - Edit a transaction's details by ID\n" +
           "/summary - View weekly/monthly aggregates";
-        sendTelegramMessage(chat_id, helpText, token);
+        sendTelegramMessage(chat_id, helpText, token, getCommandMenuReplyMarkup());
         return;
       }
       if (command === "/google_login") {
@@ -45,12 +45,12 @@ function routeUpdate(update: TelegramUpdate, token: string) {
       if (command === "/google_logout") {
         OAuth.logoutUser(user_id);
         PropertiesService.getUserProperties().deleteProperty(`STATE_${user_id}`);
-        sendTelegramMessage(chat_id, "👋 <b>Logged out successfully.</b> Your Google credentials and mappings have been deleted.", token);
+        sendTelegramMessage(chat_id, "👋 <b>Logged out successfully.</b> Your Google credentials and mappings have been deleted.", token, getCommandMenuReplyMarkup());
         return;
       }
       if (command === "/cancel") {
         PropertiesService.getUserProperties().deleteProperty(`STATE_${user_id}`);
-        sendTelegramMessage(chat_id, "❌ <b>Operation cancelled.</b>", token);
+        sendTelegramMessage(chat_id, "❌ <b>Operation cancelled.</b>", token, getCommandMenuReplyMarkup());
         return;
       }
       if (command === "/debug") {
@@ -68,13 +68,13 @@ function routeUpdate(update: TelegramUpdate, token: string) {
           `• <b>REDIRECT_URI</b>: ${redirectUri ? `<code>${redirectUri}</code>` : "❌ Missing"}\n\n` +
           `⚠️ <b>Last Recorded Error:</b>\n<pre>${lastError}</pre>`;
 
-        sendTelegramMessage(chat_id, debugMsg, token);
+        sendTelegramMessage(chat_id, debugMsg, token, getCommandMenuReplyMarkup());
         return;
       }
 
       // Check Authentication Gate for other commands
       if (!OAuth.isUserAuthenticated(user_id)) {
-        sendTelegramMessage(chat_id, "⚠️ <b>Google Login Required</b>\n\nYou must connect your Google account to use this command. Run /google_login to get started.", token);
+        sendTelegramMessage(chat_id, "⚠️ <b>Google Login Required</b>\n\nYou must connect your Google account to use this command. Run /google_login to get started.", token, getCommandMenuReplyMarkup());
         return;
       }
 
@@ -102,18 +102,18 @@ function routeUpdate(update: TelegramUpdate, token: string) {
           handleSummaryCommand(user_id, chat_id, token);
           break;
         default:
-          sendTelegramMessage(chat_id, "Unknown command. Try /add, /quick, /balance, /help.", token);
+          sendTelegramMessage(chat_id, "Unknown command. Try /add, /quick, /balance, /help.", token, getCommandMenuReplyMarkup());
       }
     } else {
       // Handle non-command messages (stateful flow inputs)
       if (!OAuth.isUserAuthenticated(user_id)) {
-        sendTelegramMessage(chat_id, "⚠️ <b>Google Login Required</b>\n\nPlease login first with /google_login.", token);
+        sendTelegramMessage(chat_id, "⚠️ <b>Google Login Required</b>\n\nPlease login first with /google_login.", token, getCommandMenuReplyMarkup());
         return;
       }
       if (activeState) {
         handleStatefulMessage(user_id, chat_id, text, activeState, token);
       } else {
-        sendTelegramMessage(chat_id, "Send a command like /add or /quick to start logging. Type /help for assistance.", token);
+        sendTelegramMessage(chat_id, "Send a command like /add or /quick to start logging. Type /help for assistance.", token, getCommandMenuReplyMarkup());
       }
     }
   } else if (update.callback_query) {
