@@ -1,0 +1,3 @@
+Task: Write failing unit tests for the Custom Reply Keyboard
+Summary: Updated specification and plan to use ReplyKeyboardMarkup (virtual keyboard). Replaced tests/command_menu.test.ts to test the reply_markup keyboard structure in command responses.
+Files: conductor/tracks/inline_keyboard_menu_20260614/plan.md, conductor/tracks/inline_keyboard_menu_20260614/spec.md, tests/command_menu.test.ts
