@@ -113,6 +113,7 @@ describe("Chatbot Command Handlers & Router Tests", () => {
 
   describe("Basic Commands (Public)", () => {
     it("should handle /start command successfully", () => {
+      (global as any).OAuth.isUserAuthenticated.mockReturnValue(false);
       // Mock fetch response for telegram sendMessage
       fetchMock.mockReturnValue({
         getResponseCode: () => 200,

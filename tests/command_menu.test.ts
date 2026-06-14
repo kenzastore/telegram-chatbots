@@ -75,7 +75,7 @@ describe("Custom Reply Keyboard Command Menu Tests", () => {
     });
   });
 
-  it("should send custom reply keyboard when /start command is run", () => {
+  it("should send custom reply keyboard when /start command is run (already authenticated)", () => {
     const update = {
       update_id: 1,
       message: {
@@ -92,7 +92,8 @@ describe("Custom Reply Keyboard Command Menu Tests", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
-    expect(payload.text).toContain("Welcome to Savings Tracker Bot");
+    expect(payload.text).toContain("Welcome back to Savings Tracker Bot");
+    expect(payload.text).not.toContain("/google_login");
     expect(payload.reply_markup).toBeDefined();
 
     const keyboard = JSON.parse(payload.reply_markup);
@@ -119,6 +120,71 @@ describe("Custom Reply Keyboard Command Menu Tests", () => {
     // Row 4: /help
     expect(keyboard.keyboard[3]).toHaveLength(1);
     expect(keyboard.keyboard[3][0].text).toBe("/help");
+  });
+
+  it("should prompt to login with /google_login when /start command is run (not authenticated)", () => {
+    (global as any).OAuth.isUserAuthenticated.mockReturnValue(false);
+    const update = {
+      update_id: 11,
+      message: {
+        message_id: 1001,
+        from: { id: userId, is_bot: false },
+        chat: { id: chatId },
+        text: "/start"
+      }
+    };
+
+    routeUpdate(update, token);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+    expect(payload.text).toContain("Welcome to Savings Tracker Bot! Connect your Google account first with /google_login");
+  });
+
+  it("should inform user they are already logged in when /google_login is run (already authenticated)", () => {
+    const update = {
+      update_id: 12,
+      message: {
+        message_id: 1002,
+        from: { id: userId, is_bot: false },
+        chat: { id: chatId },
+        text: "/google_login"
+      }
+    };
+
+    routeUpdate(update, token);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+    expect(payload.text).toContain("already connected to your Google account");
+    expect(payload.reply_markup).toBeDefined();
+    const keyboard = JSON.parse(payload.reply_markup);
+    expect(keyboard.keyboard).toBeDefined(); // custom reply keyboard
+  });
+
+  it("should send inline button to connect when /google_login is run (not authenticated)", () => {
+    (global as any).OAuth.isUserAuthenticated.mockReturnValue(false);
+    (global as any).OAuth.getAuthUrl.mockReturnValue("mock_auth_url");
+    const update = {
+      update_id: 13,
+      message: {
+        message_id: 1003,
+        from: { id: userId, is_bot: false },
+        chat: { id: chatId },
+        text: "/google_login"
+      }
+    };
+
+    routeUpdate(update, token);
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+    expect(payload.text).toContain("Click the button below to sign in with Google:");
+    expect(payload.reply_markup).toBeDefined();
+    const inlineKeyboard = JSON.parse(payload.reply_markup);
+    expect(inlineKeyboard.inline_keyboard).toBeDefined();
+    expect(inlineKeyboard.inline_keyboard[0][0].text).toBe("🔑 Connect Google Account");
+    expect(inlineKeyboard.inline_keyboard[0][0].url).toBe("mock_auth_url");
   });
 
   it("should include reply keyboard in /balance response", () => {

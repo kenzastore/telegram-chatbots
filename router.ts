@@ -14,7 +14,11 @@ function routeUpdate(update: TelegramUpdate, token: string) {
 
       // Public commands (unauthenticated)
       if (command === "/start") {
-        sendTelegramMessage(chat_id, "Welcome to Savings Tracker Bot! Connect your Google account first with /google_login. Use /add or /quick to log transactions.", token, getCommandMenuReplyMarkup());
+        if (OAuth.isUserAuthenticated(user_id)) {
+          sendTelegramMessage(chat_id, "Welcome back to Savings Tracker Bot! You are already connected to your Google account. Use the menu commands below to manage your transactions.", token, getCommandMenuReplyMarkup());
+        } else {
+          sendTelegramMessage(chat_id, "Welcome to Savings Tracker Bot! Connect your Google account first with /google_login. Use /add or /quick to log transactions.", token, getCommandMenuReplyMarkup());
+        }
         return;
       }
       if (command === "/help") {
@@ -34,6 +38,10 @@ function routeUpdate(update: TelegramUpdate, token: string) {
         return;
       }
       if (command === "/google_login") {
+        if (OAuth.isUserAuthenticated(user_id)) {
+          sendTelegramMessage(chat_id, "✅ You are already connected to your Google account. Use /google_logout to disconnect or switch accounts.", token, getCommandMenuReplyMarkup());
+          return;
+        }
         const authUrl = OAuth.getAuthUrl(user_id);
         sendTelegramMessage(chat_id, "Click the button below to sign in with Google:", token, {
           inline_keyboard: [[
