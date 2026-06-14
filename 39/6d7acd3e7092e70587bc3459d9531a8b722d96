@@ -1,0 +1,6 @@
+Task: Implement ID prompt for /edit without arguments
+Summary of changes:
+- Refactored startEditFlow in handlers.ts to extract edit menu rendering into showEditMenu helper.
+- Updated startEditFlow to prompt for the transaction ID and set state to EDIT_AWAITING_ID when called without arguments.
+- Added EDIT_AWAITING_ID state handler in handleStatefulMessage to validate the input ID and transition to the edit menu.
+- Wrote unit tests in tests/handlers.test.ts verifying conversational ID prompting, validation, and transition to the edit menu.
