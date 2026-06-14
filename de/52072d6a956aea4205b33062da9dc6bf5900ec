@@ -1,0 +1,3 @@
+Task: Write failing unit tests for the Command Menu
+Summary: Created tests/command_menu.test.ts containing tests for sending the command menu keyboard on /start and handling menu_ callback queries. Verified they failed as expected.
+Files: tests/command_menu.test.ts
