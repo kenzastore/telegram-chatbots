@@ -2,9 +2,9 @@
 
 ## Phase 1: Test-Driven Development & Unit Tests
 
-- [ ] Task: Write failing unit tests for the Custom Reply Keyboard
-    - [ ] Create test cases in `tests/command_menu.test.ts` verifying that `/start`, `/help`, etc., include the `reply_markup` with the ReplyKeyboardMarkup structure.
-    - [ ] Confirm tests fail (Red Phase).
+- [x] Task: Write failing unit tests for the Custom Reply Keyboard (c5e7af4)
+    - [x] Create test cases in `tests/command_menu.test.ts` verifying that `/start`, `/help`, etc., include the `reply_markup` with the ReplyKeyboardMarkup structure.
+    - [x] Confirm tests fail (Red Phase).
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Test-Driven Development & Unit Tests' (Protocol in workflow.md)
 
 ## Phase 2: Implementation & Manual Verification
