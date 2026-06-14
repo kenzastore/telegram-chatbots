@@ -1,0 +1,6 @@
+Task: Verify and view transaction properties before clear
+Summary of changes:
+- Updated CLEAR_AWAITING_ID stateful message handler in handlers.ts to search the database for the targeted transaction ID.
+- Displays transaction details (Date, Type, Amount, Description) as part of the confirmation prompt message before deleting.
+- Displays a 'not found' message if the transaction ID does not exist in the database.
+- Added Jest unit tests verifying correct details display upon clearing by ID and graceful handling of missing IDs.
