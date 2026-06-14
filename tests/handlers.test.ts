@@ -945,11 +945,36 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       (PropertiesService.getScriptProperties() as any).clear();
     });
 
-    it("should handle /edit command usage when args is empty", () => {
+    it("should handle /edit command when args is empty and prompt for ID", () => {
       startEditFlow(userId, chatId, "", token);
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBe("EDIT_AWAITING_ID");
       expect(fetchMock).toHaveBeenCalled();
       const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
-      expect(payload.text).toContain("Usage:");
+      expect(payload.text).toContain("Please send the transaction ID you want to edit:");
+    });
+
+    it("should handle state EDIT_AWAITING_ID with invalid numeric ID", () => {
+      PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "EDIT_AWAITING_ID");
+      handleStatefulMessage(userId, chatId, "invalid_id", "EDIT_AWAITING_ID", token);
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBe("EDIT_AWAITING_ID");
+      const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+      expect(payload.text).toContain("Invalid ID");
+    });
+
+    it("should handle state EDIT_AWAITING_ID with valid numeric ID, clear state and start edit flow", () => {
+      PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "EDIT_AWAITING_ID");
+      MockDatabase.apiCall.mockReturnValue({
+        values: [
+          ["user_id", "id", "date", "amount", "description", "type", "balance_after"],
+          [String(userId), "5", "2026-06-10", "100000", "Bonus", "credit", "170000"]
+        ]
+      });
+
+      handleStatefulMessage(userId, chatId, "5", "EDIT_AWAITING_ID", token);
+
+      expect(PropertiesService.getUserProperties().getProperty(`STATE_${userId}`)).toBeNull();
+      const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+      expect(payload.text).toContain("Edit Transaction ID 5:");
     });
 
     it("should handle /edit command with non-numeric ID", () => {

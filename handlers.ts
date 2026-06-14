@@ -265,6 +265,22 @@ function handleStatefulMessage(userId: number, chatId: number, text: string, act
       return;
     }
 
+    // STATEFUL EDIT ID ENTRY
+    if (activeState === "EDIT_AWAITING_ID") {
+      const txId = Number(text.trim());
+      if (isNaN(txId) || txId <= 0) {
+        sendTelegramMessage(chatId, "⚠️ <b>Invalid ID.</b> Please send a positive numeric transaction ID (e.g., <code>12</code>):", token);
+        return;
+      }
+
+      userProperties.deleteProperty(stateKey);
+      const success = showEditMenu(userId, chatId, txId, token);
+      if (!success) {
+        sendTelegramMessage(chatId, `❌ Transaction ID <code>${txId}</code> not found.`, token);
+      }
+      return;
+    }
+
     // STATEFUL EDIT ENTRY HANDLERS
     if (activeState.startsWith("EDIT_AWAITING_")) {
       const tempEditStr = scriptProperties.getProperty(`TEMP_EDIT_${userId}`);
@@ -637,83 +653,96 @@ function handleClearCallback(userId: number, chatId: number, messageId: number, 
  * Edit Command and Callback Handlers
  */
 
+function showEditMenu(userId: number, chatId: number, txId: number, token: string): boolean {
+  const accessToken = OAuth.getAccessTokenForUser(userId);
+  const ssId = Database.getSpreadsheetId(userId, accessToken);
+  const sheets = Database.getSheetsList(ssId, accessToken);
+  const txSheets = sheets.filter(s => s.endsWith(" Transactions")).sort().reverse();
+  
+  let targetTx: any = null;
+  let foundSheet = "";
+
+  // Search for transaction
+  for (const sheetName of txSheets) {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssId}/values/'${sheetName}'!A:G`;
+    const data = Database.apiCall(url, 'get', null, accessToken);
+    if (data.values && data.values.length > 1) {
+      for (let i = 1; i < data.values.length; i++) {
+        const row = data.values[i];
+        if (Number(row[0]) === userId && Number(row[1]) === txId) {
+          targetTx = {
+            userId: Number(row[0]),
+            id: Number(row[1]),
+            date: row[2],
+            amount: Number(row[3]),
+            description: row[4],
+            type: row[5],
+            balanceAfter: Number(row[6])
+          };
+          foundSheet = sheetName;
+          break;
+        }
+      }
+    }
+    if (targetTx) break;
+  }
+
+  if (!targetTx) {
+    return false;
+  }
+
+  // Cache target ID details
+  const scriptProperties = PropertiesService.getScriptProperties();
+  scriptProperties.setProperty(`TEMP_EDIT_${userId}`, JSON.stringify({ targetId: txId, sheetName: foundSheet }));
+
+  const formattedAmount = formatCurrency(targetTx.amount);
+  const typeLabel = targetTx.type === 'credit' ? '🟢 Income' : '🔴 Expense';
+
+  const text = `✏️ <b>Edit Transaction ID ${txId}:</b>\n\n` +
+    `📅 <b>Date:</b> ${targetTx.date}\n` +
+    `➕ <b>Type:</b> ${typeLabel}\n` +
+    `💰 <b>Amount:</b> ${formattedAmount}\n` +
+    `📝 <b>Description:</b> ${targetTx.description}\n\n` +
+    `Choose which field you want to edit:`;
+
+  const keyboard = {
+    inline_keyboard: [
+      [
+        { text: "📅 Date", callback_data: "edit_field_date" },
+        { text: "➕ Type", callback_data: "edit_field_type" }
+      ],
+      [
+        { text: "💰 Amount", callback_data: "edit_field_amount" },
+        { text: "📝 Description", callback_data: "edit_field_desc" }
+      ],
+      [
+        { text: "❌ Cancel", callback_data: "edit_field_cancel" }
+      ]
+    ]
+  };
+
+  sendTelegramMessage(chatId, text, token, keyboard);
+  return true;
+}
+
 function startEditFlow(userId: number, chatId: number, args: string, token: string) {
   try {
+    if (!args || !args.trim()) {
+      PropertiesService.getUserProperties().setProperty(`STATE_${userId}`, "EDIT_AWAITING_ID");
+      sendTelegramMessage(chatId, "👉 Please send the transaction ID you want to edit:", token);
+      return;
+    }
+
     const txId = Number(args.trim());
-    if (!args || isNaN(txId) || txId <= 0) {
+    if (isNaN(txId) || txId <= 0) {
       sendTelegramMessage(chatId, "💡 <b>Usage:</b> <code>/edit &lt;transaction_id&gt;</code>\n\nExample: <code>/edit 5</code>", token);
       return;
     }
 
-    const accessToken = OAuth.getAccessTokenForUser(userId);
-    const ssId = Database.getSpreadsheetId(userId, accessToken);
-    const sheets = Database.getSheetsList(ssId, accessToken);
-    const txSheets = sheets.filter(s => s.endsWith(" Transactions")).sort().reverse();
-    
-    let targetTx: any = null;
-    let foundSheet = "";
-
-    // Search for transaction
-    for (const sheetName of txSheets) {
-      const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssId}/values/'${sheetName}'!A:G`;
-      const data = Database.apiCall(url, 'get', null, accessToken);
-      if (data.values && data.values.length > 1) {
-        for (let i = 1; i < data.values.length; i++) {
-          const row = data.values[i];
-          if (Number(row[0]) === userId && Number(row[1]) === txId) {
-            targetTx = {
-              userId: Number(row[0]),
-              id: Number(row[1]),
-              date: row[2],
-              amount: Number(row[3]),
-              description: row[4],
-              type: row[5],
-              balanceAfter: Number(row[6])
-            };
-            foundSheet = sheetName;
-            break;
-          }
-        }
-      }
-      if (targetTx) break;
-    }
-
-    if (!targetTx) {
+    const success = showEditMenu(userId, chatId, txId, token);
+    if (!success) {
       sendTelegramMessage(chatId, `❌ Transaction ID <code>${txId}</code> not found.`, token);
-      return;
     }
-
-    // Cache target ID details
-    const scriptProperties = PropertiesService.getScriptProperties();
-    scriptProperties.setProperty(`TEMP_EDIT_${userId}`, JSON.stringify({ targetId: txId, sheetName: foundSheet }));
-
-    const formattedAmount = formatCurrency(targetTx.amount);
-    const typeLabel = targetTx.type === 'credit' ? '🟢 Income' : '🔴 Expense';
-
-    const text = `✏️ <b>Edit Transaction ID ${txId}:</b>\n\n` +
-      `📅 <b>Date:</b> ${targetTx.date}\n` +
-      `➕ <b>Type:</b> ${typeLabel}\n` +
-      `💰 <b>Amount:</b> ${formattedAmount}\n` +
-      `📝 <b>Description:</b> ${targetTx.description}\n\n` +
-      `Choose which field you want to edit:`;
-
-    const keyboard = {
-      inline_keyboard: [
-        [
-          { text: "📅 Date", callback_data: "edit_field_date" },
-          { text: "➕ Type", callback_data: "edit_field_type" }
-        ],
-        [
-          { text: "💰 Amount", callback_data: "edit_field_amount" },
-          { text: "📝 Description", callback_data: "edit_field_desc" }
-        ],
-        [
-          { text: "❌ Cancel", callback_data: "edit_field_cancel" }
-        ]
-      ]
-    };
-
-    sendTelegramMessage(chatId, text, token, keyboard);
   } catch (error) {
     console.error("Error in startEditFlow:", error);
     sendTelegramMessage(chatId, `❌ Edit Error: ${error.message}`, token);
