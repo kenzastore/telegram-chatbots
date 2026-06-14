@@ -1,0 +1,3 @@
+Task: Implement Command Menu utility, Integrate Command Menu in command endpoints, Add Callback Routing for Command Menu buttons
+Summary: Implemented sendCommandMenu function in handlers.ts using the specified 4-row keyboard layout. Integrated sendCommandMenu calls at the end of all stateless commands (/start, /help, /google_login, /google_logout, /cancel, /debug, /balance, /view, /summary), stateful flow completion points (adding, editing, clearing), and callback queries (exporting, canceling). Added callback routing for menu_ prefix to execute their corresponding commands. All unit tests successfully updated and passing.
+Files: handlers.ts, router.ts, tests/command_menu.test.ts, tests/handlers.test.ts
