@@ -1,12 +1,12 @@
 # Implementation Plan - Inline Keyboard Command Menu
 
-## Phase 1: Test-Driven Development & Unit Tests
+## Phase 1: Test-Driven Development & Unit Tests [checkpoint: 9fac241]
 
 - [x] Task: Write failing unit tests for the Command Menu (de52072)
     - [x] Create test cases in `tests/handlers.test.ts` or a new test file that verify `sendCommandMenu` is called when commands start/finish.
     - [x] Write tests verifying that `menu_` callback queries trigger the correct command logic.
     - [x] Confirm tests fail (Red Phase).
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Test-Driven Development & Unit Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Test-Driven Development & Unit Tests' (Protocol in workflow.md) (9fac241)
 
 ## Phase 2: Implementation & Manual Verification
 
