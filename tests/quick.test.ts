@@ -137,5 +137,25 @@ describe("Quick Add Parser", () => {
     const result = parseTransactionSentence("spent 50000 for a lunch", refDate);
     expect(result?.description).toBe("lunch");
   });
+
+  it("should parse date correctly when placed at the beginning of the sentence", () => {
+    const result = parseTransactionSentence("kemarin terima rp 100k gaji bulanan", refDate);
+    expect(result).toEqual({
+      amount: 100000.0,
+      type: "credit",
+      date: "2026-06-03",
+      description: "gaji bulanan"
+    });
+  });
+
+  it("should parse date correctly when placed in the middle of the sentence", () => {
+    const result = parseTransactionSentence("spent 50k 2026-06-08 on shopping", refDate);
+    expect(result).toEqual({
+      amount: 50000.0,
+      type: "debit",
+      date: "2026-06-08",
+      description: "shopping"
+    });
+  });
 });
 

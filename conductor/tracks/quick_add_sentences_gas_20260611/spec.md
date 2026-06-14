@@ -19,6 +19,7 @@ This track refactors and adapts the natural language parsing logic of the `/quic
        - `m` or `miliar` (billion, multiplier: 1,000,000,000)
        - E.g., `50k` -> 50,000; `1.5jt` -> 1,500,000.
    - **Timezone**: Relative dates (today, yesterday, etc.) must be calculated relative to `Asia/Jakarta` (GMT+7) timezone.
+   - **Date Placement**: The date format can appear anywhere in the sentence (first, middle, or end of the sentence).
    - **Date Formats Supported**:
      - *Relative*: `today` / `hari ini`, `yesterday` / `kemarin`.
      - *Numeric YYYY-MM-DD*: `2026-06-08`, `2026/06/08`, `2026.06.08`.
@@ -56,5 +57,6 @@ This track refactors and adapts the natural language parsing logic of the `/quic
 - `/quick` command without arguments sets the user state to `QUICK_AWAITING_SENTENCE` and prompts the user to send their transaction sentence.
 - Sending a valid sentence in `QUICK_AWAITING_SENTENCE` state parses successfully and triggers the confirmation keyboard prompt.
 - `/quick spent 50k on coffee today` parses successfully with amount = 50,000, type = debit, description = "coffee", date = today.
+- Parses the date correctly whether it is placed at the first, middle, or end of the sentence (e.g. `kemarin terima rp 100k gaji bulanan` or `spent 50k 2026-06-08 on shopping`).
 - Textual and numeric dates listed in functional requirements are correctly parsed into `YYYY-MM-DD` ISO strings.
 - All unit tests pass, and linter/type checking succeed.

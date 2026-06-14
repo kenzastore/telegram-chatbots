@@ -30,3 +30,15 @@
     - [x] Ensure all test cases pass.
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Stateful Sentence Input for Empty /quick Command' (Protocol in workflow.md)
 
+## Phase 4: Date Placement Flexibility
+
+- [x] Task: Write failing unit tests for date placement flexibility
+    - [x] Add tests in `tests/quick.test.ts` to verify date parsing when the date is placed at the first (beginning) of the sentence.
+    - [x] Add tests in `tests/quick.test.ts` to verify date parsing when the date is placed in the middle of the sentence.
+- [x] Task: Ensure date parser supports flexible placement
+    - [x] Verify that description extraction, type extraction, and date extraction all correctly isolate and clean up the date irrespective of its location.
+- [x] Task: Run unit tests and verify they pass
+    - [x] Ensure all test cases pass.
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Date Placement Flexibility' (Protocol in workflow.md)
+
+
