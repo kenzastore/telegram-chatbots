@@ -1,36 +1,31 @@
-# Specification: Inline Keyboard Command Menu
+# Specification: Virtual Keyboard Command Menu
 
 ## Overview
-Implement an always-available inline keyboard "Command Menu" that acts as a quick-access panel for the bot's features. This keyboard will be presented as a separate "Command Menu" message with inline buttons representing the primary commands.
+Implement a persistent custom Reply Keyboard (virtual keyboard) that acts as a quick-access panel for the bot's features. This keyboard replaces the user's standard keyboard and presents buttons for the primary bot commands.
 
 ## Functional Requirements
-1. **Triggering Conditions**:
-   - The Command Menu must be sent as a separate message:
+1. **Keyboard Layout Structure**:
+   - The custom Reply Keyboard must have a grid layout as follows:
+     - **Row 1**: `[/quick]`
+     - **Row 2**: `[/add]`, `[/balance]`, `[/view]`
+     - **Row 3**: `[/clear]`, `[/edit]`, `[/summary]`
+     - **Row 4**: `[/help]`
+   - The keyboard must be configured with `resize_keyboard: true` and `one_time_keyboard: false` to ensure it is persistent and compact.
+
+2. **Triggering/Attachment Conditions**:
+   - The custom Reply Keyboard must be sent as the `reply_markup` of the response message:
      - When the `/start` command is executed.
-     - At the end of every command or interactive flow completion (i.e. when a transaction/action is finalized, cancelled, or when a stateful workflow terminates and clears the user's state).
-     - This includes: `/start`, `/help`, `/google_login`, `/google_logout`, `/cancel`, `/balance`, `/view`, `/summary`, `/debug`.
-     - It also includes the final step of `/add` (transaction saved), `/quick` (transaction saved or cancelled), `/clear` (deletion confirmed or cancelled), and `/edit` (modification saved or cancelled).
+     - When a stateless command finishes: `/help`, `/google_login`, `/google_logout`, `/cancel`, `/balance`, `/view`, `/summary`, `/debug`.
+     - When a stateful workflow completes or terminates: `/add` final step (saved), `/quick` (saved or cancelled), `/clear` (confirmed, cancelled, or error), `/edit` (saved, cancelled, or error).
+     - When a user gets blocked by the Google Login gate or triggers the unknown command/fallback message.
 
-2. **Keyboard Layout Structure**:
-   - The inline keyboard must have a grid layout as follows:
-     - **Row 1**: `[⚡ /quick]` (Callback data: `menu_/quick`)
-     - **Row 2**: `[➕ /add]` (Callback data: `menu_/add`), `[💰 /balance]` (Callback data: `menu_/balance`), `[📅 /view]` (Callback data: `menu_/view`)
-     - **Row 3**: `[🗑️ /clear]` (Callback data: `menu_/clear`), `[✏️ /edit]` (Callback data: `menu_/edit`), `[📊 /summary]` (Callback data: `menu_/summary`)
-     - **Row 4**: `[ℹ️ /help]` (Callback data: `menu_/help`)
-
-3. **Callback Handling**:
-   - When a button from the Command Menu is clicked, the bot should handle the callback query:
-     - For `menu_/quick`: Send a message prompt instructing the user how to quick-add, e.g.:
-       "👉 Please send your transaction in a quick sentence, e.g.:\n<code>/quick 50k lunch today</code> or <code>10000 bakso kemarin</code>"
-     - For other commands (`menu_/add`, `menu_/balance`, `menu_/view`, `menu_/clear`, `menu_/edit`, `menu_/summary`, `menu_/help`), it should trigger the corresponding command logic just as if the user typed the slash command directly.
-     - Ensure the callback query is answered via `answerCallbackQuery` to prevent Telegram loading spinners.
+3. **Behavior**:
+   - Since these buttons send direct slash commands (e.g. `/add`), the Telegram client automatically sends them as plain text. The existing message routing will handle them natively without requiring callback routing.
 
 ## Technical Scope
 - **File Changes**:
-  - `router.ts`:
-    - Add/update routing for callback data prefix `menu_` under `handleCallbackQuery`.
-    - Update command handlers or the `routeUpdate` flow to automatically send the Command Menu message at the end of each command execution.
   - `handlers.ts`:
-    - Implement a reusable function `sendCommandMenu(chatId: number, token: string)` that sends the keyboard message.
-    - Call `sendCommandMenu` in the appropriate final/exit functions of `/add`, `/quick`, `/clear`, `/edit`, etc.
-  - `tests/`: Add unit tests to verify that the command menu message is triggered correctly.
+    - Implement a helper `getCommandMenuReplyMarkup()` returning the reply keyboard layout.
+    - Pass this markup to the final messages sent at the end of `/balance`, `/view`, `/summary`, `saveAndConfirmAddTransaction`, etc.
+  - `router.ts`:
+    - Pass this markup to public commands (`/start`, `/help`, `/google_login`, `/google_logout`, `/cancel`, `/debug`), unknown commands, and login gates.

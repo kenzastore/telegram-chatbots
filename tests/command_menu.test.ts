@@ -38,7 +38,7 @@ const routerObj = require('../router.ts');
 
 const { routeUpdate } = routerObj;
 
-describe("Inline Keyboard Command Menu Tests", () => {
+describe("Custom Reply Keyboard Command Menu Tests", () => {
   let fetchMock: jest.Mock;
   const userId = 12345;
   const chatId = 67890;
@@ -74,7 +74,7 @@ describe("Inline Keyboard Command Menu Tests", () => {
     });
   });
 
-  it("should send command menu keyboard when /start command is run", () => {
+  it("should send custom reply keyboard when /start command is run", () => {
     const update = {
       update_id: 1,
       message: {
@@ -87,85 +87,58 @@ describe("Inline Keyboard Command Menu Tests", () => {
 
     routeUpdate(update, token);
 
-    // Should call fetch twice: once for /start message, once for command menu
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // Should call fetch once for /start message, with the reply keyboard markup
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    const menuPayload = JSON.parse(fetchMock.mock.calls[1][0] ? fetchMock.mock.calls[1][1].payload : fetchMock.mock.calls[1][1].payload);
-    expect(menuPayload.text).toContain("Command Menu");
-    expect(menuPayload.reply_markup).toBeDefined();
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+    expect(payload.text).toContain("Welcome to Savings Tracker Bot");
+    expect(payload.reply_markup).toBeDefined();
 
-    const keyboard = JSON.parse(menuPayload.reply_markup);
-    expect(keyboard.inline_keyboard).toBeDefined();
+    const keyboard = JSON.parse(payload.reply_markup);
+    expect(keyboard.keyboard).toBeDefined();
+    expect(keyboard.resize_keyboard).toBe(true);
+    expect(keyboard.one_time_keyboard).toBe(false);
     
     // Row 1: /quick
-    expect(keyboard.inline_keyboard[0]).toHaveLength(1);
-    expect(keyboard.inline_keyboard[0][0].text).toContain("/quick");
-    expect(keyboard.inline_keyboard[0][0].callback_data).toBe("menu_/quick");
+    expect(keyboard.keyboard[0]).toHaveLength(1);
+    expect(keyboard.keyboard[0][0].text).toBe("/quick");
 
     // Row 2: /add, /balance, /view
-    expect(keyboard.inline_keyboard[1]).toHaveLength(3);
-    expect(keyboard.inline_keyboard[1][0].text).toContain("/add");
-    expect(keyboard.inline_keyboard[1][1].text).toContain("/balance");
-    expect(keyboard.inline_keyboard[1][2].text).toContain("/view");
+    expect(keyboard.keyboard[1]).toHaveLength(3);
+    expect(keyboard.keyboard[1][0].text).toBe("/add");
+    expect(keyboard.keyboard[1][1].text).toBe("/balance");
+    expect(keyboard.keyboard[1][2].text).toBe("/view");
 
     // Row 3: /clear, /edit, /summary
-    expect(keyboard.inline_keyboard[2]).toHaveLength(3);
-    expect(keyboard.inline_keyboard[2][0].text).toContain("/clear");
-    expect(keyboard.inline_keyboard[2][1].text).toContain("/edit");
-    expect(keyboard.inline_keyboard[2][2].text).toContain("/summary");
+    expect(keyboard.keyboard[2]).toHaveLength(3);
+    expect(keyboard.keyboard[2][0].text).toBe("/clear");
+    expect(keyboard.keyboard[2][1].text).toBe("/edit");
+    expect(keyboard.keyboard[2][2].text).toBe("/summary");
 
     // Row 4: /help
-    expect(keyboard.inline_keyboard[3]).toHaveLength(1);
-    expect(keyboard.inline_keyboard[3][0].text).toContain("/help");
+    expect(keyboard.keyboard[3]).toHaveLength(1);
+    expect(keyboard.keyboard[3][0].text).toBe("/help");
   });
 
-  it("should handle menu_ callbacks correctly", () => {
-    const callbackUpdate = {
+  it("should include reply keyboard in /balance response", () => {
+    MockDatabase.getUserBalance.mockReturnValue(75000);
+    const update = {
       update_id: 2,
-      callback_query: {
-        id: "cb_id",
+      message: {
+        message_id: 101,
         from: { id: userId, is_bot: false, first_name: "Karel" },
-        message: {
-          message_id: 101,
-          chat: { id: chatId, type: "private" },
-          text: "Menu"
-        },
-        data: "menu_/add"
+        chat: { id: chatId, type: "private" },
+        text: "/balance"
       }
     };
 
-    routeUpdate(callbackUpdate, token);
+    routeUpdate(update, token);
 
-    // Should answer callback query and trigger add flow
-    expect(global.answerCallbackQuery).toHaveBeenCalledWith("cb_id", "Command selected", token);
-    
-    // Verify that fetch is called (startAddFlow starts, which sends type selector message)
-    expect(fetchMock).toHaveBeenCalled();
-    const addPayload = JSON.parse(fetchMock.mock.calls[0][1].payload);
-    expect(addPayload.text).toContain("Log Transaction");
-  });
-
-  it("should prompt user with instructions when menu_/quick is clicked", () => {
-    const callbackUpdate = {
-      update_id: 3,
-      callback_query: {
-        id: "cb_id",
-        from: { id: userId, is_bot: false, first_name: "Karel" },
-        message: {
-          message_id: 101,
-          chat: { id: chatId, type: "private" },
-          text: "Menu"
-        },
-        data: "menu_/quick"
-      }
-    };
-
-    routeUpdate(callbackUpdate, token);
-
-    expect(global.answerCallbackQuery).toHaveBeenCalledWith("cb_id", "Command selected", token);
-    expect(fetchMock).toHaveBeenCalled();
-    const quickPromptPayload = JSON.parse(fetchMock.mock.calls[0][1].payload);
-    expect(quickPromptPayload.text).toContain("/quick");
-    expect(quickPromptPayload.text).toContain("sentence");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
+    expect(payload.text).toContain("Your Net Balance");
+    expect(payload.reply_markup).toBeDefined();
+    const keyboard = JSON.parse(payload.reply_markup);
+    expect(keyboard.keyboard).toBeDefined();
   });
 });
