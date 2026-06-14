@@ -6,7 +6,8 @@ This track refactors/adapts the interactive bot conversation handlers and tests 
 ## Functional Requirements
 1. **Interactive Transaction Editing (`/edit`)**:
    - Triggers the editing flow and sets state machine appropriately.
-   - Prompts the user step-by-step for Date, Type, Amount, and Description.
+   - If `/edit` is executed without arguments, prompts the user to enter/send the transaction ID.
+   - Once an ID is provided (either via command argument or stateful entry), validates it, and prompts the user step-by-step for Date, Type, Amount, and Description.
    - Handles inline callback queries for "Keep current" fields, cancellation, and confirmation.
    - Once edits are confirmed, updates the database, triggers chronological balance recalculation, and formats outputs using the Rupiah currency helper.
 2. **Interactive Clearing/Deletion (`/clear`)**:
