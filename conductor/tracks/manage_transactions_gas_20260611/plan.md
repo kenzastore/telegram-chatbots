@@ -23,10 +23,10 @@
     - [x] Run typescript type checker and linter/formatter on modified files.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Interactive /clear Flow Testing & Refinement' (Protocol in workflow.md) (7360d0c)
 
-## Phase 3: Conversational /edit ID prompts & Verification
+## Phase 3: Conversational /edit ID prompts & Verification [checkpoint: d989f82]
 
 - [x] Task: Implement ID prompt for /edit without arguments (396d7ac)
     - [x] Write failing unit tests in `tests/handlers.test.ts` verifying `/edit` without arguments prompts the user to enter the transaction ID and sets state `EDIT_AWAITING_ID`.
     - [x] Implement prompt state `EDIT_AWAITING_ID` handling in `handlers.ts` to parse the ID input and launch the edit field selection menu.
     - [x] Verify all tests pass, code coverage remains >80%, and code compiles.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Conversational /edit ID prompts & Verification' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Conversational /edit ID prompts & Verification' (Protocol in workflow.md) (d989f82)
