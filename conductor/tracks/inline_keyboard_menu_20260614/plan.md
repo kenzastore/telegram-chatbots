@@ -2,10 +2,10 @@
 
 ## Phase 1: Test-Driven Development & Unit Tests
 
-- [ ] Task: Write failing unit tests for the Command Menu
-    - [ ] Create test cases in `tests/handlers.test.ts` or a new test file that verify `sendCommandMenu` is called when commands start/finish.
-    - [ ] Write tests verifying that `menu_` callback queries trigger the correct command logic.
-    - [ ] Confirm tests fail (Red Phase).
+- [x] Task: Write failing unit tests for the Command Menu (de52072)
+    - [x] Create test cases in `tests/handlers.test.ts` or a new test file that verify `sendCommandMenu` is called when commands start/finish.
+    - [x] Write tests verifying that `menu_` callback queries trigger the correct command logic.
+    - [x] Confirm tests fail (Red Phase).
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Test-Driven Development & Unit Tests' (Protocol in workflow.md)
 
 ## Phase 2: Implementation & Manual Verification

@@ -94,7 +94,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: always show inline keyboard when /start command is ordered and after every command is done**
+- [~] **Track: always show inline keyboard when /start command is ordered and after every command is done**
   *Link: [./tracks/inline_keyboard_menu_20260614/](./tracks/inline_keyboard_menu_20260614/)*
 
 
