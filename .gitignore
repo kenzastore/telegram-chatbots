@@ -11,3 +11,13 @@ htmlcov/
 credentials.json
 *.json
 !conductor/**/*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!components.json
+
+# Next.js
+.next/
+node_modules/
+.vercel
+next-env.d.ts

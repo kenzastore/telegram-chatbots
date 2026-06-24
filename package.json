@@ -1,0 +1,46 @@
+{
+  "name": "v0-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "seed": "node scripts/seed-db.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kenzastore/telegram-chatbots.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kenzastore/telegram-chatbots/issues"
+  },
+  "homepage": "https://github.com/kenzastore/telegram-chatbots#readme",
+  "dependencies": {
+    "better-sqlite3": "^12.11.1",
+    "lucide-react": "^1.21.0",
+    "next": "^16.2.9",
+    "next-auth": "^5.0.0-beta.31",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "recharts": "^3.9.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^26.0.0",
+    "@types/react": "^19.2.17",
+    "postcss": "^8.5.15",
+    "tailwindcss": "^4.3.1",
+    "typescript": "^6.0.3"
+  }
+}
