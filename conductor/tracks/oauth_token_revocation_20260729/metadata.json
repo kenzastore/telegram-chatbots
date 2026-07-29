@@ -1,0 +1,8 @@
+{
+  "track_id": "oauth_token_revocation_20260729",
+  "type": "bug",
+  "status": "new",
+  "created_at": "2026-07-29T14:01:00Z",
+  "updated_at": "2026-07-29T14:01:00Z",
+  "description": "Handle Google OAuth token revocation/expiration gracefully"
+}

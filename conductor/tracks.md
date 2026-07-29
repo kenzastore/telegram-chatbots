@@ -97,6 +97,12 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: always show inline keyboard when /start command is ordered and after every command is done**
   *Link: [./tracks/inline_keyboard_menu_20260614/](./tracks/inline_keyboard_menu_20260614/)*
 
+---
+
+- [ ] **Track: Handle Google OAuth token revocation/expiration gracefully**
+  *Link: [./tracks/oauth_token_revocation_20260729/](./tracks/oauth_token_revocation_20260729/)*
+
+
 
 
 
