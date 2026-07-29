@@ -99,7 +99,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Handle Google OAuth token revocation/expiration gracefully**
+- [x] **Track: Handle Google OAuth token revocation/expiration gracefully**
   *Link: [./tracks/oauth_token_revocation_20260729/](./tracks/oauth_token_revocation_20260729/)*
 
 
