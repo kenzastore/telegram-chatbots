@@ -8,15 +8,15 @@
     - [ ] Confirm tests fail (Red Phase).
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Test-Driven Development for Token Cleanup & Error Handling' (Protocol in workflow.md) (8f17096)
 
-## Phase 2: Implementation & Verification
+## Phase 2: Implementation & Verification [checkpoint: 47712f3]
 
-- [ ] Task: Implement automatic token cleanup in `OAuth.getAccessTokenForUser`
-    - [ ] In `oauth.ts`, catch error response from Google token refresh endpoint (`response.getResponseCode() !== 200 || result.error`).
-    - [ ] Delete `REFRESH_TOKEN_<userId>` from `PropertiesService` and remove `ACCESS_TOKEN_<userId>` from `CacheService`.
-    - [ ] Throw clear error message `Google OAuth session has expired or was revoked. Please log in again using /google_login.`.
-- [ ] Task: Enhance error reporting in command handlers and webhook doPost
-    - [ ] Ensure `doPost` in `main.ts` formats token expiration errors into friendly Telegram messages instead of raw system error stacks.
-- [ ] Task: Verify unit tests pass and code coverage >80% (Green Phase)
-    - [ ] Run full test suite `CI=true npm test`.
-    - [ ] Verify test coverage remains >80%.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Implementation & Verification' (Protocol in workflow.md)
+- [x] Task: Implement automatic token cleanup in `OAuth.getAccessTokenForUser` (5586393)
+    - [x] In `oauth.ts`, catch error response from Google token refresh endpoint (`response.getResponseCode() !== 200 || result.error`).
+    - [x] Delete `REFRESH_TOKEN_<userId>` from `PropertiesService` and remove `ACCESS_TOKEN_<userId>` from `CacheService`.
+    - [x] Throw clear error message `Google OAuth session has expired or was revoked. Please log in again using /google_login.`.
+- [x] Task: Enhance error reporting in command handlers and webhook doPost (5586393)
+    - [x] Ensure `doPost` in `main.ts` formats token expiration errors into friendly Telegram messages instead of raw system error stacks.
+- [x] Task: Verify unit tests pass and code coverage >80% (Green Phase) (5586393)
+    - [x] Run full test suite `CI=true npm test`.
+    - [x] Verify test coverage remains >80%.
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Implementation & Verification' (Protocol in workflow.md) (47712f3)
