@@ -2,7 +2,7 @@
 
 ## Phase 1: Test-Driven Development & Unit Tests
 
-- [ ] Task: Write failing unit tests for dual balance calculation and command formatting
+- [x] Task: Write failing unit tests for dual balance calculation and command formatting (654cd2b)
     - [ ] Add unit tests in `tests/database.test.ts` for `Database.getUserMonthlyBalance` and `Database.getUserCumulativeBalance`.
     - [ ] Add unit tests in `tests/handlers.test.ts` verifying `/balance` outputs both Current Month Balance and Cumulative Total Balance.
     - [ ] Confirm tests fail (Red Phase).
