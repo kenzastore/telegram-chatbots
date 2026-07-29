@@ -117,7 +117,11 @@ const OAuth = {
     const result = JSON.parse(response.getContentText());
 
     if (response.getResponseCode() !== 200 || result.error) {
-      throw new Error(`Failed to refresh access token: ${result.error_description || result.error}`);
+      // Automatically clean up invalid refresh & access tokens
+      scriptProperties.deleteProperty(`REFRESH_TOKEN_${userId}`);
+      cache.remove(`ACCESS_TOKEN_${userId}`);
+
+      throw new Error("Google OAuth session has expired or was revoked. Please log in again using /google_login.");
     }
 
     const accessToken = result.access_token;

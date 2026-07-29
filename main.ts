@@ -52,9 +52,14 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
 
     if (chatId && token) {
       try {
+        const isAuthExpired = error.message && error.message.includes("Google OAuth session has expired");
+        const msgText = isAuthExpired
+          ? `⚠️ <b>Google Session Expired</b>\n\nYour Google account session has expired or was revoked.\n\n👉 Please send /google_login to re-connect.`
+          : `❌ <b>System Error</b>\n\nAn error occurred while processing your request:\n<code>${error.message}</code>\n\nPlease check your Google Apps Script settings.`;
+
         sendTelegramMessage(
           chatId,
-          `❌ <b>System Error</b>\n\nAn error occurred while processing your request:\n<code>${error.message}</code>\n\nPlease check your Google Apps Script settings.`,
+          msgText,
           token
         );
       } catch (sendErr) {

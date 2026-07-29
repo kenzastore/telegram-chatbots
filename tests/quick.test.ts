@@ -148,6 +148,16 @@ describe("Quick Add Parser", () => {
     });
   });
 
+  it("should parse YYYY-MM-DD date correctly when placed at the beginning of the sentence", () => {
+    const result = parseTransactionSentence("2026-06-08 spent 50k on shopping", refDate);
+    expect(result).toEqual({
+      amount: 50000.0,
+      type: "debit",
+      date: "2026-06-08",
+      description: "shopping"
+    });
+  });
+
   it("should parse date correctly when placed in the middle of the sentence", () => {
     const result = parseTransactionSentence("spent 50k 2026-06-08 on shopping", refDate);
     expect(result).toEqual({

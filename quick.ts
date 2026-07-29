@@ -12,9 +12,13 @@ function parseTransactionSentence(sentence: string, refDate: Date = new Date()):
     sClean = sClean.substring(6).trim();
   }
 
+  // Mask explicit dates so numbers in YYYY-MM-DD or DD/MM/YYYY are not misparsed as amounts
+  const dateMaskPattern = /\b(?:\d{4}[-/.]\d{1,2}[-/.]\d{1,2}|\d{1,2}[-/.]\d{1,2}[-/.]\d{4}|\d{1,2}[-/.]\d{1,2})\b/gi;
+  const sForAmount = sClean.replace(dateMaskPattern, match => " ".repeat(match.length));
+
   // 1. Extract Amount
   const amountPattern = /\b(?:rp\.?\s*)?([0-9]+(?:[.,][0-9]+)?)\s*(k|rb|jt|juta|m|miliar)?\b/i;
-  const amountMatch = amountPattern.exec(sClean);
+  const amountMatch = amountPattern.exec(sForAmount);
   if (!amountMatch) return null;
 
   const amountRaw = amountMatch[1].replace(/\s+/g, "");

@@ -28,6 +28,9 @@ if (!(global as any).Config) {
 }
 (global as any).Config.getGoogleClientSecret = jest.fn().mockReturnValue("mock_client_secret");
 
+// Save original global OAuth mock from setup.ts
+const originalGlobalOAuth = (global as any).OAuth;
+
 // Load real OAuth logic (after mocking CacheService)
 const { OAuth } = require('../oauth.ts');
 
@@ -37,7 +40,6 @@ describe("OAuth Module Tests", () => {
   const userId = 12345;
   const state = "12345";
   const code = "mock_auth_code";
-  const originalGlobalOAuth = (global as any).OAuth;
 
   afterAll(() => {
     (global as any).OAuth = originalGlobalOAuth;
@@ -178,7 +180,7 @@ describe("OAuth Module Tests", () => {
 
     it("should delete stored tokens and throw a friendly error if token refresh API fails", () => {
       PropertiesService.getScriptProperties().setProperty(`REFRESH_TOKEN_${userId}`, "my_refresh_token");
-      CacheService.getScriptCache().put(`ACCESS_TOKEN_${userId}`, "old_cached_token");
+      CacheService.getScriptCache().remove(`ACCESS_TOKEN_${userId}`);
 
       fetchMock.mockReturnValue({
         getResponseCode: () => 400,

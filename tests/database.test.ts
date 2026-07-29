@@ -6,6 +6,15 @@ describe("Database Module Tests", () => {
   const userId = 12345;
   const accessToken = "mock_access_token";
 
+  beforeAll(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date("2026-06-10T10:00:00Z"));
+  });
+
+  afterAll(() => {
+    jest.useRealTimers();
+  });
+
   beforeEach(() => {
     fetchMock = (global as any).UrlFetchApp.fetch;
     fetchMock.mockClear();
