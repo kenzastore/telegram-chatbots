@@ -104,7 +104,7 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Support active monthly balance and cumulative total balance**
+- [x] **Track: Support active monthly balance and cumulative total balance**
   *Link: [./tracks/dual_balance_tracking_20260729/](./tracks/dual_balance_tracking_20260729/)*
 
 
