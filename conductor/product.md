@@ -23,7 +23,7 @@ Every user accessing the bot must first log in to Google via OAuth2. Unauthentic
      - **Description/Category**: A brief note describing the transaction (e.g., "Groceries", "Salary").
    - **Confirmation**: The bot saves the transaction, recalculates the balance, and shows a confirmation message with the updated balance.
 2. **Checking Balance (`/balance`)**:
-   - Displays the current net balance (Total Credits - Total Debits) across all records.
+   - Displays both the **Current Month Balance** (net income/expenses for the active calendar month) and the **Cumulative Total Balance** (aggregate net savings accumulated across all historical transactions).
 3. **Viewing History (`/view`)**:
    - Lists the last N transactions (defaulting to 10) in a cleanly formatted table.
 4. **Summaries (`/summary`)**:
