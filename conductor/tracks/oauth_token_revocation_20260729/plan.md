@@ -1,12 +1,12 @@
 # Implementation Plan - Handle Google OAuth Token Revocation/Expiration Gracefully
 
-## Phase 1: Test-Driven Development for Token Cleanup & Error Handling
+## Phase 1: Test-Driven Development for Token Cleanup & Error Handling [checkpoint: 8f17096]
 
 - [x] Task: Write failing unit tests for OAuth token revocation cleanup (df475db)
     - [ ] Add unit tests in `tests/oauth.test.ts` verifying that `OAuth.getAccessTokenForUser` deletes `REFRESH_TOKEN_<userId>` and `ACCESS_TOKEN_<userId>` when Google API returns `invalid_grant` or token expired error.
     - [ ] Add unit tests in `tests/handlers.test.ts` verifying that commands catch expired token errors and return a user-friendly Telegram error message with `/google_login` prompt.
     - [ ] Confirm tests fail (Red Phase).
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Test-Driven Development for Token Cleanup & Error Handling' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Test-Driven Development for Token Cleanup & Error Handling' (Protocol in workflow.md) (8f17096)
 
 ## Phase 2: Implementation & Verification
 
