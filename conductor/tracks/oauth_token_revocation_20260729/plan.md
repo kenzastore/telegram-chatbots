@@ -2,7 +2,7 @@
 
 ## Phase 1: Test-Driven Development for Token Cleanup & Error Handling
 
-- [ ] Task: Write failing unit tests for OAuth token revocation cleanup
+- [x] Task: Write failing unit tests for OAuth token revocation cleanup (df475db)
     - [ ] Add unit tests in `tests/oauth.test.ts` verifying that `OAuth.getAccessTokenForUser` deletes `REFRESH_TOKEN_<userId>` and `ACCESS_TOKEN_<userId>` when Google API returns `invalid_grant` or token expired error.
     - [ ] Add unit tests in `tests/handlers.test.ts` verifying that commands catch expired token errors and return a user-friendly Telegram error message with `/google_login` prompt.
     - [ ] Confirm tests fail (Red Phase).
