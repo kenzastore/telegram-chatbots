@@ -102,6 +102,12 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: Handle Google OAuth token revocation/expiration gracefully**
   *Link: [./tracks/oauth_token_revocation_20260729/](./tracks/oauth_token_revocation_20260729/)*
 
+---
+
+- [ ] **Track: Support active monthly balance and cumulative total balance**
+  *Link: [./tracks/dual_balance_tracking_20260729/](./tracks/dual_balance_tracking_20260729/)*
+
+
 
 
 

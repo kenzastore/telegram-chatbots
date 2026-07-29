@@ -1,0 +1,8 @@
+{
+  "track_id": "dual_balance_tracking_20260729",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-07-29T14:20:50Z",
+  "updated_at": "2026-07-29T14:20:50Z",
+  "description": "Support active monthly balance and cumulative total balance"
+}
