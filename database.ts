@@ -136,7 +136,8 @@ const Database = {
   /**
    * Gets the running balance for a user.
    */
-  getUserBalance(userId: number, accessToken: string, ssId?: string): number {
+  getUserBalance(userId: number, accessToken: string, existingSsId?: string): number {
+    let ssId = existingSsId;
     if (!ssId) {
       ssId = this.getSpreadsheetId(userId, accessToken);
     }
@@ -156,6 +157,45 @@ const Database = {
       }
     }
     return 0;
+  },
+
+  /**
+   * Returns net balance (credits minus debits) for a specific calendar month (YYYY-MM).
+   */
+  getUserMonthlyBalance(userId: number, monthStr: string, accessToken: string, existingSsId?: string): number {
+    let ssId = existingSsId;
+    if (!ssId) {
+      ssId = this.getSpreadsheetId(userId, accessToken);
+    }
+    const sheetName = `${monthStr} Transactions`;
+    const sheets = this.getSheetsList(ssId, accessToken);
+    if (!sheets.includes(sheetName)) return 0;
+
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${ssId}/values/'${sheetName}'!A:G`;
+    const data = this.apiCall(url, 'get', null, accessToken);
+    if (!data.values || data.values.length <= 1) return 0;
+
+    let netBalance = 0;
+    for (let i = 1; i < data.values.length; i++) {
+      const row = data.values[i];
+      if (Number(row[0]) === userId) {
+        const amount = Number(row[3]);
+        const type = row[5];
+        if (type === 'credit') {
+          netBalance += amount;
+        } else if (type === 'debit') {
+          netBalance -= amount;
+        }
+      }
+    }
+    return netBalance;
+  },
+
+  /**
+   * Returns aggregate net cumulative balance (credits minus debits) across all historical transaction sheets.
+   */
+  getUserCumulativeBalance(userId: number, accessToken: string, existingSsId?: string): number {
+    return this.getUserBalance(userId, accessToken, existingSsId);
   },
 
   /**

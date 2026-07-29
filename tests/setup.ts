@@ -99,4 +99,19 @@ const MockSpreadsheetApp = {
   getRedirectUri: jest.fn().mockReturnValue("https://mock.redirect.uri"),
 };
 
+(global as any).Database = {
+  getUserBalance: jest.fn().mockReturnValue(75000),
+  getUserMonthlyBalance: jest.fn().mockReturnValue(50000),
+  getUserCumulativeBalance: jest.fn().mockReturnValue(150000),
+  getSpreadsheetId: jest.fn().mockReturnValue("mock_ss_id"),
+  getSheetsList: jest.fn().mockReturnValue(["2026-07 Transactions"]),
+  apiCall: jest.fn(),
+  addTransaction: jest.fn(),
+  editTransaction: jest.fn(),
+  deleteTransaction: jest.fn(),
+  getMonthSheetName: jest.fn().mockReturnValue("2026-07 Transactions"),
+  exportDataToSpreadsheet: jest.fn(),
+  clearTransactionsRange: jest.fn(),
+};
+
 

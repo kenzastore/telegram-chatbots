@@ -250,7 +250,7 @@ describe("Chatbot Command Handlers & Router Tests", () => {
 
     it("should report error if database fails to retrieve balance", () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      MockDatabase.getUserBalance.mockImplementation(() => {
+      MockDatabase.getUserMonthlyBalance.mockImplementation(() => {
         throw new Error("Sheets offline");
       });
       fetchMock.mockReturnValue({

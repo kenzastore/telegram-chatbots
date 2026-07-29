@@ -5,10 +5,18 @@
 function handleBalanceCommand(userId: number, chatId: number, token: string) {
   try {
     const accessToken = OAuth.getAccessTokenForUser(userId);
-    const balance = Database.getUserBalance(userId, accessToken);
+    const now = new Date();
+    const currentMonthStr = Utilities.formatDate(now, "Asia/Jakarta", "yyyy-MM");
 
-    const formattedBalance = formatCurrency(balance);
-    sendTelegramMessage(chatId, `💰 <b>Your Net Balance:</b>\n\n<code>${formattedBalance}</code>`, token, getCommandMenuReplyMarkup());
+    const monthlyBalance = Database.getUserMonthlyBalance(userId, currentMonthStr, accessToken);
+    const cumulativeBalance = Database.getUserCumulativeBalance(userId, accessToken);
+
+    const formattedMonthly = formatCurrency(monthlyBalance);
+    const formattedCumulative = formatCurrency(cumulativeBalance);
+
+    const messageText = `📊 <b>Your Balance Overview</b>\n\n📅 <b>Current Month (${currentMonthStr}):</b> <code>${formattedMonthly}</code>\n💰 <b>Cumulative Total:</b> <code>${formattedCumulative}</code>`;
+
+    sendTelegramMessage(chatId, messageText, token, getCommandMenuReplyMarkup());
   } catch (error) {
     console.error("Error in handleBalanceCommand:", error);
     sendTelegramMessage(chatId, `❌ Error retrieving balance: ${error.message}`, token, getCommandMenuReplyMarkup());

@@ -3,6 +3,8 @@ export {};
 // Define a stub for Database since it is globally referenced
 const MockDatabase = {
   getUserBalance: jest.fn(),
+  getUserMonthlyBalance: jest.fn(),
+  getUserCumulativeBalance: jest.fn(),
   getSpreadsheetId: jest.fn(),
   getSheetsList: jest.fn(),
   apiCall: jest.fn(),
@@ -203,7 +205,7 @@ describe("Custom Reply Keyboard Command Menu Tests", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const payload = JSON.parse(fetchMock.mock.calls[0][1].payload);
-    expect(payload.text).toContain("Your Net Balance");
+    expect(payload.text).toContain("Balance Overview");
     expect(payload.reply_markup).toBeDefined();
     const keyboard = JSON.parse(payload.reply_markup);
     expect(keyboard.keyboard).toBeDefined();
