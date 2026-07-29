@@ -1,12 +1,12 @@
 # Implementation Plan - Dual Balance Tracking (Monthly Reset & Cumulative Total)
 
-## Phase 1: Test-Driven Development & Unit Tests
+## Phase 1: Test-Driven Development & Unit Tests [checkpoint: 3b411a8]
 
 - [x] Task: Write failing unit tests for dual balance calculation and command formatting (654cd2b)
     - [ ] Add unit tests in `tests/database.test.ts` for `Database.getUserMonthlyBalance` and `Database.getUserCumulativeBalance`.
     - [ ] Add unit tests in `tests/handlers.test.ts` verifying `/balance` outputs both Current Month Balance and Cumulative Total Balance.
     - [ ] Confirm tests fail (Red Phase).
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Test-Driven Development & Unit Tests' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Test-Driven Development & Unit Tests' (Protocol in workflow.md) (3b411a8)
 
 ## Phase 2: Implementation & Verification
 
