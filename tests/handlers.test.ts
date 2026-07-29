@@ -3,6 +3,8 @@ export {};
 // Define a stub for Database since it is globally referenced
 const MockDatabase = {
   getUserBalance: jest.fn(),
+  getUserMonthlyBalance: jest.fn(),
+  getUserCumulativeBalance: jest.fn(),
   getSpreadsheetId: jest.fn(),
   getSheetsList: jest.fn(),
   apiCall: jest.fn(),
@@ -216,8 +218,9 @@ describe("Chatbot Command Handlers & Router Tests", () => {
   });
 
   describe("Command /balance", () => {
-    it("should retrieve and format balance correctly", () => {
-      MockDatabase.getUserBalance.mockReturnValue(75000);
+    it("should retrieve and format both Current Month and Cumulative Total balance correctly", () => {
+      MockDatabase.getUserMonthlyBalance.mockReturnValue(50000);
+      MockDatabase.getUserCumulativeBalance.mockReturnValue(150000);
       fetchMock.mockReturnValue({
         getResponseCode: () => 200,
         getContentText: () => JSON.stringify({ ok: true })
@@ -235,10 +238,14 @@ describe("Chatbot Command Handlers & Router Tests", () => {
 
       routeUpdate(update, token);
 
-      expect(MockDatabase.getUserBalance).toHaveBeenCalledWith(userId, "mock_access_token");
+      expect(MockDatabase.getUserMonthlyBalance).toHaveBeenCalled();
+      expect(MockDatabase.getUserCumulativeBalance).toHaveBeenCalledWith(userId, "mock_access_token");
       expect(fetchMock).toHaveBeenCalledTimes(1);
       const fetchCallArgs = JSON.parse(fetchMock.mock.calls[0][1].payload);
-      expect(fetchCallArgs.text).toContain("Rp 75.000,00");
+      expect(fetchCallArgs.text).toContain("Current Month");
+      expect(fetchCallArgs.text).toContain("Rp 50.000,00");
+      expect(fetchCallArgs.text).toContain("Cumulative Total");
+      expect(fetchCallArgs.text).toContain("Rp 150.000,00");
     });
 
     it("should report error if database fails to retrieve balance", () => {
