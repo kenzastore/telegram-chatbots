@@ -37,6 +37,11 @@ describe("OAuth Module Tests", () => {
   const userId = 12345;
   const state = "12345";
   const code = "mock_auth_code";
+  const originalGlobalOAuth = (global as any).OAuth;
+
+  afterAll(() => {
+    (global as any).OAuth = originalGlobalOAuth;
+  });
 
   beforeEach(() => {
     fetchMock = (global as any).UrlFetchApp.fetch;
@@ -171,10 +176,12 @@ describe("OAuth Module Tests", () => {
       }).toThrow("User is not authenticated with Google.");
     });
 
-    it("should throw an error if token refresh API fails", () => {
+    it("should delete stored tokens and throw a friendly error if token refresh API fails", () => {
       PropertiesService.getScriptProperties().setProperty(`REFRESH_TOKEN_${userId}`, "my_refresh_token");
+      CacheService.getScriptCache().put(`ACCESS_TOKEN_${userId}`, "old_cached_token");
+
       fetchMock.mockReturnValue({
-        getResponseCode: () => 401,
+        getResponseCode: () => 400,
         getContentText: () => JSON.stringify({
           error: "invalid_grant",
           error_description: "Token has been expired or revoked."
@@ -183,7 +190,11 @@ describe("OAuth Module Tests", () => {
 
       expect(() => {
         OAuth.getAccessTokenForUser(userId);
-      }).toThrow("Failed to refresh access token: Token has been expired or revoked.");
+      }).toThrow("Google OAuth session has expired or was revoked. Please log in again using /google_login.");
+
+      // Check automatic token cleanup
+      expect(PropertiesService.getScriptProperties().getProperty(`REFRESH_TOKEN_${userId}`)).toBeNull();
+      expect(CacheService.getScriptCache().get(`ACCESS_TOKEN_${userId}`)).toBeNull();
     });
   });
 
@@ -219,6 +230,10 @@ describe("OAuth Module Tests", () => {
       sendTelegramMessageMock = jest.fn();
       (global as any).sendTelegramMessage = sendTelegramMessageMock;
       (global as any).OAuth = OAuth; // ensure the real OAuth is used
+    });
+
+    afterEach(() => {
+      (global as any).OAuth = originalGlobalOAuth;
     });
 
     it("should successfully handle Google redirect and send success message to Telegram", () => {

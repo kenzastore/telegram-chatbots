@@ -1287,4 +1287,17 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       expect(payload.text).toContain("Invalid ID.");
     });
   });
+
+  describe("OAuth Token Expiration Handling", () => {
+    it("should throw friendly OAuth session expired error when token refresh fails", () => {
+      (global as any).OAuth.isUserAuthenticated.mockReturnValue(true);
+      (global as any).OAuth.getAccessTokenForUser.mockImplementation(() => {
+        throw new Error("Google OAuth session has expired or was revoked. Please log in again using /google_login.");
+      });
+
+      expect(() => {
+        handleBalanceCommand(userId, chatId, token);
+      }).toThrow("Google OAuth session has expired or was revoked. Please log in again using /google_login.");
+    });
+  });
 });
