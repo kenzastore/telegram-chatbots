@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "push": "tsc && clasp push",
+    "deploy": "tsc && clasp push && clasp deploy -i AKfycbwDk9f_uLvonRB1ZU7XcMbTgjHy6ToDaH9DJ33wIga7-4_lLzENvzifW3nDaO9T_iZs -d 'Auto deploy'",
     "test": "jest"
   },
   "keywords": [],
