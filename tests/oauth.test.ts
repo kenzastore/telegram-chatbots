@@ -291,6 +291,7 @@ describe("OAuth Module Tests", () => {
     });
 
     it("should return failure HTML if handleAuthRedirect throws an error", () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       PropertiesService.getScriptProperties().setProperty("TELEGRAM_BOT_TOKEN", "my_bot_token");
 
       // Mock token exchange failure
@@ -315,6 +316,7 @@ describe("OAuth Module Tests", () => {
       expect(output.getContent()).toContain("Authentication Failed");
       expect(output.getContent()).toContain("Expired code");
       expect(sendTelegramMessageMock).not.toHaveBeenCalled();
+      consoleSpy.mockRestore();
     });
   });
 });

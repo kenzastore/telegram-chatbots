@@ -907,6 +907,8 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       expect(fetchCallArgs.text).toContain("Google Login Required");
 
       // Verify User A can execute /balance successfully
+      MockDatabase.getUserMonthlyBalance.mockReturnValue(50000);
+      MockDatabase.getUserCumulativeBalance.mockReturnValue(150000);
       routeUpdate({
         update_id: 102,
         message: {
@@ -1297,6 +1299,7 @@ describe("Chatbot Command Handlers & Router Tests", () => {
 
   describe("OAuth Token Expiration Handling", () => {
     it("should send friendly OAuth session expired error message to Telegram when token refresh fails", () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
       (global as any).OAuth.isUserAuthenticated.mockReturnValue(true);
       (global as any).OAuth.getAccessTokenForUser.mockImplementation(() => {
         throw new Error("Google OAuth session has expired or was revoked. Please log in again using /google_login.");
@@ -1306,6 +1309,7 @@ describe("Chatbot Command Handlers & Router Tests", () => {
       expect(fetchMock).toHaveBeenCalled();
       const payload = JSON.parse(fetchMock.mock.calls[fetchMock.mock.calls.length - 1][1].payload);
       expect(payload.text).toContain("Google OAuth session has expired or was revoked");
+      consoleSpy.mockRestore();
     });
   });
 });
