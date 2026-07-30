@@ -4,6 +4,8 @@
   "description": "",
   "main": "Code.js",
   "scripts": {
+    "build": "tsc",
+    "push": "tsc && clasp push",
     "test": "jest"
   },
   "keywords": [],
